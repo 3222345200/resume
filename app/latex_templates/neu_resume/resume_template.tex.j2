@@ -1,0 +1,89 @@
+\documentclass[UTF8,AutoFakeBold]{resume}
+\usepackage{zh_CN-Adobefonts_external}
+\usepackage{linespacing_fix}
+\usepackage{cite}
+\usepackage{float}
+\usepackage{fontspec}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{amsmath,bm}
+\usepackage{booktabs}
+
+\begin{document}
+\pagenumbering{gobble}
+\begin{figure}[h]
+    \flushright
+    \includegraphics[height=3.4cm,width=2.6cm]{\VAR{avatar_path|latex}}
+\end{figure}
+\vspace{-0.175\linewidth}
+
+\makebox[\textwidth]{\LARGE\fangsong\textbf{\VAR{basics.name|latex}}}
+
+\begin{center}
+    \faPhone \textbf{(+86)\VAR{basics.phone|latex}}
+    \hspace{0.25em}{\textbullet}\hspace{0.25em}
+    \faEnvelope \hspace{0.25em}\textbf{\textit{\VAR{basics.email|latex}}}\\
+    \kaishu 求职意向：\VAR{basics.job_target|latex}
+\end{center}
+
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faGraduationCap} \fangsong\textbf{教育背景}}
+\BLOCK{ for item in education }
+\datedsubsection{\textbf{\VAR{item.school|latex}}\qquad \textbf{\VAR{item.major|latex}}\qquad \textbf{\VAR{item.degree|latex}}}
+{\textbf{\VAR{item.start_date|latex} \textasciitilde\ \VAR{item.end_date|latex}}}
+\BLOCK{ for line in item.highlights }
+\faTrophy\ \kaishu \VAR{line|label_bold}
+\BLOCK{ endfor }
+\BLOCK{ endfor }
+
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faPuzzlePiece} \fangsong\textbf{专业技能}}
+\BLOCK{ for skill in skills }
+\kaishu \VAR{skill|label_bold}
+
+\BLOCK{ endfor }
+
+\BLOCK{ if experience }
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faUsers} \fangsong\textbf{实习经历}}
+\BLOCK{ for item in experience }
+\datedsubsection{\textbf{\VAR{item.company|latex}}\quad{\small\faMapMarker\ \VAR{item.location|latex}}}
+{\large\textbf{\VAR{item.start_date|latex} \textasciitilde\ \VAR{item.end_date|latex}}}
+\role{\VAR{item.department|latex}}{\VAR{item.role|latex}}
+\begin{itemize}
+\BLOCK{ for line in item.highlights }
+    \item \kaishu \VAR{line|label_bold}
+\BLOCK{ endfor }
+\end{itemize}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\BLOCK{ if projects }
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faFlask} \fangsong\textbf{项目经历}}
+\BLOCK{ for item in projects }
+\datedsubsection{\textbf{\VAR{item.name|latex}}}{\textbf{\VAR{item.start_date|latex} \textasciitilde\ \VAR{item.end_date|latex}}}
+\role{项目技术：}{\VAR{item.tech_stack|latex}}
+\kaishu \textbf{主要工作：}
+\begin{enumerate}[label=\textbf{\kaishu \arabic*.}, leftmargin=*, nosep]
+\BLOCK{ for line in item.highlights }
+    \item \kaishu \VAR{line|label_bold}
+\BLOCK{ endfor }
+\end{enumerate}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\BLOCK{ if research }
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faBook} \fangsong\textbf{科研经历}}
+\BLOCK{ for item in research }
+\datedsubsection{\kaishu \VAR{item.title|latex}}{\textbf{\VAR{item.label|latex}}}
+\kaishu \VAR{item.summary|latex}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+
+\BLOCK{ if honors }
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faTrophy} \fangsong\textbf{荣誉奖项}}
+\BLOCK{ for item in honors }
+\datedsubsection{\kaishu \VAR{item.title|latex}}{\textbf{\VAR{item.label|latex}}}
+\kaishu \VAR{item.summary|latex}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\end{document}

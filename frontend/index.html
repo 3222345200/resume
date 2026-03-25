@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>在线简历编辑器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="sidebar">
+      <div>
+        <p class="eyebrow">Resume Studio</p>
+        <h1>东北大学 LaTeX 简历模板</h1>
+        <p class="sidebar-copy">表单内容会写入你指定的 LaTeX 模板，并在生成时直接导出 PDF。</p>
+      </div>
+      <button id="new-resume-btn" class="primary-button">新建简历</button>
+      <div class="resume-list-wrap">
+        <div class="section-title-row">
+          <h2>我的简历</h2>
+          <span id="resume-count">0 份</span>
+        </div>
+        <div id="resume-list" class="resume-list"></div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <section class="editor-panel card">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Editor</p>
+            <h2>模板字段编辑</h2>
+          </div>
+          <div class="actions wrap-actions">
+            <button id="save-btn" class="primary-button" type="button">保存简历</button>
+            <button id="render-btn" class="ghost-button" type="button">生成 PDF</button>
+            <a id="download-link" class="ghost-button hidden-link" target="_blank">下载 PDF</a>
+            <button id="delete-btn" class="ghost-button" type="button">删除</button>
+          </div>
+        </div>
+
+        <form id="resume-form" class="form-grid">
+          <label>
+            标题
+            <input id="title" name="title" placeholder="例如：Java 后端简历" required />
+          </label>
+          <label>
+            模板
+            <select id="template_id" name="template_id"></select>
+          </label>
+          <label>
+            语言
+            <input id="language" name="language" value="zh-CN" />
+          </label>
+          <label>
+            状态
+            <select id="status" name="status">
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+            </select>
+          </label>
+          <label class="full-width">
+            Slug
+            <input id="slug" name="slug" placeholder="resume-zhangsan" />
+          </label>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>基础信息</h3>
+            </div>
+            <div class="form-grid nested-grid">
+              <label>姓名<input id="basics_name" /></label>
+              <label>电话<input id="basics_phone" /></label>
+              <label>邮箱<input id="basics_email" /></label>
+              <label>城市<input id="basics_location" /></label>
+              <label>求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
+              <label class="full-width">个人简介<textarea id="basics_summary" rows="4" placeholder="一句话介绍自己，突出方向和优势"></textarea></label>
+              <div class="full-width avatar-row">
+                <div class="avatar-preview-wrap">
+                  <img id="avatar-preview" class="avatar-preview" src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='240' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' rx='24' fill='%23edf2ff'/%3E%3Ccircle cx='100' cy='80' r='36' fill='%2390a4d4'/%3E%3Crect x='42' y='132' width='116' height='58' rx='28' fill='%2390a4d4'/%3E%3C/svg%3E" alt="头像预览" />
+                </div>
+                <div class="avatar-actions">
+                  <label class="upload-label">
+                    上传头像
+                    <input id="avatar-file" type="file" accept="image/*" hidden />
+                  </label>
+                  <button id="avatar-clear" class="ghost-button" type="button">移除头像</button>
+                  <div id="avatar-status" class="avatar-status">未上传头像，将使用默认照片。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>教育经历</h3>
+              <button type="button" class="small-button" data-add-section="education">新增教育</button>
+            </div>
+            <div id="education-list" class="repeat-list"></div>
+          </div>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>专业技能</h3>
+            </div>
+            <label class="full-width">
+              技能关键词
+              <textarea id="skills" rows="5" placeholder="每行一个技能，例如：&#10;Java&#10;SpringBoot&#10;MySQL"></textarea>
+            </label>
+          </div>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>实习经历</h3>
+              <button type="button" class="small-button" data-add-section="experience">新增经历</button>
+            </div>
+            <div id="experience-list" class="repeat-list"></div>
+          </div>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>项目经历</h3>
+              <button type="button" class="small-button" data-add-section="projects">新增项目</button>
+            </div>
+            <div id="projects-list" class="repeat-list"></div>
+          </div>
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>科研经历</h3>
+              <button type="button" class="small-button" data-add-section="research">新增科研</button>
+            </div>
+            <div id="research-list" class="repeat-list"></div>
+          </div>
+
+
+          <div class="full-width section-card">
+            <div class="section-title-row">
+              <h3>荣誉奖项</h3>
+              <button type="button" class="small-button" data-add-section="honors">新增奖项</button>
+            </div>
+            <div id="honors-list" class="repeat-list"></div>
+          </div>
+        </form>
+      </section>
+
+      <section class="preview-panel card">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Preview</p>
+            <h2>PDF 预览</h2>
+          </div>
+        </div>
+        <div id="preview-empty" class="preview-empty">
+          生成 PDF 后，这里会直接显示简历预览。
+        </div>
+        <iframe id="pdf-preview" class="pdf-preview hidden-preview" title="PDF Preview"></iframe>
+      </section>
+    </main>
+  </div>
+
+  <template id="education-template">
+    <div class="repeat-item" data-section="education">
+      <div class="section-title-row compact"><h4>教育条目</h4><button type="button" class="text-button remove-btn">删除</button></div>
+      <div class="form-grid nested-grid">
+        <label>学校<input data-field="school" /></label>
+        <label>专业<input data-field="major" /></label>
+        <label>
+          学历
+          <select data-field="degree">
+            <option value="">请选择学历</option>
+            <option value="专科">专科</option>
+            <option value="本科">本科</option>
+            <option value="硕士">硕士</option>
+            <option value="博士">博士</option>
+          </select>
+        </label>
+        <label>开始时间<select data-field="start_date" data-date-select="true"></select></label>
+        <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
+        <label class="full-width">奖项/亮点<textarea rows="3" data-field="highlights" placeholder="每行一条"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <template id="experience-template">
+    <div class="repeat-item" data-section="experience">
+      <div class="section-title-row compact"><h4>实习条目</h4><button type="button" class="text-button remove-btn">删除</button></div>
+      <div class="form-grid nested-grid">
+        <label>公司<input data-field="company" /></label>
+        <label>地点<input data-field="location" placeholder="北京" /></label>
+        <label>部门<input data-field="department" placeholder="技术研发部" /></label>
+        <label>岗位<input data-field="role" placeholder="Java开发工程师" /></label>
+        <label>开始时间<select data-field="start_date" data-date-select="true"></select></label>
+        <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
+        <label class="full-width">亮点<textarea rows="5" data-field="highlights" placeholder="每行一条"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <template id="projects-template">
+    <div class="repeat-item" data-section="projects">
+      <div class="section-title-row compact"><h4>项目条目</h4><button type="button" class="text-button remove-btn">删除</button></div>
+      <div class="form-grid nested-grid">
+        <label>项目名<input data-field="name" /></label>
+        <label>技术栈<input data-field="tech_stack" placeholder="SpringBoot+MySQL+Redis" /></label>
+        <label>开始时间<select data-field="start_date" data-date-select="true"></select></label>
+        <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
+        <label class="full-width">主要工作<textarea rows="5" data-field="highlights" placeholder="每行一条"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <template id="research-template">
+    <div class="repeat-item" data-section="research">
+      <div class="section-title-row compact"><h4>科研条目</h4><button type="button" class="text-button remove-btn">删除</button></div>
+      <div class="form-grid nested-grid">
+        <label class="full-width">标题<input data-field="title" /></label>
+        <label>标签<input data-field="label" placeholder="JSA在投(二作)" /></label>
+        <label class="full-width">简介<textarea rows="4" data-field="summary"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+
+  <template id="honors-template">
+    <div class="repeat-item" data-section="honors">
+      <div class="section-title-row compact"><h4>奖项条目</h4><button type="button" class="text-button remove-btn">删除</button></div>
+      <div class="form-grid nested-grid">
+        <label class="full-width">标题<input data-field="title" /></label>
+        <label>标签<input data-field="label" placeholder="国家奖学金 / 竞赛一等奖" /></label>
+        <label class="full-width">简介<textarea rows="4" data-field="summary"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
