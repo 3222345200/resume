@@ -1,13 +1,13 @@
-﻿from pathlib import Path
-import shutil
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.core.security import get_current_user
 from app.models.resume import Resume
+from app.models.user import User
 from app.schemas.resume import (
     RenderResponseSchema,
     ResumeCreateSchema,
@@ -15,9 +15,20 @@ from app.schemas.resume import (
     ResumeReadSchema,
     ResumeUpdateSchema,
 )
-from app.services.latex import OUTPUT_ROOT, render_resume_pdf
+from app.services.latex import render_resume_pdf
+from app.services.minio_storage import delete_object, get_presigned_pdf_url, upload_user_pdf
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
+
+
+def _resume_pdf_url(resume: Resume) -> str | None:
+    if not resume.pdf_object_key:
+        return None
+    return get_presigned_pdf_url(
+        resume.pdf_object_key,
+        f"{resume.title}.pdf",
+        bucket_name=resume.pdf_bucket,
+    )
 
 
 def _to_read_schema(resume: Resume) -> ResumeReadSchema:
@@ -29,37 +40,54 @@ def _to_read_schema(resume: Resume) -> ResumeReadSchema:
         language=resume.language,
         status=resume.status,
         content=resume.content,
-        rendered_pdf_url=resume.rendered_pdf_url,
+        rendered_pdf_url=_resume_pdf_url(resume),
         created_at=resume.created_at.isoformat(),
         updated_at=resume.updated_at.isoformat(),
     )
 
 
-def _get_resume_or_404(resume_id: str, db: Session) -> Resume:
-    resume = db.get(Resume, resume_id)
+def _get_resume_or_404(resume_id: str, db: Session, current_user: User) -> Resume:
+    resume = db.scalar(
+        select(Resume).where(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+    )
     if resume is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume not found")
     return resume
 
 
-def _pdf_path_for_resume(resume_id: str) -> Path:
-    return OUTPUT_ROOT / resume_id / 'resume.pdf'
-
-
 @router.get("", response_model=ResumeListResponseSchema)
-def list_resumes(db: Session = Depends(get_db)) -> ResumeListResponseSchema:
-    resumes = db.scalars(select(Resume).order_by(Resume.updated_at.desc())).all()
+def list_resumes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeListResponseSchema:
+    resumes = db.scalars(
+        select(Resume)
+        .where(Resume.user_id == current_user.id)
+        .order_by(Resume.updated_at.desc())
+    ).all()
     return ResumeListResponseSchema(items=[_to_read_schema(item) for item in resumes])
 
 
 @router.get("/{resume_id}", response_model=ResumeReadSchema)
-def get_resume(resume_id: str, db: Session = Depends(get_db)) -> ResumeReadSchema:
-    return _to_read_schema(_get_resume_or_404(resume_id, db))
+def get_resume(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeReadSchema:
+    return _to_read_schema(_get_resume_or_404(resume_id, db, current_user))
 
 
 @router.post("", response_model=ResumeReadSchema, status_code=status.HTTP_201_CREATED)
-def create_resume(payload: ResumeCreateSchema, db: Session = Depends(get_db)) -> ResumeReadSchema:
+def create_resume(
+    payload: ResumeCreateSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ResumeReadSchema:
     resume = Resume(
+        user_id=current_user.id,
         title=payload.title,
         template_id=payload.template_id,
         slug=payload.slug,
@@ -78,8 +106,9 @@ def update_resume(
     resume_id: str,
     payload: ResumeUpdateSchema,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> ResumeReadSchema:
-    resume = _get_resume_or_404(resume_id, db)
+    resume = _get_resume_or_404(resume_id, db, current_user)
     resume.title = payload.title
     resume.template_id = payload.template_id
     resume.slug = payload.slug
@@ -93,38 +122,54 @@ def update_resume(
 
 
 @router.post("/{resume_id}/render", response_model=RenderResponseSchema)
-def render_resume(resume_id: str, db: Session = Depends(get_db)) -> RenderResponseSchema:
-    resume = _get_resume_or_404(resume_id, db)
+def render_resume(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> RenderResponseSchema:
+    resume = _get_resume_or_404(resume_id, db, current_user)
     try:
-        render_resume_pdf(resume)
+        pdf_bytes = render_resume_pdf(resume)
+        storage_info = upload_user_pdf(current_user.id, resume.id, pdf_bytes)
     except RuntimeError as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
-    resume.rendered_pdf_url = f"/api/resumes/{resume.id}/pdf"
+    resume.pdf_bucket = str(storage_info["bucket"])
+    resume.pdf_object_key = str(storage_info["object_key"])
+    resume.pdf_size = int(storage_info["size"])
+    resume.pdf_updated_at = datetime.now(timezone.utc)
     db.add(resume)
     db.commit()
-    return RenderResponseSchema(message="PDF generated", pdf_url=resume.rendered_pdf_url)
+    db.refresh(resume)
+
+    pdf_url = _resume_pdf_url(resume)
+    if not pdf_url:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="PDF upload failed")
+    return RenderResponseSchema(message="PDF generated", pdf_url=pdf_url)
 
 
-@router.get("/{resume_id}/pdf")
-def download_resume_pdf(resume_id: str, db: Session = Depends(get_db)) -> FileResponse:
-    resume = _get_resume_or_404(resume_id, db)
-    pdf_path = _pdf_path_for_resume(resume.id)
-    if not resume.rendered_pdf_url or not pdf_path.exists():
+@router.get("/{resume_id}/pdf", response_model=RenderResponseSchema)
+def get_resume_pdf(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> RenderResponseSchema:
+    resume = _get_resume_or_404(resume_id, db, current_user)
+    pdf_url = _resume_pdf_url(resume)
+    if not pdf_url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not generated")
-    return FileResponse(
-        path=pdf_path,
-        media_type="application/pdf",
-        filename=f"{resume.title}.pdf",
-        content_disposition_type="inline",
-    )
+    return RenderResponseSchema(message="PDF ready", pdf_url=pdf_url)
 
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_resume(resume_id: str, db: Session = Depends(get_db)) -> None:
-    resume = _get_resume_or_404(resume_id, db)
-    output_dir = OUTPUT_ROOT / resume.id
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
+def delete_resume(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> None:
+    resume = _get_resume_or_404(resume_id, db, current_user)
+    object_name = resume.pdf_object_key
+    bucket_name = resume.pdf_bucket
     db.delete(resume)
     db.commit()
+    delete_object(object_name, bucket_name=bucket_name)

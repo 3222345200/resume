@@ -7,3 +7,7 @@ __pycache__/
 dist/
 build/
 app/generated/
+uploads/
+*.log
+texput.log
+*.tmp

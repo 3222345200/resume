@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,6 +16,12 @@ class Resume(Base):
         primary_key=True,
         default=lambda: str(uuid4()),
     )
+    user_id: Mapped[str | None] = mapped_column(
+        UUID(as_uuid=False),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     template_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     slug: Mapped[str | None] = mapped_column(String(120), unique=True)
@@ -23,6 +29,10 @@ class Resume(Base):
     status: Mapped[str] = mapped_column(String(30), default="draft", nullable=False, index=True)
     content: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     rendered_pdf_url: Mapped[str | None] = mapped_column(Text)
+    pdf_bucket: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    pdf_object_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    pdf_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pdf_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

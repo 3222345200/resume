@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 - 在线简历编辑器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+  <main class="login-page login-page-premium">
+    <section class="login-hero premium-hero">
+      <div class="premium-orb premium-orb-one"></div>
+      <div class="premium-orb premium-orb-two"></div>
+      <div class="premium-grid"></div>
+
+      <div class="premium-topline">
+        <span class="login-badge premium-badge">Resume Studio</span>
+        <span class="premium-status">LaTeX Driven Resume Workflow</span>
+      </div>
+
+      <div class="premium-copy">
+        <p class="premium-kicker">EDITORIAL LAYOUT FOR AMBITIOUS CANDIDATES</p>
+        <h1>把内容整理好，剩下的交给排版质感。</h1>
+        <p class="login-copy premium-copy-text">
+          从账号登录开始，进入一个更像作品集工作台的简历编辑流程。
+          结构化填写，统一渲染，导出可直接投递的 PDF。
+        </p>
+      </div>
+
+      <div class="premium-metrics">
+        <div class="premium-metric">
+          <strong>01</strong>
+          <span>结构化内容录入</span>
+        </div>
+        <div class="premium-metric">
+          <strong>02</strong>
+          <span>LaTeX 模板渲染</span>
+        </div>
+        <div class="premium-metric">
+          <strong>03</strong>
+          <span>在线预览与导出</span>
+        </div>
+      </div>
+
+      <div class="premium-note">
+        <div class="premium-note-card">
+          <span class="premium-note-label">Current Flow</span>
+          <p>登录后会自动进入简历编辑页，继续你上一轮的工作状态。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-panel premium-panel">
+      <div class="login-card premium-card">
+        <p class="eyebrow">Sign In</p>
+        <h2>进入你的简历工作台</h2>
+        <p class="sidebar-copy">
+          没有账号也没关系，直接注册后会自动跳转到编辑页面。
+          用户名仅支持英文和数字，长度 4 到 20 位。
+        </p>
+
+        <form id="auth-form" class="login-form premium-form">
+          <label class="login-label premium-label">
+            <span>用户名</span>
+            <input
+              id="auth-username"
+              autocomplete="username"
+              placeholder="例如：zhangsan01"
+              minlength="4"
+              maxlength="20"
+              pattern="[A-Za-z0-9]+"
+            />
+          </label>
+
+          <label class="login-label premium-label">
+            <span>密码</span>
+            <input
+              id="auth-password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="至少 8 位"
+              minlength="8"
+              maxlength="128"
+            />
+          </label>
+
+          <div id="auth-message" class="auth-message premium-message"></div>
+
+          <button id="login-btn" class="primary-button login-primary premium-primary" type="submit">登录</button>
+          <button id="register-btn" class="ghost-button login-secondary premium-secondary" type="button">注册并登录</button>
+        </form>
+
+        <div class="premium-footer">
+          <div class="premium-divider"></div>
+          <p>你的登录状态会保存在当前浏览器，下次打开可直接回到编辑页。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/assets/login.js"></script>
+</body>
+</html>

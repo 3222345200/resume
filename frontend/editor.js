@@ -1,11 +1,17 @@
-﻿const state = {
+const TOKEN_KEY = 'resume_auth_token';
+
+const state = {
+  authToken: localStorage.getItem(TOKEN_KEY),
+  currentUser: null,
   templates: [],
   resumes: [],
   currentResumeId: null,
   currentPdfUrl: null,
+  currentAvatarUrl: null,
 };
 
 const elements = {
+  currentUser: document.getElementById('current-user'),
   resumeList: document.getElementById('resume-list'),
   resumeCount: document.getElementById('resume-count'),
   templateSelect: document.getElementById('template_id'),
@@ -17,35 +23,52 @@ const elements = {
   deleteButton: document.getElementById('delete-btn'),
   downloadLink: document.getElementById('download-link'),
   newResumeButton: document.getElementById('new-resume-btn'),
+  logoutButton: document.getElementById('logout-btn'),
   educationList: document.getElementById('education-list'),
   experienceList: document.getElementById('experience-list'),
   projectsList: document.getElementById('projects-list'),
   researchList: document.getElementById('research-list'),
+  honorsList: document.getElementById('honors-list'),
+  avatarFile: document.getElementById('avatar-file'),
+  avatarPreview: document.getElementById('avatar-preview'),
+  avatarStatus: document.getElementById('avatar-status'),
+  avatarClear: document.getElementById('avatar-clear'),
 };
 
-const defaultResume = () => ({
-  title: '新建简历',
-  template_id: 'neu_resume',
-  slug: '',
-  language: 'zh-CN',
-  status: 'draft',
-  rendered_pdf_url: null,
-  content: {
-    basics: {
-      name: '',
-      phone: '',
-      email: '',
-      location: '',
-      summary: '',
-      job_target: '',
+const DEFAULT_AVATAR_PLACEHOLDER =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="240" viewBox="0 0 200 240"><rect width="200" height="240" rx="24" fill="%23edf2ff"/><circle cx="100" cy="80" r="36" fill="%2390a4d4"/><rect x="42" y="132" width="116" height="58" rx="28" fill="%2390a4d4"/></svg>';
+
+function defaultResume() {
+  return {
+    title: '新建简历',
+    template_id: 'neu_resume',
+    slug: '',
+    language: 'zh-CN',
+    status: 'draft',
+    rendered_pdf_url: null,
+    content: {
+      basics: {
+        name: '',
+        phone: '',
+        email: '',
+        location: '',
+        summary: '',
+        job_target: '',
+        avatar_url: null,
+      },
+      education: [],
+      experience: [],
+      projects: [],
+      research: [],
+      honors: [],
+      skills: [],
     },
-    education: [],
-    experience: [],
-    projects: [],
-    research: [],
-    skills: [],
-  },
-});
+  };
+}
+
+function redirectToLogin() {
+  window.location.href = '/login';
+}
 
 function showToast(message) {
   const toast = document.createElement('div');
@@ -55,52 +78,111 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 2400);
 }
 
-function buildPreviewUrl(url) {
-  const cacheBusted = `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`;
-  return `${cacheBusted}#toolbar=0&navpanes=0&scrollbar=0&zoom=page-width`;
-}
-
 function setPreviewMessage(message) {
   elements.previewEmpty.textContent = message;
 }
 
-function setDownloadLink(url) {
-  state.currentPdfUrl = url || null;
-  if (state.currentPdfUrl) {
-    elements.downloadLink.href = state.currentPdfUrl;
-    elements.downloadLink.classList.remove('hidden-link');
-    elements.pdfPreview.src = buildPreviewUrl(state.currentPdfUrl);
-    elements.pdfPreview.classList.remove('hidden-preview');
-    elements.previewEmpty.classList.add('hidden-preview');
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  state.authToken = null;
+}
+
+function applyCurrentUser(user) {
+  state.currentUser = user || null;
+  elements.currentUser.textContent = state.currentUser
+    ? `已登录：${state.currentUser.username}`
+    : '未登录';
+}
+
+function handleUnauthorized() {
+  clearToken();
+  redirectToLogin();
+}
+
+function setAvatar(url) {
+  state.currentAvatarUrl = url || null;
+  if (state.currentAvatarUrl) {
+    elements.avatarPreview.src = state.currentAvatarUrl;
+    elements.avatarStatus.textContent = '头像已上传，生成 PDF 时会使用这张照片。';
   } else {
-    elements.downloadLink.removeAttribute('href');
-    elements.downloadLink.classList.add('hidden-link');
-    elements.pdfPreview.removeAttribute('src');
-    elements.pdfPreview.classList.add('hidden-preview');
-    elements.previewEmpty.classList.remove('hidden-preview');
+    elements.avatarPreview.src = DEFAULT_AVATAR_PLACEHOLDER;
+    elements.avatarStatus.textContent = '未上传头像，将使用默认占位图。';
   }
 }
 
+function resetPreview() {
+  state.currentPdfUrl = null;
+  elements.downloadLink.removeAttribute('href');
+  elements.downloadLink.removeAttribute('download');
+  elements.downloadLink.classList.add('hidden-link');
+  elements.pdfPreview.removeAttribute('src');
+  elements.pdfPreview.classList.add('hidden-preview');
+  elements.previewEmpty.classList.remove('hidden-preview');
+}
+
+function setPreviewUrl(url) {
+  state.currentPdfUrl = url || null;
+  if (!state.currentPdfUrl) {
+    resetPreview();
+    return;
+  }
+
+  const filename = `${document.getElementById('title').value.trim() || 'resume'}.pdf`;
+  elements.downloadLink.href = state.currentPdfUrl;
+  elements.downloadLink.download = filename;
+  elements.downloadLink.target = '_blank';
+  elements.downloadLink.rel = 'noopener';
+  elements.downloadLink.classList.remove('hidden-link');
+  elements.pdfPreview.src = state.currentPdfUrl;
+  elements.pdfPreview.classList.remove('hidden-preview');
+  elements.previewEmpty.classList.add('hidden-preview');
+}
+
+function buildDateOptions(allowPresent = false) {
+  const options = ['<option value="">请选择时间</option>'];
+  if (allowPresent) {
+    options.push('<option value="至今">至今</option>');
+  }
+
+  for (let year = 2035; year >= 1990; year -= 1) {
+    for (let month = 12; month >= 1; month -= 1) {
+      const value = `${year}.${String(month).padStart(2, '0')}`;
+      options.push(`<option value="${value}">${value}</option>`);
+    }
+  }
+  return options.join('');
+}
+
 function multilineToArray(value) {
-  return value.split('\n').map((item) => item.trim()).filter(Boolean);
+  return value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function arrayToMultiline(items = []) {
   return items.join('\n');
 }
 
+function hydrateDynamicField(input, field, data) {
+  if (input.dataset.dateSelect === 'true') {
+    input.innerHTML = buildDateOptions(input.dataset.allowPresent === 'true');
+  }
+  const value = Array.isArray(data[field]) ? arrayToMultiline(data[field]) : (data[field] || '');
+  input.value = value;
+  input.addEventListener('input', updatePreviewMessage);
+  input.addEventListener('change', updatePreviewMessage);
+}
+
 function createRepeatItem(section, data = {}) {
   const template = document.getElementById(`${section}-template`);
   const node = template.content.firstElementChild.cloneNode(true);
   node.querySelectorAll('[data-field]').forEach((input) => {
-    const field = input.dataset.field;
-    const value = Array.isArray(data[field]) ? arrayToMultiline(data[field]) : (data[field] || '');
-    input.value = value;
-    input.addEventListener('input', updatePreview);
+    hydrateDynamicField(input, input.dataset.field, data);
   });
   node.querySelector('.remove-btn').addEventListener('click', () => {
     node.remove();
-    updatePreview();
+    updatePreviewMessage();
   });
   return node;
 }
@@ -115,8 +197,9 @@ function collectRepeatList(section) {
   return Array.from(elements[`${section}List`].querySelectorAll('.repeat-item')).map((item) => {
     const result = {};
     item.querySelectorAll('[data-field]').forEach((input) => {
-      const field = input.dataset.field;
-      result[field] = input.tagName === 'TEXTAREA' ? multilineToArray(input.value) : input.value.trim();
+      result[input.dataset.field] = input.tagName === 'TEXTAREA'
+        ? multilineToArray(input.value)
+        : input.value.trim();
     });
     return result;
   });
@@ -137,12 +220,14 @@ function getFormPayload() {
         location: document.getElementById('basics_location').value.trim(),
         summary: document.getElementById('basics_summary').value.trim(),
         job_target: document.getElementById('basics_job_target').value.trim(),
+        avatar_url: state.currentAvatarUrl,
       },
       education: collectRepeatList('education'),
       experience: collectRepeatList('experience'),
       projects: collectRepeatList('projects'),
       research: collectRepeatList('research'),
-      skills: document.getElementById('skills').value.split(',').map((item) => item.trim()).filter(Boolean),
+      honors: collectRepeatList('honors'),
+      skills: multilineToArray(document.getElementById('skills').value),
     },
   };
 }
@@ -160,18 +245,27 @@ function fillForm(resume) {
   document.getElementById('basics_location').value = current.content?.basics?.location || '';
   document.getElementById('basics_summary').value = current.content?.basics?.summary || '';
   document.getElementById('basics_job_target').value = current.content?.basics?.job_target || '';
-  document.getElementById('skills').value = (current.content?.skills || []).join(', ');
+  document.getElementById('skills').value = arrayToMultiline(current.content?.skills || []);
+
+  setAvatar(current.content?.basics?.avatar_url || null);
   mountRepeatList('education', current.content?.education || []);
   mountRepeatList('experience', current.content?.experience || []);
   mountRepeatList('projects', current.content?.projects || []);
   mountRepeatList('research', current.content?.research || []);
-  setDownloadLink(current.rendered_pdf_url || null);
-  updatePreview();
+  mountRepeatList('honors', current.content?.honors || []);
+
+  if (current.rendered_pdf_url) {
+    setPreviewUrl(current.rendered_pdf_url);
+  } else {
+    resetPreview();
+  }
+  updatePreviewMessage();
 }
 
 function renderResumeList() {
   elements.resumeCount.textContent = `${state.resumes.length} 份`;
   elements.resumeList.innerHTML = '';
+
   state.resumes.forEach((resume) => {
     const item = document.createElement('button');
     item.type = 'button';
@@ -191,25 +285,59 @@ function renderResumeList() {
 }
 
 function renderTemplateOptions() {
-  elements.templateSelect.innerHTML = state.templates.map((template) => `<option value="${template.id}">${template.name}</option>`).join('');
+  elements.templateSelect.innerHTML = state.templates
+    .map((template) => `<option value="${template.id}">${template.name}</option>`)
+    .join('');
 }
 
-function updatePreview() {
+function updatePreviewMessage() {
   if (!state.currentPdfUrl) {
     setPreviewMessage('生成 PDF 后，这里会直接显示简历预览。');
   }
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
+  const headers = { ...(options.headers || {}) };
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+  headers.Authorization = `Bearer ${state.authToken}`;
+
+  const response = await fetch(path, { ...options, headers });
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new Error('登录已失效，请重新登录');
+  }
   if (!response.ok) {
-    const error = await response.text();
+    const contentType = response.headers.get('content-type') || '';
+    const error = contentType.includes('application/json')
+      ? JSON.stringify(await response.json())
+      : await response.text();
     throw new Error(error || '请求失败');
   }
-  if (response.status === 204) return null;
+  if (response.status === 204) {
+    return null;
+  }
+  return response.json();
+}
+
+async function uploadAvatar(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await fetch('/api/uploads/avatar', {
+    method: 'POST',
+    body: formData,
+    headers: { Authorization: `Bearer ${state.authToken}` },
+  });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    throw new Error('登录已失效，请重新登录');
+  }
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || '头像上传失败');
+  }
   return response.json();
 }
 
@@ -221,6 +349,7 @@ async function loadTemplates() {
 async function loadResumes() {
   const data = await request('/api/resumes');
   state.resumes = data.items;
+
   if (!state.currentResumeId && state.resumes.length > 0) {
     state.currentResumeId = state.resumes[0].id;
     fillForm(state.resumes[0]);
@@ -231,25 +360,22 @@ async function loadResumes() {
   renderResumeList();
 }
 
-async function fetchCurrentResume() {
-  if (!state.currentResumeId) return null;
-  return request(`/api/resumes/${state.currentResumeId}`);
-}
-
 async function saveResume({ silent = false } = {}) {
   const payload = getFormPayload();
   if (!payload.title) {
     showToast('标题不能为空');
     return null;
   }
+
   const path = state.currentResumeId ? `/api/resumes/${state.currentResumeId}` : '/api/resumes';
   const method = state.currentResumeId ? 'PUT' : 'POST';
   const saved = await request(path, { method, body: JSON.stringify(payload) });
   state.currentResumeId = saved.id;
   await loadResumes();
   fillForm(saved);
+
   if (!silent) {
-    showToast('已保存');
+    showToast('简历已保存');
   }
   return saved;
 }
@@ -264,26 +390,17 @@ async function renderPdf() {
     if (!state.currentResumeId) {
       await saveResume({ silent: true });
     }
-    if (!state.currentResumeId) return;
+    if (!state.currentResumeId) {
+      return;
+    }
 
     await saveResume({ silent: true });
     const result = await request(`/api/resumes/${state.currentResumeId}/render`, { method: 'POST' });
-    setDownloadLink(result.pdf_url);
-
-    const latest = await fetchCurrentResume();
-    if (latest) {
-      const index = state.resumes.findIndex((item) => item.id === latest.id);
-      if (index >= 0) {
-        state.resumes[index] = latest;
-      }
-      fillForm(latest);
-      renderResumeList();
-    }
-
+    setPreviewUrl(result.pdf_url);
     showToast('PDF 已生成');
   } catch (error) {
     console.error(error);
-    setDownloadLink(null);
+    resetPreview();
     setPreviewMessage(`生成失败：${String(error.message || error)}`);
     showToast('生成 PDF 失败');
   } finally {
@@ -296,39 +413,92 @@ async function deleteResume() {
     showToast('当前没有可删除的简历');
     return;
   }
+
   await request(`/api/resumes/${state.currentResumeId}`, { method: 'DELETE' });
   state.currentResumeId = null;
-  setDownloadLink(null);
+  setAvatar(null);
+  resetPreview();
   await loadResumes();
   renderResumeList();
-  showToast('已删除');
+  showToast('简历已删除');
+}
+
+async function restoreSession() {
+  if (!state.authToken) {
+    redirectToLogin();
+    return false;
+  }
+
+  try {
+    const user = await request('/api/auth/me');
+    applyCurrentUser(user);
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
 }
 
 function bindEvents() {
-  elements.form.addEventListener('input', updatePreview);
+  elements.form.addEventListener('input', updatePreviewMessage);
+  elements.form.addEventListener('change', updatePreviewMessage);
   elements.saveButton.addEventListener('click', () => saveResume());
   elements.renderButton.addEventListener('click', renderPdf);
   elements.deleteButton.addEventListener('click', deleteResume);
   elements.newResumeButton.addEventListener('click', () => {
     state.currentResumeId = null;
-    setDownloadLink(null);
+    setAvatar(null);
+    resetPreview();
     fillForm(defaultResume());
     renderResumeList();
   });
+  elements.logoutButton.addEventListener('click', () => {
+    clearToken();
+    redirectToLogin();
+  });
+
+  elements.avatarFile.addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      elements.avatarStatus.textContent = '头像上传中...';
+      const result = await uploadAvatar(file);
+      setAvatar(result.url);
+      showToast('头像上传成功');
+    } catch (error) {
+      console.error(error);
+      setAvatar(state.currentAvatarUrl);
+      elements.avatarStatus.textContent = `上传失败：${String(error.message || error)}`;
+      showToast('头像上传失败');
+    } finally {
+      elements.avatarFile.value = '';
+    }
+  });
+
+  elements.avatarClear.addEventListener('click', () => setAvatar(null));
+
   document.querySelectorAll('[data-add-section]').forEach((button) => {
     button.addEventListener('click', () => {
       const section = button.dataset.addSection;
       elements[`${section}List`].appendChild(createRepeatItem(section, {}));
-      updatePreview();
+      updatePreviewMessage();
     });
   });
 }
 
 async function bootstrap() {
   bindEvents();
+  fillForm(defaultResume());
+  updatePreviewMessage();
+  const ok = await restoreSession();
+  if (!ok) {
+    return;
+  }
   await loadTemplates();
   await loadResumes();
-  updatePreview();
 }
 
 bootstrap().catch((error) => {
