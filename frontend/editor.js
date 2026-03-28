@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'resume_auth_token';
+﻿const TOKEN_KEY = 'resume_auth_token';
 
 const state = {
   authToken: localStorage.getItem(TOKEN_KEY),
@@ -27,6 +27,7 @@ const elements = {
   educationList: document.getElementById('education-list'),
   experienceList: document.getElementById('experience-list'),
   projectsList: document.getElementById('projects-list'),
+  portfolioList: document.getElementById('portfolio-list'),
   researchList: document.getElementById('research-list'),
   honorsList: document.getElementById('honors-list'),
   avatarFile: document.getElementById('avatar-file'),
@@ -39,6 +40,188 @@ const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
 const MONTH_PICKER_MIN_YEAR = 1990;
 const MONTH_PICKER_MAX_YEAR = 2035;
 const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const RICH_ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A']);
+
+function plainTextToRichHtml(value, mode = 'paragraphs') {
+  const lines = String(value || '')
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (lines.length === 0) {
+    return '';
+  }
+
+  if (mode === 'list') {
+    return `<ul>${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`;
+  }
+
+  return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join('');
+}
+
+function normalizeIncomingRichValue(value, mode = 'paragraphs') {
+  if (Array.isArray(value)) {
+    return plainTextToRichHtml(value.join('\n'), mode);
+  }
+  if (typeof value === 'string' && /<[^>]+>/.test(value)) {
+    return sanitizeRichHtml(value);
+  }
+  return plainTextToRichHtml(value || '', mode);
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeRichHtml(inputHtml) {
+  const template = document.createElement('template');
+  template.innerHTML = inputHtml || '';
+
+  const walk = (node) => {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (!RICH_ALLOWED_TAGS.has(child.tagName)) {
+          const fragment = document.createDocumentFragment();
+          while (child.firstChild) {
+            fragment.appendChild(child.firstChild);
+          }
+          child.replaceWith(fragment);
+          walk(node);
+          return;
+        }
+
+        if (child.tagName === 'A') {
+          const href = (child.getAttribute('href') || '').trim();
+          Array.from(child.attributes).forEach((attribute) => child.removeAttribute(attribute.name));
+          if (/^(https?:\/\/|mailto:)/i.test(href)) {
+            child.setAttribute('href', href);
+            child.setAttribute('target', '_blank');
+            child.setAttribute('rel', 'noopener');
+          }
+        } else {
+          Array.from(child.attributes).forEach((attribute) => child.removeAttribute(attribute.name));
+        }
+
+        walk(child);
+        return;
+      }
+
+      if (child.nodeType === Node.COMMENT_NODE) {
+        child.remove();
+      }
+    });
+  };
+
+  walk(template.content);
+  return template.innerHTML.trim();
+}
+
+function ensureRichTextEditor(textarea) {
+  if (!textarea || textarea.dataset.richReady === 'true') {
+    return;
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'rich-editor';
+  wrapper.innerHTML = `
+    <div class="rich-toolbar">
+      <button type="button" class="tool-icon" data-command="undo" data-tooltip="撤销" aria-label="撤销">&#8630;</button>
+      <button type="button" class="tool-icon" data-command="redo" data-tooltip="重做" aria-label="重做">&#8631;</button>
+      <span class="tool-divider"></span>
+      <button type="button" class="tool-icon" data-command="bold" data-tooltip="加粗" aria-label="加粗"><strong>B</strong></button>
+      <button type="button" class="tool-icon" data-command="italic" data-tooltip="斜体" aria-label="斜体"><em>I</em></button>
+      <span class="tool-divider"></span>
+      <button type="button" class="tool-icon" data-command="insertUnorderedList" data-tooltip="无序列表" aria-label="无序列表">&#8226;</button>
+      <button type="button" class="tool-icon" data-command="insertOrderedList" data-tooltip="有序列表" aria-label="有序列表">1.</button>
+      <button type="button" class="tool-icon" data-action="outdent" data-tooltip="减少缩进" aria-label="减少缩进">&#8647;</button>
+      <button type="button" class="tool-icon" data-action="indent" data-tooltip="增加缩进" aria-label="增加缩进">&#8649;</button>
+      <button type="button" class="tool-icon" data-action="link" data-tooltip="插入链接" aria-label="插入链接">&#128279;</button>
+      <button type="button" class="tool-icon" data-command="removeFormat" data-tooltip="清除格式" aria-label="清除格式">Tx</button>
+    </div>
+    <div class="rich-surface" contenteditable="true"></div>
+  `;
+
+  textarea.classList.add('rich-editor-input');
+  textarea.hidden = true;
+  textarea.insertAdjacentElement('afterend', wrapper);
+
+  const surface = wrapper.querySelector('.rich-surface');
+  const sync = () => {
+    const sanitized = sanitizeRichHtml(surface.innerHTML);
+    textarea.value = sanitized;
+    if (surface.innerHTML !== sanitized) {
+      surface.innerHTML = sanitized;
+    }
+    updatePreviewMessage();
+  };
+
+  wrapper.querySelectorAll('[data-command]').forEach((button) => {
+    button.addEventListener('click', () => {
+      surface.focus();
+      document.execCommand(button.dataset.command, false);
+      sync();
+    });
+  });
+
+  wrapper.querySelector('[data-action="indent"]')?.addEventListener('click', () => {
+    surface.focus();
+    document.execCommand('indent', false);
+    sync();
+  });
+
+  wrapper.querySelector('[data-action="outdent"]')?.addEventListener('click', () => {
+    surface.focus();
+    document.execCommand('outdent', false);
+    sync();
+  });
+
+  wrapper.querySelector('[data-action="link"]')?.addEventListener('click', () => {
+    surface.focus();
+    const existing = window.getSelection()?.toString().trim();
+    const href = window.prompt('请输入链接地址', existing && /^(https?:\/\/|mailto:)/i.test(existing) ? existing : 'https://');
+    if (!href) {
+      return;
+    }
+    document.execCommand('createLink', false, href);
+    sync();
+  });
+
+  surface.addEventListener('input', sync);
+  surface.addEventListener('blur', sync);
+  textarea.dataset.richReady = 'true';
+}
+
+function setRichTextValue(textarea, value) {
+  if (!textarea) {
+    return;
+  }
+  ensureRichTextEditor(textarea);
+  const html = normalizeIncomingRichValue(value, textarea.dataset.richMode || 'paragraphs');
+  textarea.value = html;
+  const surface = textarea.nextElementSibling?.querySelector('.rich-surface');
+  if (surface) {
+    surface.innerHTML = html;
+  }
+}
+
+function getRichTextValue(textarea) {
+  if (!textarea) {
+    return '';
+  }
+  if (textarea.dataset.richText === 'true') {
+    ensureRichTextEditor(textarea);
+    const surface = textarea.nextElementSibling?.querySelector('.rich-surface');
+    const html = sanitizeRichHtml(surface?.innerHTML || textarea.value || '');
+    textarea.value = html;
+    return html;
+  }
+  return textarea.value.trim();
+}
 
 function formatMonthPickerValue(value) {
   if (!value) {
@@ -240,6 +423,7 @@ function defaultResume() {
       education: [],
       experience: [],
       projects: [],
+      portfolio: [],
       research: [],
       honors: [],
       skills: [],
@@ -404,16 +588,22 @@ function arrayToMultiline(items = []) {
 }
 
 function hydrateDynamicField(input, field, data) {
+  const sourceValue = field === 'description' ? (data.description || data.tech_stack || '') : (data[field] || '');
+  const value = Array.isArray(sourceValue) ? arrayToMultiline(sourceValue) : sourceValue;
+
   if (input.dataset.dateSelect === 'true') {
     input.innerHTML = buildDateOptions(input.dataset.allowPresent === 'true');
+    input.value = value;
     input.closest('label')?.classList.add('date-field-card');
     createMonthPicker(input);
     input.addEventListener('change', () => {
       syncDateRangeState(input.closest('.repeat-item'));
     });
+  } else if (input.dataset.richText === 'true') {
+    setRichTextValue(input, value);
+  } else {
+    input.value = value;
   }
-  const value = Array.isArray(data[field]) ? arrayToMultiline(data[field]) : (data[field] || '');
-  input.value = value;
   input.addEventListener('input', updatePreviewMessage);
   input.addEventListener('change', updatePreviewMessage);
 }
@@ -441,9 +631,14 @@ function collectRepeatList(section) {
   return Array.from(elements[`${section}List`].querySelectorAll('.repeat-item')).map((item) => {
     const result = {};
     item.querySelectorAll('[data-field]').forEach((input) => {
-      result[input.dataset.field] = input.tagName === 'TEXTAREA'
-        ? multilineToArray(input.value)
-        : input.value.trim();
+      if (input.tagName === 'TEXTAREA') {
+        const textareaValue = getRichTextValue(input);
+        result[input.dataset.field] = input.dataset.richMode === 'list'
+          ? textareaValue
+          : textareaValue;
+      } else {
+        result[input.dataset.field] = input.value.trim();
+      }
     });
     return result;
   });
@@ -459,16 +654,17 @@ function getFormPayload() {
         phone: document.getElementById('basics_phone').value.trim(),
         email: document.getElementById('basics_email').value.trim(),
         location: document.getElementById('basics_location').value.trim(),
-        summary: document.getElementById('basics_summary').value.trim(),
+        summary: getRichTextValue(document.getElementById('basics_summary')),
         job_target: document.getElementById('basics_job_target').value.trim(),
         avatar_url: state.currentAvatarUrl,
       },
       education: collectRepeatList('education'),
       experience: collectRepeatList('experience'),
       projects: collectRepeatList('projects'),
+      portfolio: collectRepeatList('portfolio'),
       research: collectRepeatList('research'),
       honors: collectRepeatList('honors'),
-      skills: multilineToArray(document.getElementById('skills').value),
+      skills: getRichTextValue(document.getElementById('skills')),
     },
   };
 }
@@ -481,14 +677,15 @@ function fillForm(resume) {
   document.getElementById('basics_phone').value = current.content?.basics?.phone || '';
   document.getElementById('basics_email').value = current.content?.basics?.email || '';
   document.getElementById('basics_location').value = current.content?.basics?.location || '';
-  document.getElementById('basics_summary').value = current.content?.basics?.summary || '';
+  setRichTextValue(document.getElementById('basics_summary'), current.content?.basics?.summary || '');
   document.getElementById('basics_job_target').value = current.content?.basics?.job_target || '';
-  document.getElementById('skills').value = arrayToMultiline(current.content?.skills || []);
+  setRichTextValue(document.getElementById('skills'), current.content?.skills || []);
 
   setAvatar(current.content?.basics?.avatar_url || null);
   mountRepeatList('education', current.content?.education || []);
   mountRepeatList('experience', current.content?.experience || []);
   mountRepeatList('projects', current.content?.projects || []);
+  mountRepeatList('portfolio', current.content?.portfolio || []);
   mountRepeatList('research', current.content?.research || []);
   mountRepeatList('honors', current.content?.honors || []);
 
@@ -532,6 +729,23 @@ function updatePreviewMessage() {
   if (!state.currentPdfUrl) {
     setPreviewMessage('生成 PDF 后，这里会直接显示简历预览。');
   }
+}
+
+function bindCollapsibleSections() {
+  document.querySelectorAll('.section-card[data-collapsible="true"]').forEach((card) => {
+    const toggle = card.querySelector('.section-toggle');
+    const body = card.querySelector('.section-card-body');
+    if (!toggle || !body || toggle.dataset.collapseBound === 'true') {
+      return;
+    }
+
+    toggle.addEventListener('click', () => {
+      const nextExpanded = toggle.getAttribute('aria-expanded') !== 'true';
+      toggle.setAttribute('aria-expanded', String(nextExpanded));
+      card.classList.toggle('is-collapsed', !nextExpanded);
+    });
+    toggle.dataset.collapseBound = 'true';
+  });
 }
 
 async function request(path, options = {}) {
@@ -639,8 +853,21 @@ async function renderPdf() {
       return;
     }
 
-    await saveResume({ silent: true });
-    const result = await request(`/api/resumes/${state.currentResumeId}/render`, { method: 'POST' });
+    const payload = getFormPayload();
+    if (!payload.title) {
+      showToast('标题不能为空');
+      return;
+    }
+
+    const result = await request(`/api/resumes/${state.currentResumeId}/render`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (result.resume) {
+      state.currentResumeId = result.resume.id;
+      await loadResumes();
+      fillForm(result.resume);
+    }
     setPreviewUrl(result.pdf_url);
     showToast('PDF 已生成');
   } catch (error) {
@@ -685,6 +912,9 @@ async function restoreSession() {
 }
 
 function bindEvents() {
+  document.querySelectorAll('[data-rich-text="true"]').forEach((textarea) => ensureRichTextEditor(textarea));
+  bindCollapsibleSections();
+
   document.addEventListener('click', (event) => {
     if (!event.target.closest('.month-picker')) {
       closeAllMonthPickers();

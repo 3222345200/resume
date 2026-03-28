@@ -18,6 +18,8 @@ def ensure_runtime_schema(engine: Engine) -> None:
         statements.append('ALTER TABLE resumes ADD COLUMN pdf_object_key VARCHAR(500)')
     if "pdf_size" not in existing_columns:
         statements.append('ALTER TABLE resumes ADD COLUMN pdf_size INTEGER')
+    if "pdf_source_hash" not in existing_columns:
+        statements.append('ALTER TABLE resumes ADD COLUMN pdf_source_hash VARCHAR(64)')
     if "pdf_updated_at" not in existing_columns:
         statements.append('ALTER TABLE resumes ADD COLUMN pdf_updated_at TIMESTAMPTZ')
     if "rendered_pdf_url" in existing_columns:

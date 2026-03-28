@@ -56,7 +56,7 @@
 \section{\hspace{0.25em}\makebox[0.75em][c]{\faFlask} \fangsong\textbf{项目经历}}
 \BLOCK{ for item in projects }
 \datedsubsection{\textbf{\VAR{item.name|latex}}}{\textbf{\VAR{item.start_date|latex} \textasciitilde\ \VAR{item.end_date|latex}}}
-\role{项目技术：}{\VAR{item.tech_stack|latex}}
+\role{项目描述：}{\VAR{(item.description or item.tech_stack)|latex}}
 \kaishu \textbf{主要工作：}
 \begin{enumerate}[label=\textbf{\kaishu \arabic*.}, leftmargin=*, nosep]
 \BLOCK{ for line in item.highlights }

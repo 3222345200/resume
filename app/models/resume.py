@@ -28,6 +28,7 @@ class Resume(Base):
     pdf_bucket: Mapped[str | None] = mapped_column(String(120), nullable=True)
     pdf_object_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     pdf_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pdf_source_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     pdf_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -1,6 +1,6 @@
 import re
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 DATE_VALUE_PATTERN = re.compile(r"^\d{4}\.\d{2}$")
@@ -38,6 +38,13 @@ class BasicsSchema(BaseModel):
     job_target: str = ""
     avatar_url: str | None = None
 
+    @field_validator("summary", mode="before")
+    @classmethod
+    def normalize_summary(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
+
 
 class EducationItemSchema(BaseModel):
     school: str = ""
@@ -45,7 +52,14 @@ class EducationItemSchema(BaseModel):
     degree: str = ""
     start_date: str = ""
     end_date: str = ""
-    highlights: list[str] = Field(default_factory=list)
+    highlights: str = ""
+
+    @field_validator("highlights", mode="before")
+    @classmethod
+    def normalize_highlights(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
 
     @model_validator(mode="after")
     def validate_dates(self) -> "EducationItemSchema":
@@ -54,13 +68,29 @@ class EducationItemSchema(BaseModel):
 
 
 class ExperienceItemSchema(BaseModel):
+    entry_type: str = "实习经历"
     company: str = ""
     role: str = ""
     department: str = ""
     location: str = ""
     start_date: str = ""
     end_date: str = ""
-    highlights: list[str] = Field(default_factory=list)
+    highlights: str = ""
+
+    @field_validator("entry_type", mode="before")
+    @classmethod
+    def normalize_entry_type(cls, value: object) -> str:
+        text = str(value or "").strip()
+        if text in {"实习经历", "工作经历"}:
+            return text
+        return "实习经历"
+
+    @field_validator("highlights", mode="before")
+    @classmethod
+    def normalize_highlights(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
 
     @model_validator(mode="after")
     def validate_dates(self) -> "ExperienceItemSchema":
@@ -70,13 +100,33 @@ class ExperienceItemSchema(BaseModel):
 
 class ProjectItemSchema(BaseModel):
     name: str = ""
+    description: str = ""
     tech_stack: str = ""
     start_date: str = ""
     end_date: str = ""
-    highlights: list[str] = Field(default_factory=list)
+    highlights: str = ""
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def normalize_description(cls, value: object) -> str:
+        return str(value or "")
+
+    @field_validator("tech_stack", mode="before")
+    @classmethod
+    def normalize_tech_stack(cls, value: object) -> str:
+        return str(value or "")
+
+    @field_validator("highlights", mode="before")
+    @classmethod
+    def normalize_highlights(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
 
     @model_validator(mode="after")
     def validate_dates(self) -> "ProjectItemSchema":
+        if not self.description and self.tech_stack:
+            self.description = self.tech_stack
         _validate_date_range(self.start_date, self.end_date)
         return self
 
@@ -86,11 +136,38 @@ class ResearchItemSchema(BaseModel):
     label: str = ""
     summary: str = ""
 
+    @field_validator("summary", mode="before")
+    @classmethod
+    def normalize_summary(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
+
 
 class HonorItemSchema(BaseModel):
     title: str = ""
     label: str = ""
     summary: str = ""
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def normalize_summary(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
+
+
+class PortfolioItemSchema(BaseModel):
+    title: str = ""
+    link: str = ""
+    summary: str = ""
+
+    @field_validator("summary", mode="before")
+    @classmethod
+    def normalize_summary(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
 
 
 class ResumeContentSchema(BaseModel):
@@ -98,9 +175,17 @@ class ResumeContentSchema(BaseModel):
     education: list[EducationItemSchema] = Field(default_factory=list)
     experience: list[ExperienceItemSchema] = Field(default_factory=list)
     projects: list[ProjectItemSchema] = Field(default_factory=list)
+    portfolio: list[PortfolioItemSchema] = Field(default_factory=list)
     research: list[ResearchItemSchema] = Field(default_factory=list)
     honors: list[HonorItemSchema] = Field(default_factory=list)
-    skills: list[str] = Field(default_factory=list)
+    skills: str = ""
+
+    @field_validator("skills", mode="before")
+    @classmethod
+    def normalize_skills(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
 
 
 class ResumeBaseSchema(BaseModel):
@@ -142,6 +227,7 @@ class UploadResponseSchema(BaseModel):
 class RenderResponseSchema(BaseModel):
     message: str
     pdf_url: str
+    resume: ResumeReadSchema | None = None
 
 
 class ResumeListResponseSchema(BaseModel):

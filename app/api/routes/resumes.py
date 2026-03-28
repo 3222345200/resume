@@ -1,3 +1,5 @@
+import hashlib
+import json
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,11 +17,21 @@ from app.schemas.resume import (
     ResumeReadSchema,
     ResumeUpdateSchema,
 )
-from app.services.latex import render_resume_pdf
+from app.services.html_pdf import render_resume_pdf
 from app.services.minio_storage import delete_object, get_presigned_pdf_url, upload_user_pdf
 from app.services.templates import normalize_template_id
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
+
+
+def _resume_render_hash(resume: Resume) -> str:
+    payload = {
+        "title": resume.title,
+        "template_id": normalize_template_id(resume.template_id),
+        "content": resume.content or {},
+    }
+    serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def _resume_pdf_url(resume: Resume) -> str | None:
@@ -116,10 +128,27 @@ def update_resume(
 @router.post("/{resume_id}/render", response_model=RenderResponseSchema)
 def render_resume(
     resume_id: str,
+    payload: ResumeUpdateSchema | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> RenderResponseSchema:
     resume = _get_resume_or_404(resume_id, db, current_user)
+    if payload is not None:
+        resume.title = payload.title
+        resume.template_id = normalize_template_id(payload.template_id)
+        resume.content = payload.content.model_dump()
+        db.add(resume)
+        db.commit()
+        db.refresh(resume)
+
+    current_hash = _resume_render_hash(resume)
+    cached_pdf_url = _resume_pdf_url(resume)
+    if cached_pdf_url and resume.pdf_source_hash == current_hash:
+        return RenderResponseSchema(
+            message="PDF ready",
+            pdf_url=cached_pdf_url,
+            resume=_to_read_schema(resume),
+        )
     try:
         pdf_bytes = render_resume_pdf(resume)
         storage_info = upload_user_pdf(current_user.id, resume.id, pdf_bytes)
@@ -129,6 +158,7 @@ def render_resume(
     resume.pdf_bucket = str(storage_info["bucket"])
     resume.pdf_object_key = str(storage_info["object_key"])
     resume.pdf_size = int(storage_info["size"])
+    resume.pdf_source_hash = current_hash
     resume.pdf_updated_at = datetime.now(timezone.utc)
     db.add(resume)
     db.commit()
@@ -137,7 +167,11 @@ def render_resume(
     pdf_url = _resume_pdf_url(resume)
     if not pdf_url:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="PDF upload failed")
-    return RenderResponseSchema(message="PDF generated", pdf_url=pdf_url)
+    return RenderResponseSchema(
+        message="PDF generated",
+        pdf_url=pdf_url,
+        resume=_to_read_schema(resume),
+    )
 
 
 @router.get("/{resume_id}/pdf", response_model=RenderResponseSchema)

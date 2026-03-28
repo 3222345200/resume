@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -56,10 +56,14 @@
             <select id="template_id" name="template_id"></select>
           </label>
 
-          <div class="full-width section-card">
+          <div class="full-width section-card" data-collapsible="true">
             <div class="section-title-row">
-              <h3>基础信息</h3>
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">基础信息</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
             </div>
+            <div class="section-card-body">
             <div class="form-grid nested-grid">
               <div class="full-width avatar-row">
                 <div class="avatar-preview-wrap">
@@ -86,59 +90,103 @@
               <label>求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
               <label class="full-width">
                 个人简介
-                <textarea id="basics_summary" rows="4" placeholder="一句话介绍自己，突出方向和优势"></textarea>
+                <textarea id="basics_summary" rows="4" data-rich-text="true" data-rich-mode="paragraphs" placeholder="一句话介绍自己，突出方向和优势"></textarea>
+              </label>
+            </div>
+            </div>
+          </div>
+
+          <div class="full-width section-card" data-collapsible="true">
+            <div class="section-title-row">
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">教育经历</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="small-button" data-add-section="education">新增教育</button>
+            </div>
+            <div class="section-card-body">
+              <div id="education-list" class="repeat-list"></div>
+            </div>
+          </div>
+
+          <div class="full-width section-card" data-collapsible="true">
+            <div class="section-title-row">
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">专业技能</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="section-card-body">
+              <label class="full-width">
+                技能关键词
+                <textarea id="skills" rows="5" data-rich-text="true" data-rich-mode="list" placeholder="支持列表、加粗、斜体和链接"></textarea>
               </label>
             </div>
           </div>
 
-          <div class="full-width section-card">
+          <div class="full-width section-card" data-collapsible="true">
             <div class="section-title-row">
-              <h3>教育经历</h3>
-              <button type="button" class="small-button" data-add-section="education">新增教育</button>
-            </div>
-            <div id="education-list" class="repeat-list"></div>
-          </div>
-
-          <div class="full-width section-card">
-            <div class="section-title-row">
-              <h3>专业技能</h3>
-            </div>
-            <label class="full-width">
-              技能关键词
-              <textarea id="skills" rows="5" placeholder="每行一个技能，例如：&#10;Java&#10;Spring Boot&#10;PostgreSQL"></textarea>
-            </label>
-          </div>
-
-          <div class="full-width section-card">
-            <div class="section-title-row">
-              <h3>实习经历</h3>
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">工作 / 实习经历</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
               <button type="button" class="small-button" data-add-section="experience">新增经历</button>
             </div>
-            <div id="experience-list" class="repeat-list"></div>
+            <div class="section-card-body">
+              <div id="experience-list" class="repeat-list"></div>
+            </div>
           </div>
 
-          <div class="full-width section-card">
+          <div class="full-width section-card" data-collapsible="true">
             <div class="section-title-row">
-              <h3>项目经历</h3>
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">项目经历</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
               <button type="button" class="small-button" data-add-section="projects">新增项目</button>
             </div>
-            <div id="projects-list" class="repeat-list"></div>
+            <div class="section-card-body">
+              <div id="projects-list" class="repeat-list"></div>
+            </div>
           </div>
 
-          <div class="full-width section-card">
+          <div class="full-width section-card" data-collapsible="true">
             <div class="section-title-row">
-              <h3>科研经历</h3>
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">作品集</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
+              <button type="button" class="small-button" data-add-section="portfolio">新增作品</button>
+            </div>
+            <div class="section-card-body">
+              <div id="portfolio-list" class="repeat-list"></div>
+            </div>
+          </div>
+
+          <div class="full-width section-card" data-collapsible="true">
+            <div class="section-title-row">
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">科研经历</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
               <button type="button" class="small-button" data-add-section="research">新增科研</button>
             </div>
-            <div id="research-list" class="repeat-list"></div>
+            <div class="section-card-body">
+              <div id="research-list" class="repeat-list"></div>
+            </div>
           </div>
 
-          <div class="full-width section-card">
+          <div class="full-width section-card" data-collapsible="true">
             <div class="section-title-row">
-              <h3>荣誉奖项</h3>
+              <button type="button" class="section-toggle" aria-expanded="true">
+                <span class="section-toggle-title">荣誉奖项</span>
+                <span class="section-toggle-chevron" aria-hidden="true"></span>
+              </button>
               <button type="button" class="small-button" data-add-section="honors">新增奖项</button>
             </div>
-            <div id="honors-list" class="repeat-list"></div>
+            <div class="section-card-body">
+              <div id="honors-list" class="repeat-list"></div>
+            </div>
           </div>
         </form>
       </section>
@@ -173,7 +221,7 @@
         <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
         <label class="full-width">
           亮点
-          <textarea rows="3" data-field="highlights" placeholder="每行一条"></textarea>
+          <textarea rows="3" data-field="highlights" data-rich-text="true" data-rich-mode="list" placeholder="支持加粗、斜体、列表和链接"></textarea>
         </label>
       </div>
     </div>
@@ -182,10 +230,17 @@
   <template id="experience-template">
     <div class="repeat-item" data-section="experience">
       <div class="section-title-row compact">
-        <h4>实习条目</h4>
+        <h4>经历条目</h4>
         <button type="button" class="text-button remove-btn">删除</button>
       </div>
       <div class="form-grid nested-grid">
+        <label>
+          经历类型
+          <select data-field="entry_type">
+            <option value="实习经历">实习经历</option>
+            <option value="工作经历">工作经历</option>
+          </select>
+        </label>
         <label>公司<input data-field="company" /></label>
         <label>地点<input data-field="location" placeholder="北京" /></label>
         <label>部门<input data-field="department" placeholder="技术研发部" /></label>
@@ -194,7 +249,7 @@
         <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
         <label class="full-width">
           亮点
-          <textarea rows="5" data-field="highlights" placeholder="每行一条"></textarea>
+          <textarea rows="5" data-field="highlights" data-rich-text="true" data-rich-mode="list" placeholder="支持加粗、斜体、列表和链接"></textarea>
         </label>
       </div>
     </div>
@@ -208,12 +263,12 @@
       </div>
       <div class="form-grid nested-grid">
         <label>项目名<input data-field="name" /></label>
-        <label>技术栈<input data-field="tech_stack" placeholder="FastAPI + PostgreSQL + Redis" /></label>
+        <label>项目描述<input data-field="description" placeholder="例如：企业级权限后台与数据分析平台" /></label>
         <label>开始时间<select data-field="start_date" data-date-select="true"></select></label>
         <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
         <label class="full-width">
           主要工作
-          <textarea rows="5" data-field="highlights" placeholder="每行一条"></textarea>
+          <textarea rows="5" data-field="highlights" data-rich-text="true" data-rich-mode="list" placeholder="支持加粗、斜体、列表和链接"></textarea>
         </label>
       </div>
     </div>
@@ -229,6 +284,23 @@
         <label class="full-width">标题<input data-field="title" /></label>
         <label>标签<input data-field="label" placeholder="JSA 在投（二作）" /></label>
         <label class="full-width">简介<textarea rows="4" data-field="summary"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <template id="portfolio-template">
+    <div class="repeat-item" data-section="portfolio">
+      <div class="section-title-row compact">
+        <h4>作品条目</h4>
+        <button type="button" class="text-button remove-btn">删除</button>
+      </div>
+      <div class="form-grid nested-grid">
+        <label class="full-width">标题<input data-field="title" /></label>
+        <label class="full-width">链接<input data-field="link" placeholder="https://github.com/yourname/project" /></label>
+        <label class="full-width">
+          简介
+          <textarea rows="4" data-field="summary" data-rich-text="true" data-rich-mode="paragraphs" placeholder="可以填写作品亮点、职责和链接说明"></textarea>
+        </label>
       </div>
     </div>
   </template>

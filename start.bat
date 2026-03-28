@@ -32,6 +32,6 @@ if errorlevel 1 (
   timeout /t 2 >nul
 )
 
-"%VENV_PYTHON%" -m uvicorn app.main:app --app-dir "%PROJECT_ROOT%" --host 127.0.0.1 --port 8000 --reload
+"%VENV_PYTHON%" -m uvicorn app.main:app --app-dir "%PROJECT_ROOT%" --host 127.0.0.1 --port 8000 --reload --reload-dir "%PROJECT_ROOT%\app"
 
 pause
