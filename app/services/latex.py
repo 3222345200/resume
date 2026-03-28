@@ -10,9 +10,10 @@ from jinja2 import Environment, FileSystemLoader
 
 from app.models.resume import Resume
 
-TEMPLATE_ROOT = Path('app/latex_templates/neu_resume')
+APP_ROOT = Path(__file__).resolve().parent.parent
+TEMPLATE_ROOT = APP_ROOT / 'latex_templates' / 'pro_resume'
 TEMPLATE_FILE = 'resume_template.tex.j2'
-DEFAULT_AVATAR = 'cwg.jpg'
+DEFAULT_AVATAR = 'default-avatar.jpg'
 
 
 def latex_escape(value: object) -> str:
@@ -140,20 +141,15 @@ def render_resume_pdf(resume: Resume) -> bytes:
             log_content = ''
             if log_path.exists():
                 log_content = log_path.read_text(encoding='utf-8', errors='ignore')[-4000:]
-            raise RuntimeError(log_content or result.stderr or 'LaTeX compilation failed')
+            error_text = log_content or result.stderr or result.stdout or 'LaTeX compilation failed'
+            if 'fresh TeX installation' in error_text or 'finish the setup before proceeding' in error_text:
+                raise RuntimeError(
+                    'MiKTeX 尚未完成初始化，请先打开 MiKTeX Console 完成首次设置，'
+                    '或在命令行先手动执行一次 xelatex 完成安装。'
+                )
+            raise RuntimeError(error_text)
 
         pdf_path = output_dir / 'resume.pdf'
         if not pdf_path.exists():
             raise RuntimeError('PDF generation failed')
         return pdf_path.read_bytes()
-
-
-def get_user_pdf_path(user_id: str) -> Path:
-    USER_PDF_ROOT.mkdir(parents=True, exist_ok=True)
-    return USER_PDF_ROOT / f'{user_id}.pdf'
-
-
-def save_user_pdf(user_id: str, pdf_bytes: bytes) -> Path:
-    pdf_path = get_user_pdf_path(user_id)
-    pdf_path.write_bytes(pdf_bytes)
-    return pdf_path

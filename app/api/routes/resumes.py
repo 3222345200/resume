@@ -17,6 +17,7 @@ from app.schemas.resume import (
 )
 from app.services.latex import render_resume_pdf
 from app.services.minio_storage import delete_object, get_presigned_pdf_url, upload_user_pdf
+from app.services.templates import normalize_template_id
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -35,10 +36,7 @@ def _to_read_schema(resume: Resume) -> ResumeReadSchema:
     return ResumeReadSchema(
         id=resume.id,
         title=resume.title,
-        template_id=resume.template_id,
-        slug=resume.slug,
-        language=resume.language,
-        status=resume.status,
+        template_id=normalize_template_id(resume.template_id),
         content=resume.content,
         rendered_pdf_url=_resume_pdf_url(resume),
         created_at=resume.created_at.isoformat(),
@@ -89,10 +87,7 @@ def create_resume(
     resume = Resume(
         user_id=current_user.id,
         title=payload.title,
-        template_id=payload.template_id,
-        slug=payload.slug,
-        language=payload.language,
-        status=payload.status,
+        template_id=normalize_template_id(payload.template_id),
         content=payload.content.model_dump(),
     )
     db.add(resume)
@@ -110,10 +105,7 @@ def update_resume(
 ) -> ResumeReadSchema:
     resume = _get_resume_or_404(resume_id, db, current_user)
     resume.title = payload.title
-    resume.template_id = payload.template_id
-    resume.slug = payload.slug
-    resume.language = payload.language
-    resume.status = payload.status
+    resume.template_id = normalize_template_id(payload.template_id)
     resume.content = payload.content.model_dump()
     db.add(resume)
     db.commit()

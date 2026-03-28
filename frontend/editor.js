@@ -35,16 +35,197 @@ const elements = {
   avatarClear: document.getElementById('avatar-clear'),
 };
 
-const DEFAULT_AVATAR_PLACEHOLDER =
-  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="240" viewBox="0 0 200 240"><rect width="200" height="240" rx="24" fill="%23edf2ff"/><circle cx="100" cy="80" r="36" fill="%2390a4d4"/><rect x="42" y="132" width="116" height="58" rx="28" fill="%2390a4d4"/></svg>';
+const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
+const MONTH_PICKER_MIN_YEAR = 1990;
+const MONTH_PICKER_MAX_YEAR = 2035;
+const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+function formatMonthPickerValue(value) {
+  if (!value) {
+    return '请选择时间';
+  }
+  if (value === '至今') {
+    return '至今';
+  }
+
+  const parsed = parseDateValue(value);
+  if (!parsed) {
+    return value;
+  }
+  return `${parsed.year}年${parsed.month}月`;
+}
+
+function closeAllMonthPickers(exceptInput = null) {
+  document.querySelectorAll('.month-picker.is-open').forEach((picker) => {
+    const input = picker.previousElementSibling;
+    if (input === exceptInput) {
+      return;
+    }
+    picker.classList.remove('is-open');
+    picker.querySelector('.month-picker-trigger')?.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function setMonthPickerYear(input, year) {
+  const picker = input.nextElementSibling;
+  if (!picker) {
+    return;
+  }
+  const nextYear = Math.min(MONTH_PICKER_MAX_YEAR, Math.max(MONTH_PICKER_MIN_YEAR, year));
+  picker.dataset.viewYear = String(nextYear);
+  picker.querySelector('.month-picker-title').textContent = `${nextYear}年`;
+  picker.querySelector('.month-picker-prev').disabled = nextYear <= MONTH_PICKER_MIN_YEAR;
+  picker.querySelector('.month-picker-next').disabled = nextYear >= MONTH_PICKER_MAX_YEAR;
+}
+
+function syncMonthPickerSelection(input) {
+  const picker = input.nextElementSibling;
+  if (!picker) {
+    return;
+  }
+
+  const trigger = picker.querySelector('.month-picker-trigger');
+  trigger.querySelector('.month-picker-value').textContent = formatMonthPickerValue(input.value);
+  trigger.classList.toggle('is-placeholder', !input.value);
+
+  const parsed = parseDateValue(input.value);
+  if (parsed && input.value !== '至今') {
+    setMonthPickerYear(input, parsed.year);
+  }
+
+  picker.querySelectorAll('.month-picker-month').forEach((button) => {
+    const buttonYear = Number(button.dataset.year);
+    const buttonMonth = Number(button.dataset.month);
+    const isSelected = parsed && input.value !== '至今' && parsed.year === buttonYear && parsed.month === buttonMonth;
+    button.classList.toggle('is-selected', Boolean(isSelected));
+  });
+
+  const presentButton = picker.querySelector('.month-picker-present');
+  if (presentButton) {
+    presentButton.classList.toggle('is-selected', input.value === '至今');
+  }
+}
+
+function rebuildMonthPickerGrid(input) {
+  const picker = input.nextElementSibling;
+  if (!picker) {
+    return;
+  }
+
+  const year = Number(picker.dataset.viewYear || MONTH_PICKER_MAX_YEAR);
+  const grid = picker.querySelector('.month-picker-grid');
+  grid.innerHTML = '';
+
+  MONTH_LABELS.forEach((label, index) => {
+    const month = index + 1;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'month-picker-month';
+    button.dataset.year = String(year);
+    button.dataset.month = String(month);
+    button.textContent = label;
+    button.addEventListener('click', () => {
+      input.value = `${year}.${String(month).padStart(2, '0')}`;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      syncMonthPickerSelection(input);
+      closeAllMonthPickers();
+    });
+    grid.appendChild(button);
+  });
+
+  syncMonthPickerSelection(input);
+}
+
+function toggleMonthPicker(input) {
+  const picker = input.nextElementSibling;
+  if (!picker) {
+    return;
+  }
+
+  const willOpen = !picker.classList.contains('is-open');
+  closeAllMonthPickers(willOpen ? input : null);
+  picker.classList.toggle('is-open', willOpen);
+  picker.querySelector('.month-picker-trigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  if (willOpen) {
+    syncMonthPickerSelection(input);
+  }
+}
+
+function createMonthPicker(input) {
+  if (input.nextElementSibling?.classList.contains('month-picker')) {
+    return;
+  }
+
+  const allowPresent = input.dataset.allowPresent === 'true';
+  const picker = document.createElement('div');
+  picker.className = 'month-picker';
+  picker.dataset.viewYear = String(parseDateValue(input.value)?.year || new Date().getFullYear());
+  picker.innerHTML = `
+    <button type="button" class="month-picker-trigger is-placeholder" aria-expanded="false">
+      <span class="month-picker-value">请选择时间</span>
+      <span class="month-picker-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="month-picker-popover">
+      <div class="month-picker-header">
+        <button type="button" class="month-picker-nav month-picker-prev" aria-label="上一年"></button>
+        <div class="month-picker-title"></div>
+        <button type="button" class="month-picker-nav month-picker-next" aria-label="下一年"></button>
+      </div>
+      ${allowPresent ? '<button type="button" class="month-picker-present">至今</button>' : ''}
+      <div class="month-picker-weekdays">
+        <span>一</span>
+        <span>二</span>
+        <span>三</span>
+        <span>四</span>
+        <span>五</span>
+        <span>六</span>
+        <span>日</span>
+      </div>
+      <div class="month-picker-grid"></div>
+    </div>
+  `;
+
+  input.classList.add('month-picker-native');
+  input.tabIndex = -1;
+  input.setAttribute('aria-hidden', 'true');
+  input.insertAdjacentElement('afterend', picker);
+
+  picker.querySelector('.month-picker-trigger').addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleMonthPicker(input);
+  });
+
+  picker.querySelector('.month-picker-prev').addEventListener('click', () => {
+    setMonthPickerYear(input, Number(picker.dataset.viewYear) - 1);
+    rebuildMonthPickerGrid(input);
+  });
+
+  picker.querySelector('.month-picker-next').addEventListener('click', () => {
+    setMonthPickerYear(input, Number(picker.dataset.viewYear) + 1);
+    rebuildMonthPickerGrid(input);
+  });
+
+  picker.querySelector('.month-picker-present')?.addEventListener('click', () => {
+    input.value = '至今';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    syncMonthPickerSelection(input);
+    closeAllMonthPickers();
+  });
+
+  input.addEventListener('change', () => {
+    syncMonthPickerSelection(input);
+  });
+
+  setMonthPickerYear(input, parseDateValue(input.value)?.year || new Date().getFullYear());
+  rebuildMonthPickerGrid(input);
+}
 
 function defaultResume() {
   return {
     title: '新建简历',
-    template_id: 'neu_resume',
-    slug: '',
-    language: 'zh-CN',
-    status: 'draft',
+    template_id: 'pro_resume',
     rendered_pdf_url: null,
     content: {
       basics: {
@@ -153,6 +334,64 @@ function buildDateOptions(allowPresent = false) {
   return options.join('');
 }
 
+function parseDateValue(value) {
+  if (!value) {
+    return null;
+  }
+  if (value === '至今') {
+    return { year: 9999, month: 12 };
+  }
+
+  const match = /^(\d{4})\.(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+  };
+}
+
+function validateDateRange(startValue, endValue) {
+  const start = parseDateValue(startValue);
+  const end = parseDateValue(endValue);
+  if (!start || !end) {
+    return true;
+  }
+  return start.year < end.year || (start.year === end.year && start.month <= end.month);
+}
+
+function syncDateRangeState(container) {
+  const startInput = container?.querySelector('[data-field="start_date"]');
+  const endInput = container?.querySelector('[data-field="end_date"]');
+  if (!startInput || !endInput) {
+    return true;
+  }
+
+  const isValid = validateDateRange(startInput.value, endInput.value);
+  startInput.classList.toggle('date-input-error', !isValid);
+  endInput.classList.toggle('date-input-error', !isValid);
+  startInput.closest('label')?.classList.toggle('date-field-error', !isValid);
+  endInput.closest('label')?.classList.toggle('date-field-error', !isValid);
+  startInput.nextElementSibling?.querySelector('.month-picker-trigger')?.classList.toggle('date-input-error', !isValid);
+  endInput.nextElementSibling?.querySelector('.month-picker-trigger')?.classList.toggle('date-input-error', !isValid);
+  return isValid;
+}
+
+function validateSectionDateRanges() {
+  const items = Array.from(document.querySelectorAll('.repeat-item'));
+  for (const item of items) {
+    const isValid = syncDateRangeState(item);
+    if (!isValid) {
+      item.querySelector('[data-field="end_date"]')?.nextElementSibling?.querySelector('.month-picker-trigger')?.focus();
+      showToast('开始日期不能晚于结束日期');
+      return false;
+    }
+  }
+  return true;
+}
+
 function multilineToArray(value) {
   return value
     .split('\n')
@@ -167,6 +406,11 @@ function arrayToMultiline(items = []) {
 function hydrateDynamicField(input, field, data) {
   if (input.dataset.dateSelect === 'true') {
     input.innerHTML = buildDateOptions(input.dataset.allowPresent === 'true');
+    input.closest('label')?.classList.add('date-field-card');
+    createMonthPicker(input);
+    input.addEventListener('change', () => {
+      syncDateRangeState(input.closest('.repeat-item'));
+    });
   }
   const value = Array.isArray(data[field]) ? arrayToMultiline(data[field]) : (data[field] || '');
   input.value = value;
@@ -209,9 +453,6 @@ function getFormPayload() {
   return {
     title: document.getElementById('title').value.trim(),
     template_id: document.getElementById('template_id').value,
-    slug: document.getElementById('slug').value.trim() || null,
-    language: document.getElementById('language').value.trim() || 'zh-CN',
-    status: document.getElementById('status').value,
     content: {
       basics: {
         name: document.getElementById('basics_name').value.trim(),
@@ -236,9 +477,6 @@ function fillForm(resume) {
   const current = resume || defaultResume();
   document.getElementById('title').value = current.title || '';
   document.getElementById('template_id').value = current.template_id || state.templates[0]?.id || '';
-  document.getElementById('slug').value = current.slug || '';
-  document.getElementById('language').value = current.language || 'zh-CN';
-  document.getElementById('status').value = current.status || 'draft';
   document.getElementById('basics_name').value = current.content?.basics?.name || '';
   document.getElementById('basics_phone').value = current.content?.basics?.phone || '';
   document.getElementById('basics_email').value = current.content?.basics?.email || '';
@@ -366,6 +604,9 @@ async function saveResume({ silent = false } = {}) {
     showToast('标题不能为空');
     return null;
   }
+  if (!validateSectionDateRanges()) {
+    return null;
+  }
 
   const path = state.currentResumeId ? `/api/resumes/${state.currentResumeId}` : '/api/resumes';
   const method = state.currentResumeId ? 'PUT' : 'POST';
@@ -386,6 +627,10 @@ async function renderPdf() {
     setPreviewMessage('正在生成 PDF，请稍等...');
     elements.previewEmpty.classList.remove('hidden-preview');
     elements.pdfPreview.classList.add('hidden-preview');
+
+    if (!validateSectionDateRanges()) {
+      return;
+    }
 
     if (!state.currentResumeId) {
       await saveResume({ silent: true });
@@ -440,6 +685,18 @@ async function restoreSession() {
 }
 
 function bindEvents() {
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.month-picker')) {
+      closeAllMonthPickers();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeAllMonthPickers();
+    }
+  });
+
   elements.form.addEventListener('input', updatePreviewMessage);
   elements.form.addEventListener('change', updatePreviewMessage);
   elements.saveButton.addEventListener('click', () => saveResume());

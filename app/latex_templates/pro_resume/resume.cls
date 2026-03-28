@@ -10,6 +10,7 @@
 %-------------------------------------------------------------------------------
 \RequirePackage{url}
 \urlstyle{tt}
+\RequirePackage[hidelinks]{hyperref}
 %-------------------------------------------------------------------------------
 \RequirePackage{fontawesome}
 \RequirePackage{fontspec}
@@ -77,10 +78,10 @@
 \newcommand{\basicInfo}[1]{\centerline{\ttfamily\large{#1}}\vspace{1.25ex}}
 \newcommand{\role}[2]{
     \vspace{-0.2em}
-        {
+        {%
         \par 
-        \kaishu\textbf{#1} ~ \textit{#2}}
-        \vspace{-0.2em
+        \kaishu\textbf{#1} ~ \textit{#2}%
         }
+        \vspace{-0.2em}
     }
 %-------------------------------------------------------------------------------

@@ -14,8 +14,8 @@
     <aside class="sidebar">
       <div>
         <p class="eyebrow">Resume Studio</p>
-        <h1>东北大学 LaTeX 简历模板</h1>
-        <p class="sidebar-copy">表单内容会写入你选择的 LaTeX 模板，并在生成时导出 PDF。</p>
+        <h1>专业简历模板</h1>
+        <p class="sidebar-copy">表单内容会写入当前模板，并在生成时导出 PDF。</p>
         <p id="current-user" class="meta-text">未登录</p>
       </div>
 
@@ -55,42 +55,18 @@
             模板
             <select id="template_id" name="template_id"></select>
           </label>
-          <label>
-            语言
-            <input id="language" name="language" value="zh-CN" />
-          </label>
-          <label>
-            状态
-            <select id="status" name="status">
-              <option value="draft">draft</option>
-              <option value="published">published</option>
-            </select>
-          </label>
-          <label class="full-width">
-            Slug
-            <input id="slug" name="slug" placeholder="resume-zhangsan" />
-          </label>
 
           <div class="full-width section-card">
             <div class="section-title-row">
               <h3>基础信息</h3>
             </div>
             <div class="form-grid nested-grid">
-              <label>姓名<input id="basics_name" /></label>
-              <label>电话<input id="basics_phone" /></label>
-              <label>邮箱<input id="basics_email" /></label>
-              <label>城市<input id="basics_location" /></label>
-              <label>求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
-              <label class="full-width">
-                个人简介
-                <textarea id="basics_summary" rows="4" placeholder="一句话介绍自己，突出方向和优势"></textarea>
-              </label>
               <div class="full-width avatar-row">
                 <div class="avatar-preview-wrap">
                   <img
                     id="avatar-preview"
                     class="avatar-preview"
-                    src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='240' viewBox='0 0 200 240'%3E%3Crect width='200' height='240' rx='24' fill='%23edf2ff'/%3E%3Ccircle cx='100' cy='80' r='36' fill='%2390a4d4'/%3E%3Crect x='42' y='132' width='116' height='58' rx='28' fill='%2390a4d4'/%3E%3C/svg%3E"
+                    src="/assets/default-avatar.jpg"
                     alt="头像预览"
                   />
                 </div>
@@ -103,6 +79,15 @@
                   <div id="avatar-status" class="avatar-status">未上传头像，将使用默认占位图。</div>
                 </div>
               </div>
+              <label>姓名<input id="basics_name" /></label>
+              <label>电话<input id="basics_phone" /></label>
+              <label>邮箱<input id="basics_email" /></label>
+              <label>城市<input id="basics_location" /></label>
+              <label>求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
+              <label class="full-width">
+                个人简介
+                <textarea id="basics_summary" rows="4" placeholder="一句话介绍自己，突出方向和优势"></textarea>
+              </label>
             </div>
           </div>
 
@@ -159,12 +144,6 @@
       </section>
 
       <section class="preview-panel card">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">Preview</p>
-            <h2>PDF 预览</h2>
-          </div>
-        </div>
         <div id="preview-empty" class="preview-empty">生成 PDF 后，这里会直接显示简历预览。</div>
         <iframe id="pdf-preview" class="pdf-preview hidden-preview" title="PDF Preview"></iframe>
       </section>

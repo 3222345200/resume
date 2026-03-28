@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -24,11 +24,7 @@ class Resume(Base):
     )
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     template_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    slug: Mapped[str | None] = mapped_column(String(120), unique=True)
-    language: Mapped[str] = mapped_column(String(20), default="zh-CN", nullable=False)
-    status: Mapped[str] = mapped_column(String(30), default="draft", nullable=False, index=True)
     content: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-    rendered_pdf_url: Mapped[str | None] = mapped_column(Text)
     pdf_bucket: Mapped[str | None] = mapped_column(String(120), nullable=True)
     pdf_object_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     pdf_size: Mapped[int | None] = mapped_column(Integer, nullable=True)

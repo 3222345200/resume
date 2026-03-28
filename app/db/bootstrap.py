@@ -20,9 +20,16 @@ def ensure_runtime_schema(engine: Engine) -> None:
         statements.append('ALTER TABLE resumes ADD COLUMN pdf_size INTEGER')
     if "pdf_updated_at" not in existing_columns:
         statements.append('ALTER TABLE resumes ADD COLUMN pdf_updated_at TIMESTAMPTZ')
+    if "rendered_pdf_url" in existing_columns:
+        statements.append('ALTER TABLE resumes DROP COLUMN IF EXISTS rendered_pdf_url CASCADE')
+    if "slug" in existing_columns:
+        statements.append('ALTER TABLE resumes DROP COLUMN IF EXISTS slug CASCADE')
+    if "language" in existing_columns:
+        statements.append('ALTER TABLE resumes DROP COLUMN IF EXISTS language CASCADE')
+    if "status" in existing_columns:
+        statements.append('ALTER TABLE resumes DROP COLUMN IF EXISTS status CASCADE')
 
     if statements:
         with engine.begin() as connection:
             for statement in statements:
                 connection.execute(text(statement))
-

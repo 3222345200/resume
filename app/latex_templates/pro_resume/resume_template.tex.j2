@@ -11,11 +11,8 @@
 
 \begin{document}
 \pagenumbering{gobble}
-\begin{figure}[h]
-    \flushright
-    \includegraphics[height=3.4cm,width=2.6cm]{\VAR{avatar_path|latex}}
-\end{figure}
-\vspace{-0.175\linewidth}
+\noindent\makebox[\textwidth][r]{\includegraphics[height=3.4cm,width=2.6cm]{\VAR{avatar_path|latex}}}
+\vspace{-2.9cm}
 
 \makebox[\textwidth]{\LARGE\fangsong\textbf{\VAR{basics.name|latex}}}
 
@@ -77,13 +74,17 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
-
 \BLOCK{ if honors }
 \section{\hspace{0.25em}\makebox[0.75em][c]{\faTrophy} \fangsong\textbf{荣誉奖项}}
 \BLOCK{ for item in honors }
 \datedsubsection{\kaishu \VAR{item.title|latex}}{\textbf{\VAR{item.label|latex}}}
 \kaishu \VAR{item.summary|latex}
 \BLOCK{ endfor }
+\BLOCK{ endif }
+
+\BLOCK{ if basics.summary }
+\section{\hspace{0.25em}\makebox[0.75em][c]{\faUser} \fangsong\textbf{个人简介}}
+\kaishu \VAR{basics.summary|latex}
 \BLOCK{ endif }
 
 \end{document}

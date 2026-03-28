@@ -394,6 +394,7 @@ a { text-decoration: none; }
 }
 .main-content { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(580px, 0.86fr); gap: 20px; align-items: start; }
 .card { padding: 24px; }
+.editor-panel { position: relative; z-index: 5; overflow: visible; }
 .preview-panel { position: sticky; top: 20px; }
 
 .eyebrow { margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; color: var(--muted); font-family: 'Outfit', sans-serif; }
@@ -422,6 +423,229 @@ label { display: flex; flex-direction: column; gap: 8px; color: var(--muted); fo
 input, select, textarea { border: 1px solid var(--line); border-radius: 14px; padding: 13px 14px; background: var(--panel-strong); color: var(--text); }
 input:focus, select:focus, textarea:focus { outline: 2px solid rgba(21, 94, 239, 0.18); border-color: rgba(21, 94, 239, 0.4); }
 
+.date-field-card {
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.date-field-card:focus-within {
+  border: 0;
+  box-shadow: none;
+}
+
+.month-picker-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.month-picker {
+  position: relative;
+}
+
+.month-picker-trigger {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: var(--panel-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.72);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.month-picker-trigger:hover,
+.month-picker.is-open .month-picker-trigger {
+  border-color: rgba(21, 94, 239, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.82),
+    0 0 0 2px rgba(21, 94, 239, 0.12);
+  transform: none;
+}
+
+.month-picker-trigger.is-placeholder .month-picker-value {
+  color: #768299;
+  font-weight: 500;
+}
+
+.month-picker-value {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.month-picker-chevron {
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid rgba(15, 23, 42, 0.6);
+  border-bottom: 2px solid rgba(15, 23, 42, 0.6);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform .18s ease;
+}
+
+.month-picker.is-open .month-picker-chevron {
+  transform: rotate(225deg) translateY(-1px);
+}
+
+.month-picker-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 200;
+  width: min(300px, calc(100vw - 72px));
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.9), rgba(255,255,255,0) 38%),
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246, 248, 252, 0.98) 100%);
+  box-shadow:
+    0 22px 48px rgba(15, 23, 42, 0.16),
+    inset 0 1px 0 rgba(255,255,255,0.9);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+
+.month-picker.is-open .month-picker-popover {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.month-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.month-picker-title {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.month-picker-nav {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.04);
+  position: relative;
+}
+
+.month-picker-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 10px;
+  height: 10px;
+  margin: auto;
+  border-top: 2px solid rgba(15, 23, 42, 0.72);
+  border-right: 2px solid rgba(15, 23, 42, 0.72);
+}
+
+.month-picker-prev::before {
+  transform: rotate(-135deg);
+  left: 3px;
+}
+
+.month-picker-next::before {
+  transform: rotate(45deg);
+  right: 3px;
+}
+
+.month-picker-nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.month-picker-present {
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: rgba(15, 23, 42, 0.03);
+  color: var(--text);
+  text-align: left;
+}
+
+.month-picker-present.is-selected {
+  border-color: rgba(36, 156, 255, 0.9);
+  box-shadow: inset 0 0 0 2px rgba(36, 156, 255, 0.85);
+  color: #ffffff;
+}
+
+.month-picker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.month-picker-weekdays span {
+  text-align: center;
+}
+
+.month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.month-picker-month {
+  min-height: 44px;
+  border: 1px solid rgba(15, 23, 42, 0.04);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.025);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.month-picker-month:hover {
+  background: rgba(21, 94, 239, 0.08);
+  transform: translateY(-1px);
+}
+
+.month-picker-month.is-selected {
+  border-color: rgba(36, 156, 255, 0.95);
+  box-shadow: inset 0 0 0 2px rgba(36, 156, 255, 0.95);
+  background: rgba(0, 116, 217, 0.32);
+  color: #ffffff;
+}
+
+.date-input-error {
+  border-color: rgba(180, 35, 24, 0.72) !important;
+  outline: 2px solid rgba(180, 35, 24, 0.14) !important;
+}
+
+.date-field-error {
+  border-color: rgba(180, 35, 24, 0.3) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.96),
+    0 14px 30px rgba(180, 35, 24, 0.08) !important;
+}
+
 .primary-button, .ghost-button, .small-button, .upload-label {
   border: 0;
   border-radius: 999px;
@@ -439,7 +663,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(21, 94, 239,
 .text-button { border: 0; background: transparent; color: #c2410c; cursor: pointer; }
 .primary-button:hover, .ghost-button:hover, .small-button:hover, .upload-label:hover { transform: translateY(-1px); }
 
-.section-card, .repeat-item { background: rgba(255,255,255,0.72); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+.section-card, .repeat-item { background: rgba(255,255,255,0.72); border: 1px solid var(--line); border-radius: 20px; padding: 18px; overflow: visible; }
 .repeat-list { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
 
 .avatar-row { display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; margin-top: 8px; }

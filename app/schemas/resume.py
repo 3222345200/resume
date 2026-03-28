@@ -1,4 +1,32 @@
-﻿from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, Field, model_validator
+
+
+DATE_VALUE_PATTERN = re.compile(r"^\d{4}\.\d{2}$")
+
+
+def _parse_date_value(value: str) -> tuple[int, int] | None:
+    if not value:
+        return None
+    if value == "至今":
+        return (9999, 12)
+    if not DATE_VALUE_PATTERN.fullmatch(value):
+        raise ValueError("日期格式必须为 YYYY.MM 或 至今")
+
+    year_str, month_str = value.split(".")
+    year = int(year_str)
+    month = int(month_str)
+    if month < 1 or month > 12:
+        raise ValueError("日期月份必须在 01 到 12 之间")
+    return (year, month)
+
+
+def _validate_date_range(start_date: str, end_date: str) -> None:
+    start = _parse_date_value(start_date)
+    end = _parse_date_value(end_date)
+    if start and end and start > end:
+        raise ValueError("开始日期不能晚于结束日期")
 
 
 class BasicsSchema(BaseModel):
@@ -19,6 +47,11 @@ class EducationItemSchema(BaseModel):
     end_date: str = ""
     highlights: list[str] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def validate_dates(self) -> "EducationItemSchema":
+        _validate_date_range(self.start_date, self.end_date)
+        return self
+
 
 class ExperienceItemSchema(BaseModel):
     company: str = ""
@@ -29,6 +62,11 @@ class ExperienceItemSchema(BaseModel):
     end_date: str = ""
     highlights: list[str] = Field(default_factory=list)
 
+    @model_validator(mode="after")
+    def validate_dates(self) -> "ExperienceItemSchema":
+        _validate_date_range(self.start_date, self.end_date)
+        return self
+
 
 class ProjectItemSchema(BaseModel):
     name: str = ""
@@ -36,6 +74,11 @@ class ProjectItemSchema(BaseModel):
     start_date: str = ""
     end_date: str = ""
     highlights: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "ProjectItemSchema":
+        _validate_date_range(self.start_date, self.end_date)
+        return self
 
 
 class ResearchItemSchema(BaseModel):
@@ -63,9 +106,6 @@ class ResumeContentSchema(BaseModel):
 class ResumeBaseSchema(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     template_id: str = Field(min_length=1, max_length=100)
-    slug: str | None = Field(default=None, max_length=120)
-    language: str = Field(default="zh-CN", max_length=20)
-    status: str = Field(default="draft", max_length=30)
     content: ResumeContentSchema = Field(default_factory=ResumeContentSchema)
 
 

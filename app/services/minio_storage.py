@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from datetime import timedelta
 from io import BytesIO
+from pathlib import Path
 
 from minio import Minio
 from minio.error import S3Error
+from urllib3 import PoolManager, Retry, Timeout
 
 from app.core.config import settings
+
+UPLOADS_ROOT = Path(__file__).resolve().parent.parent.parent / "uploads"
+LOCAL_PDF_ROOT = UPLOADS_ROOT / "generated"
 
 
 def _build_client(endpoint: str) -> Minio:
@@ -15,6 +20,10 @@ def _build_client(endpoint: str) -> Minio:
         access_key=settings.minio_access_key,
         secret_key=settings.minio_secret_key,
         secure=settings.minio_secure,
+        http_client=PoolManager(
+            timeout=Timeout(connect=1.0, read=2.0),
+            retries=Retry(total=0, connect=0, read=0, redirect=0),
+        ),
     )
 
 
@@ -27,9 +36,14 @@ def get_minio_public_client() -> Minio:
 
 
 def ensure_bucket_exists() -> None:
-    client = get_minio_client()
-    if not client.bucket_exists(settings.minio_bucket):
-        client.make_bucket(settings.minio_bucket)
+    LOCAL_PDF_ROOT.mkdir(parents=True, exist_ok=True)
+    try:
+        client = get_minio_client()
+        if not client.bucket_exists(settings.minio_bucket):
+            client.make_bucket(settings.minio_bucket)
+    except Exception:
+        # Fall back to local filesystem storage when MinIO is unavailable.
+        return
 
 
 def get_user_pdf_object_name(user_id: str, resume_id: str) -> str:
@@ -37,23 +51,39 @@ def get_user_pdf_object_name(user_id: str, resume_id: str) -> str:
     return f"{prefix}/{user_id}/{resume_id}.pdf"
 
 
+def _save_local_pdf(user_id: str, resume_id: str, pdf_bytes: bytes) -> dict[str, str | int]:
+    relative_path = Path("generated") / user_id / f"{resume_id}.pdf"
+    target_path = UPLOADS_ROOT / relative_path
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    target_path.write_bytes(pdf_bytes)
+    return {
+        "bucket": "local",
+        "object_key": relative_path.as_posix(),
+        "size": len(pdf_bytes),
+        "etag": "",
+    }
+
+
 def upload_user_pdf(user_id: str, resume_id: str, pdf_bytes: bytes) -> dict[str, str | int]:
     ensure_bucket_exists()
     object_name = get_user_pdf_object_name(user_id, resume_id)
-    client = get_minio_client()
-    result = client.put_object(
-        settings.minio_bucket,
-        object_name,
-        data=BytesIO(pdf_bytes),
-        length=len(pdf_bytes),
-        content_type="application/pdf",
-    )
-    return {
-        "bucket": settings.minio_bucket,
-        "object_key": object_name,
-        "size": len(pdf_bytes),
-        "etag": result.etag,
-    }
+    try:
+        client = get_minio_client()
+        result = client.put_object(
+            settings.minio_bucket,
+            object_name,
+            data=BytesIO(pdf_bytes),
+            length=len(pdf_bytes),
+            content_type="application/pdf",
+        )
+        return {
+            "bucket": settings.minio_bucket,
+            "object_key": object_name,
+            "size": len(pdf_bytes),
+            "etag": result.etag,
+        }
+    except Exception:
+        return _save_local_pdf(user_id, resume_id, pdf_bytes)
 
 
 def get_presigned_pdf_url(
@@ -64,6 +94,12 @@ def get_presigned_pdf_url(
     if not object_name:
         return None
     bucket = bucket_name or settings.minio_bucket
+    if bucket == "local":
+        local_path = UPLOADS_ROOT / Path(object_name)
+        if not local_path.exists():
+            return None
+        return f"/uploads/{Path(object_name).as_posix()}"
+
     client = get_minio_client()
 
     try:
@@ -90,6 +126,12 @@ def delete_object(object_name: str | None, bucket_name: str | None = None) -> No
     if not object_name:
         return
     bucket = bucket_name or settings.minio_bucket
+    if bucket == "local":
+        local_path = UPLOADS_ROOT / Path(object_name)
+        if local_path.exists():
+            local_path.unlink()
+        return
+
     client = get_minio_client()
     try:
         client.remove_object(bucket, object_name)

@@ -25,7 +25,7 @@ uvicorn app.main:app --reload
 
 模板文件已经复制到：
 
-- `app/latex_templates/neu_resume/`
+- `app/latex_templates/pro_resume/`
 
 其中包括：
 
