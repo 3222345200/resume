@@ -17,7 +17,6 @@ TEMPLATE_ROOT = APP_ROOT / "html_templates" / "pro_resume"
 TEMPLATE_FILE = "resume.html.j2"
 DEFAULT_AVATAR_CANDIDATES = [
     APP_ROOT.parent / "frontend" / "default-avatar.jpg",
-    APP_ROOT / "latex_templates" / "pro_resume" / "default-avatar.jpg",
 ]
 EDGE_CANDIDATES = [
     Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),

@@ -1,12 +1,12 @@
 ﻿# Resume Backend
 
-这是一个基于 `FastAPI + PostgreSQL + LaTeX` 的在线简历系统 MVP。
+这是一个基于 `FastAPI + PostgreSQL + HTML` 的在线简历系统 MVP。
 
 当前已经具备：
 
 - 简历的创建、查询、更新、删除
 - 前端表单编辑页面
-- 基于你提供的东北大学 LaTeX 模板生成 PDF
+- 基于 HTML 模板和浏览器打印能力生成 PDF
 - PostgreSQL 持久化存储
 
 ## 本地启动
@@ -25,15 +25,13 @@ uvicorn app.main:app --reload
 
 模板文件已经复制到：
 
-- `app/latex_templates/pro_resume/`
+- `app/html_templates/pro_resume/`
 
 其中包括：
 
-- `resume.cls`
-- `zh_CN-Adobefonts_external.sty`
-- 字体目录 `fonts/`
-- 头像图片 `cwg.jpg`
-- 可注入变量的模板 `resume_template.tex.j2`
+- HTML 模板 `resume.html.j2`
+- 前端默认头像 `frontend/default-avatar.jpg`
+- 浏览器无头打印 PDF 流程
 
 ## 主要接口
 
