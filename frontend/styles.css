@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   --bg: #f6f3ee;
   --panel: rgba(255, 255, 255, 0.82);
   --panel-strong: #ffffff;
@@ -935,7 +935,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(21, 94, 239,
   justify-items: center;
 }
 .avatar-preview-wrap {
-  width: min(180px, 100%);
+  width: min(208px, 100%);
   aspect-ratio: 5 / 7;
   border-radius: 0;
   overflow: hidden;
@@ -1043,3 +1043,51 @@ input:focus, select:focus, textarea:focus { outline: 2px solid rgba(21, 94, 239,
 
 
 
+.auth-captcha-group,
+.auth-code-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px auto;
+  gap: 12px;
+  align-items: end;
+}
+.auth-captcha-label,
+.auth-code-label {
+  margin: 0;
+}
+.auth-captcha-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 4px;
+  border-radius: 18px;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.auth-captcha-preview img {
+  width: 132px;
+  height: 48px;
+  display: block;
+}
+.auth-inline-button {
+  min-height: 54px;
+  white-space: nowrap;
+}
+.auth-helper {
+  margin: -2px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+  .auth-captcha-group,
+  .auth-code-group {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-captcha-preview img {
+    width: 100%;
+    max-width: 132px;
+  }
+}

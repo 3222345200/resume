@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>登录 - 职跃 OfferPilot</title>
+  <title>账号入口 - 职跃 OfferPilot</title>
   <link rel="icon" type="image/svg+xml" href="/assets/brand-mark.svg" />
   <link rel="shortcut icon" href="/assets/brand-mark.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,56 +12,57 @@
   <link rel="stylesheet" href="/assets/styles.css" />
 </head>
 <body>
-  <main class="login-page login-page-premium">
+  <main class="login-page login-page-premium" data-auth-mode="login">
     <section class="login-hero premium-hero">
       <div class="premium-orb premium-orb-one"></div>
       <div class="premium-orb premium-orb-two"></div>
       <div class="premium-grid"></div>
 
       <div class="premium-topline">
-        <div class="brand-badge premium-badge"><img class="brand-logo" src="/assets/brand-mark.svg" alt="职跃 OfferPilot 标志" /><span class="brand-name">职跃 OfferPilot</span></div>
+        <div class="brand-badge premium-badge">
+          <img class="brand-logo" src="/assets/brand-mark.svg" alt="职跃 OfferPilot 标志" />
+          <span class="brand-name">职跃 OfferPilot</span>
+        </div>
         <span class="premium-status">Career Workspace</span>
       </div>
 
       <div class="premium-copy">
         <p class="premium-kicker">CAREER TOOLS FOR AMBITIOUS CANDIDATES</p>
-        <h1>把经历组织好，剩下的交给职业表达。</h1>
-        <p class="login-copy premium-copy-text">
-          从简历开始，逐步延展到职位、投递与求职管理。
-          先把内容沉淀成高质量材料，再继续扩展成完整的求职工作台。
+        <h1 id="auth-hero-title">把经历组织好，剩下的交给职业表达。</h1>
+        <p id="auth-hero-copy" class="login-copy premium-copy-text">
+          登录页只保留账号密码入口。没有账号时，点击注册进入单独的注册页，再完成邮箱验证流程。
         </p>
       </div>
 
       <div class="premium-metrics">
         <div class="premium-metric">
           <strong>01</strong>
-          <span>结构化内容录入</span>
+          <span>账号密码登录</span>
         </div>
         <div class="premium-metric">
           <strong>02</strong>
-          <span>HTML 模板渲染</span>
+          <span>注册页邮箱验证</span>
         </div>
         <div class="premium-metric">
           <strong>03</strong>
-          <span>在线预览与导出</span>
+          <span>验证后进入工作台</span>
         </div>
       </div>
 
       <div class="premium-note">
         <div class="premium-note-card">
-          <span class="premium-note-label">Current Flow</span>
-          <p>登录后会自动进入简历编辑页，继续你上一轮的工作状态。</p>
+          <span class="premium-note-label">Security Flow</span>
+          <p id="auth-note-copy">登录与注册拆分后，首次访问更简单，注册流程也更清晰。</p>
         </div>
       </div>
     </section>
 
     <section class="login-panel premium-panel">
       <div class="login-card premium-card">
-        <p class="eyebrow">Sign In</p>
-        <h2>进入你的求职工作台</h2>
-        <p class="sidebar-copy">
-          没有账号也没关系，直接注册后会自动跳转到编辑页面。
-          用户名仅支持英文和数字，长度 4 到 20 位。
+        <p id="auth-eyebrow" class="eyebrow">Sign In</p>
+        <h2 id="auth-panel-title">进入你的求职工作台</h2>
+        <p id="auth-panel-copy" class="sidebar-copy">
+          输入账号和密码即可登录。如果还没有账号，请先进入注册页完成邮箱验证。
         </p>
 
         <form id="auth-form" class="login-form premium-form">
@@ -89,15 +90,59 @@
             />
           </label>
 
+          <label class="login-label premium-label full-width register-only">
+            <span>个人邮箱</span>
+            <input
+              id="auth-email"
+              type="email"
+              autocomplete="email"
+              placeholder="例如：name@example.com"
+              maxlength="255"
+            />
+          </label>
+
+          <div class="auth-captcha-group full-width register-only">
+            <label class="login-label premium-label auth-captcha-label">
+              <span>字母验证码</span>
+              <input
+                id="auth-captcha-answer"
+                autocomplete="off"
+                placeholder="输入图片中的字母"
+                maxlength="8"
+              />
+            </label>
+            <div class="auth-captcha-preview" aria-live="polite">
+              <img id="captcha-image" alt="字母验证码" />
+            </div>
+            <button id="refresh-captcha-btn" class="ghost-button auth-inline-button" type="button">刷新验证码</button>
+          </div>
+
+          <div class="auth-code-group full-width register-only">
+            <label class="login-label premium-label auth-code-label">
+              <span>邮箱验证码</span>
+              <input
+                id="auth-email-code"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                placeholder="输入邮件中的 6 位验证码"
+                maxlength="6"
+              />
+            </label>
+            <button id="send-code-btn" class="ghost-button auth-inline-button" type="button">发送邮箱验证码</button>
+          </div>
+
+          <p id="auth-helper" class="auth-helper register-only">注册流程：填写用户名、密码、邮箱，输入字母验证码，发送邮箱验证码，收到邮件后再点“注册并登录”。</p>
           <div id="auth-message" class="auth-message premium-message"></div>
 
           <button id="login-btn" class="primary-button login-primary premium-primary" type="submit">登录</button>
-          <button id="register-btn" class="ghost-button login-secondary premium-secondary" type="button">注册并登录</button>
+          <button id="register-submit-btn" class="primary-button login-primary premium-primary register-only" type="button">注册并登录</button>
+          <a id="go-register-link" class="ghost-button login-secondary premium-secondary" href="/register">没有账号？去注册</a>
+          <a id="go-login-link" class="ghost-button login-secondary premium-secondary register-only" href="/login">已有账号？返回登录</a>
         </form>
 
         <div class="premium-footer">
           <div class="premium-divider"></div>
-          <p>你的登录状态会保存在当前浏览器，下次打开可直接回到编辑页。</p>
+          <p id="auth-footer-copy">你的登录状态会保存在当前浏览器，下次打开可直接回到编辑页。</p>
         </div>
       </div>
     </section>
@@ -106,5 +151,3 @@
   <script src="/assets/login.js"></script>
 </body>
 </html>
-
-

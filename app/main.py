@@ -53,6 +53,12 @@ def login_page() -> HTMLResponse:
     return HTMLResponse(content=html)
 
 
+@app.get('/register', include_in_schema=False)
+def register_page() -> HTMLResponse:
+    html = (FRONTEND_DIR / 'login.html').read_text(encoding='utf-8')
+    return HTMLResponse(content=html)
+
+
 @app.get('/editor', include_in_schema=False)
 def editor_page() -> HTMLResponse:
     html = (FRONTEND_DIR / 'editor.html').read_text(encoding='utf-8')

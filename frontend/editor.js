@@ -1,4 +1,4 @@
-﻿const TOKEN_KEY = 'resume_auth_token';
+const TOKEN_KEY = 'resume_auth_token';
 
 const state = {
   authToken: localStorage.getItem(TOKEN_KEY),
@@ -1051,6 +1051,8 @@ async function restoreSession() {
     return true;
   } catch (error) {
     console.error(error);
+    clearToken();
+    redirectToLogin();
     return false;
   }
 }

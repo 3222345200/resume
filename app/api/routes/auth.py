@@ -1,10 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import create_access_token, get_current_user, hash_password, verify_password
 from app.models.user import User
-from app.schemas.auth import TokenResponseSchema, UserLoginSchema, UserReadSchema, UserRegisterSchema
+from app.schemas.auth import (
+    CaptchaResponseSchema,
+    SendRegisterCodeResponseSchema,
+    SendRegisterCodeSchema,
+    TokenResponseSchema,
+    UserLoginSchema,
+    UserReadSchema,
+    UserRegisterSchema,
+)
+from app.services.auth_verification import (
+    build_captcha_svg,
+    create_captcha_challenge,
+    ensure_captcha_valid,
+    ensure_email_code_send_allowed,
+    get_challenge_or_404,
+    issue_email_code,
+    mark_challenge_used,
+    verify_email_code,
+)
+from app.services.email_service import EmailDeliveryError, raise_email_delivery_http_error, send_register_verification_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -13,7 +33,53 @@ def _to_user_schema(user: User) -> UserReadSchema:
     return UserReadSchema(
         id=user.id,
         username=user.username,
+        email=user.email,
+        email_verified=bool(user.email_verified),
         created_at=user.created_at.isoformat(),
+    )
+
+
+def _has_login_access(user: User) -> bool:
+    # Keep pre-verification legacy accounts usable. New accounts with a bound email
+    # must still finish verification before they can sign in.
+    return user.email is None or bool(user.email_verified)
+
+
+@router.get("/captcha", response_model=CaptchaResponseSchema)
+def get_captcha(db: Session = Depends(get_db)) -> CaptchaResponseSchema:
+    challenge = create_captcha_challenge(db)
+    return CaptchaResponseSchema(
+        captcha_id=challenge.id,
+        captcha_svg=build_captcha_svg(challenge.captcha_code),
+        expires_at=challenge.captcha_expires_at.isoformat(),
+    )
+
+
+@router.post("/send-register-code", response_model=SendRegisterCodeResponseSchema)
+def send_register_code(payload: SendRegisterCodeSchema, db: Session = Depends(get_db)) -> SendRegisterCodeResponseSchema:
+    existing_user = db.query(User).filter(User.email == payload.email.strip().lower()).first()
+    if existing_user is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该邮箱已注册，请直接登录")
+
+    challenge = get_challenge_or_404(db, payload.captcha_id)
+    ensure_captcha_valid(challenge, payload.captcha_answer)
+    ensure_email_code_send_allowed(challenge)
+
+    code = issue_email_code(challenge, payload.email)
+    try:
+        send_register_verification_email(payload.email.strip().lower(), code)
+    except EmailDeliveryError as exc:
+        db.rollback()
+        raise_email_delivery_http_error(exc)
+
+    db.add(challenge)
+    db.commit()
+    db.refresh(challenge)
+
+    return SendRegisterCodeResponseSchema(
+        message="邮箱验证码已发送，请查收邮件",
+        verification_id=challenge.id,
+        cooldown_seconds=settings.auth_email_code_cooldown_seconds,
     )
 
 
@@ -23,13 +89,23 @@ def register(payload: UserRegisterSchema, db: Session = Depends(get_db)) -> Toke
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="用户名已存在")
 
+    existing_email = db.query(User).filter(User.email == payload.email.strip().lower()).first()
+    if existing_email is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该邮箱已注册，请直接登录")
+
+    challenge = get_challenge_or_404(db, payload.verification_id)
+    verify_email_code(challenge, payload.email, payload.email_code)
+
     user = User(
         username=payload.username,
+        email=payload.email.strip().lower(),
+        email_verified=True,
         password_hash=hash_password(payload.password),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
+    mark_challenge_used(db, challenge)
     return TokenResponseSchema(access_token=create_access_token(user.username), user=_to_user_schema(user))
 
 
@@ -38,9 +114,13 @@ def login(payload: UserLoginSchema, db: Session = Depends(get_db)) -> TokenRespo
     user = db.query(User).filter(User.username == payload.username).first()
     if user is None or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="账号或密码错误")
+    if not _has_login_access(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="该账号尚未完成邮箱验证，暂时不能使用")
     return TokenResponseSchema(access_token=create_access_token(user.username), user=_to_user_schema(user))
 
 
 @router.get("/me", response_model=UserReadSchema)
 def me(current_user: User = Depends(get_current_user)) -> UserReadSchema:
+    if not _has_login_access(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="当前账号未完成邮箱验证")
     return _to_user_schema(current_user)
