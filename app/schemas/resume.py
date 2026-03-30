@@ -1,4 +1,4 @@
-import re
+﻿import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -10,6 +10,7 @@ LAYOUT_CONTENT_FONT_SIZES = {"12.5", "13.5", "14.5"}
 LAYOUT_CONTENT_LINE_HEIGHTS = {"1.28", "1.36", "1.5"}
 LAYOUT_SECTION_DIVIDER_GAPS = {"2", "4", "6"}
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
 
 
 def _parse_date_value(value: str) -> tuple[int, int] | None:
@@ -249,6 +250,7 @@ class ResumeContentSchema(BaseModel):
     research: list[ResearchItemSchema] = Field(default_factory=list)
     honors: list[HonorItemSchema] = Field(default_factory=list)
     skills: str = ""
+    section_order: list[str] = Field(default_factory=lambda: list(MOVABLE_SECTION_ORDER))
 
     @field_validator("skills", mode="before")
     @classmethod
@@ -256,6 +258,20 @@ class ResumeContentSchema(BaseModel):
         if isinstance(value, list):
             return "\n".join(str(item).strip() for item in value if str(item).strip())
         return str(value or "")
+
+    @field_validator("section_order", mode="before")
+    @classmethod
+    def normalize_section_order(cls, value: object) -> list[str]:
+        items = value if isinstance(value, list) else []
+        unique: list[str] = []
+        for item in items:
+            text = str(item or "").strip()
+            if text in MOVABLE_SECTION_ORDER and text not in unique:
+                unique.append(text)
+        for key in MOVABLE_SECTION_ORDER:
+            if key not in unique:
+                unique.append(key)
+        return unique
 
 
 class ResumeBaseSchema(BaseModel):

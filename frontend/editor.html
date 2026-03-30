@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -191,84 +191,123 @@
               <div id="education-list" class="repeat-list"></div>
             </div>
           </div>
+          <div class="full-width section-order-hint">Section order placeholder</div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">专业技能</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
+          <div id="sortable-sections" class="full-width sortable-sections">
+            <div class="full-width section-card" data-collapsible="true" data-section-key="skills">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">skills</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <label class="full-width">
+                  skills field
+                  <textarea id="skills" rows="5" data-rich-text="true" data-rich-mode="list" placeholder="skills placeholder"></textarea>
+                </label>
+              </div>
             </div>
-            <div class="section-card-body">
-              <label class="full-width">
-                技能关键词
-                <textarea id="skills" rows="5" data-rich-text="true" data-rich-mode="list" placeholder="支持列表、加粗、斜体和链接"></textarea>
-              </label>
-            </div>
-          </div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">工作 / 实习经历</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="experience">新增经历</button>
+            <div class="full-width section-card" data-collapsible="true" data-section-key="experience">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">experience</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                  <button type="button" class="small-button" data-add-section="experience">add</button>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <div id="experience-list" class="repeat-list"></div>
+              </div>
             </div>
-            <div class="section-card-body">
-              <div id="experience-list" class="repeat-list"></div>
-            </div>
-          </div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">项目经历</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="projects">新增项目</button>
+            <div class="full-width section-card" data-collapsible="true" data-section-key="projects">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">projects</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                  <button type="button" class="small-button" data-add-section="projects">add</button>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <div id="projects-list" class="repeat-list"></div>
+              </div>
             </div>
-            <div class="section-card-body">
-              <div id="projects-list" class="repeat-list"></div>
-            </div>
-          </div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">作品集</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="portfolio">新增作品</button>
+            <div class="full-width section-card" data-collapsible="true" data-section-key="portfolio">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">portfolio</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                  <button type="button" class="small-button" data-add-section="portfolio">add</button>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <div id="portfolio-list" class="repeat-list"></div>
+              </div>
             </div>
-            <div class="section-card-body">
-              <div id="portfolio-list" class="repeat-list"></div>
-            </div>
-          </div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">科研经历</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="research">新增科研</button>
+            <div class="full-width section-card" data-collapsible="true" data-section-key="research">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">research</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                  <button type="button" class="small-button" data-add-section="research">add</button>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <div id="research-list" class="repeat-list"></div>
+              </div>
             </div>
-            <div class="section-card-body">
-              <div id="research-list" class="repeat-list"></div>
-            </div>
-          </div>
 
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">荣誉奖项</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="honors">新增奖项</button>
-            </div>
-            <div class="section-card-body">
-              <div id="honors-list" class="repeat-list"></div>
+            <div class="full-width section-card" data-collapsible="true" data-section-key="honors">
+              <div class="section-title-row">
+                <button type="button" class="section-toggle" aria-expanded="true">
+                  <span class="section-toggle-title">honors</span>
+                  <span class="section-toggle-chevron" aria-hidden="true"></span>
+                </button>
+                <div class="section-actions">
+                  <div class="section-order-actions" aria-label="section-order">
+                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                  </div>
+                  <button type="button" class="small-button" data-add-section="honors">add</button>
+                </div>
+              </div>
+              <div class="section-card-body">
+                <div id="honors-list" class="repeat-list"></div>
+              </div>
             </div>
           </div>
         </form>

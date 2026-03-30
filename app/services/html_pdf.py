@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import base64
 import html
@@ -35,6 +35,7 @@ DEFAULT_LAYOUT = {
     "section_divider_gap": "4px",
     "font_color": "#111111",
 }
+MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
 
 
 class RichTextSanitizer(HTMLParser):
@@ -296,7 +297,7 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         for item in (
             _compact_entry(
                 {
-                    "entry_type": plain_text(raw.get("entry_type")) or "实习经历",
+                    "entry_type": plain_text(raw.get("entry_type")) or "瀹炰範缁忓巻",
                     "company": plain_text(raw.get("company")),
                     "role": plain_text(raw.get("role")),
                     "department": plain_text(raw.get("department")),
@@ -372,6 +373,32 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
     summary = _visible_rich_text(basics.get("summary"))
     layout = _layout_context(content.get("layout"))
 
+    requested_order = content.get("section_order") if isinstance(content.get("section_order"), list) else []
+    normalized_order: list[str] = []
+    for key in requested_order:
+        text = str(key or "").strip()
+        if text in MOVABLE_SECTION_ORDER and text not in normalized_order:
+            normalized_order.append(text)
+    for key in MOVABLE_SECTION_ORDER:
+        if key not in normalized_order:
+            normalized_order.append(key)
+
+    section_map = {
+        "skills": {"key": "skills", "title": "\u4e13\u4e1a\u6280\u80fd", "content": skills},
+        "experience": {"key": "experience", "title": "\u5de5\u4f5c / \u5b9e\u4e60\u7ecf\u5386", "items": experience},
+        "projects": {"key": "projects", "title": "\u9879\u76ee\u7ecf\u5386", "items": projects},
+        "portfolio": {"key": "portfolio", "title": "\u4f5c\u54c1\u96c6", "items": portfolio},
+        "research": {"key": "research", "title": "\u79d1\u7814\u7ecf\u5386", "items": research},
+        "honors": {"key": "honors", "title": "\u8363\u8a89\u5956\u9879", "items": honors},
+    }
+    ordered_sections = []
+    for key in normalized_order:
+        section = section_map.get(key)
+        if not section:
+            continue
+        if section.get("content") or section.get("items"):
+            ordered_sections.append(section)
+
     return {
         "title": resume.title,
         "basics": {
@@ -386,12 +413,7 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         },
         "layout": layout,
         "education": education,
-        "experience": experience,
-        "projects": projects,
-        "portfolio": portfolio,
-        "research": research,
-        "honors": honors,
-        "skills": skills,
+        "ordered_sections": ordered_sections,
     }
 
 
@@ -435,5 +457,5 @@ def render_resume_pdf(resume: Resume) -> bytes:
             raise RuntimeError((result.stderr or result.stdout or "HTML to PDF generation failed").strip())
 
         if not pdf_path.exists():
-            raise RuntimeError("HTML 已生成，但 PDF 文件未输出。")
+            raise RuntimeError("HTML ????? PDF ??????")
         return pdf_path.read_bytes()

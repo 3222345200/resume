@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -307,7 +307,7 @@
     }
 
     .education-lines .line::before {
-      content: "鈥?;
+      content: "?";
       display: inline-block;
       width: 1em;
     }
@@ -367,20 +367,30 @@
 
       <div class="contact">
         {% if basics.phone %}<strong>(+86){{ basics.phone }}</strong>{% endif %}
-        {% if basics.phone and basics.email %}<span class="divider-dot">鈥?/span>{% endif %}
+        {% if basics.phone and basics.email %}<span class="divider-dot">|</span>{% endif %}
         {% if basics.email %}<strong><em>{{ basics.email }}</em></strong>{% endif %}
         {% if basics.job_target %}
-          <div class="job-target">姹傝亴鎰忓悜锛歿{ basics.job_target }}</div>
+          <div class="job-target">求职意向：{{ basics.job_target }}</div>
         {% endif %}
       </div>
     </div>
+    {% if basics.summary %}
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg>
+          </span>个人简介
+        </h2>
+        <div class="rich self-summary">{{ basics.summary | safe }}</div>
+      </section>
+    {% endif %}
 
     {% if education %}
       <section class="section">
         <h2 class="section-title">
           <span class="section-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M3 8l9-4 9 4-9 4-9-4Z"></path><path d="M7 10.5v4.2c0 .8 2.2 2.3 5 2.3s5-1.5 5-2.3v-4.2"></path><path d="M21 9v6"></path></svg>
-          </span>鏁欒偛鑳屾櫙
+          </span>教育经历
         </h2>
         {% for item in education %}
           <div class="entry">
@@ -404,151 +414,132 @@
       </section>
     {% endif %}
 
-    {% if skills %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M14 6l4 4"></path><path d="M4 20l5.5-1 9-9a2.1 2.1 0 0 0-3-3l-9 9L4 20Z"></path><path d="M12 8l4 4"></path></svg>
-          </span>涓撲笟鎶€鑳?
-        </h2>
-        <div class="skills-text rich">{{ skills | safe }}</div>
-      </section>
-    {% endif %}
-
-    {% if experience %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"></rect><path d="M9 7V5h6v2"></path><path d="M4 12h16"></path></svg>
-          </span>宸ヤ綔 / 瀹炰範缁忓巻
-        </h2>
-        {% for item in experience %}
-          <div class="entry">
-            <div class="entry-head">
-              <div class="entry-left entry-title">
-                <span class="entry-tag">{{ item.entry_type or "瀹炰範缁忓巻" }}</span>
-                <strong>{{ item.company }}</strong>
-                {% if item.location %}
-                  <span class="location-chip">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"></path><circle cx="12" cy="11" r="2.2"></circle></svg>
-                    {{ item.location }}
-                  </span>
-                {% endif %}
+    {% for section in ordered_sections %}
+      {% if section["key"] == "skills" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M14 6l4 4"></path><path d="M4 20l5.5-1 9-9a2.1 2.1 0 0 0-3-3l-9 9L4 20Z"></path><path d="M12 8l4 4"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          <div class="skills-text rich">{{ section["content"] | safe }}</div>
+        </section>
+      {% elif section["key"] == "experience" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"></rect><path d="M9 7V5h6v2"></path><path d="M4 12h16"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">
+                  <span class="entry-tag">{{ item.entry_type or "实习经历" }}</span>
+                  <strong>{{ item.company }}</strong>
+                  {% if item.location %}
+                    <span class="location-chip">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"></path><circle cx="12" cy="11" r="2.2"></circle></svg>
+                      {{ item.location }}
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
               </div>
-              <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+              {% if item.department or item.role %}
+                <div class="role-line">{{ item.department }}{% if item.department and item.role %} <em>{{ item.role }}</em>{% else %}{% if item.role %}<em>{{ item.role }}</em>{% endif %}{% endif %}</div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="rich">{{ item.highlights | safe }}</div>
+              {% endif %}
             </div>
-            {% if item.department or item.role %}
-              <div class="role-line">{{ item.department }}{% if item.department and item.role %} <em>{{ item.role }}</em>{% else %}{% if item.role %}<em>{{ item.role }}</em>{% endif %}{% endif %}</div>
-            {% endif %}
-            {% if item.highlights %}
-              <div class="rich">{{ item.highlights | safe }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if projects %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 19v2"></path><path d="M16 19v2"></path><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
-          </span>椤圭洰缁忓巻
-        </h2>
-        {% for item in projects %}
-          <div class="entry">
-            <div class="entry-head">
-              <div class="entry-left entry-title"><strong>{{ item.name }}</strong></div>
-              <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "projects" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 19v2"></path><path d="M16 19v2"></path><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title"><strong>{{ item.name }}</strong></div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.description %}
+                <div class="role-line">项目描述：<em>{{ item.description }}</em></div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="project-prefix">主要工作</div>
+                <div class="rich project-list">{{ item.highlights | safe }}</div>
+              {% endif %}
             </div>
-            {% if item.description %}
-              <div class="role-line">椤圭洰鎻忚堪锛?<em>{{ item.description }}</em></div>
-            {% endif %}
-            {% if item.highlights %}
-              <div class="project-prefix">涓昏宸ヤ綔锛?/div>
-              <div class="rich project-list">{{ item.highlights | safe }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if portfolio %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L10 5"></path><path d="M14 11a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1L14 19"></path></svg>
-          </span>浣滃搧闆?
-        </h2>
-        {% for item in portfolio %}
-          <div class="entry">
-            <div class="entry-head">
-              <div class="entry-left entry-title">{{ item.title }}</div>
-              <div class="entry-right"></div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "portfolio" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L10 5"></path><path d="M14 11a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1L14 19"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right"></div>
+              </div>
+              {% if item.link %}
+                <div class="portfolio-link"><a href="{{ item.link }}">{{ item.link }}</a></div>
+              {% endif %}
+              {% if item.summary %}
+                <div class="rich">{{ item.summary | safe }}</div>
+              {% endif %}
             </div>
-            {% if item.link %}
-              <div class="portfolio-link"><a href="{{ item.link }}">{{ item.link }}</a></div>
-            {% endif %}
-            {% if item.summary %}
-              <div class="rich">{{ item.summary | safe }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if research %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"></path><path d="M15 4v3h3"></path><path d="M9 12h6"></path><path d="M9 16h4"></path></svg>
-          </span>绉戠爺缁忓巻
-        </h2>
-        {% for item in research %}
-          <div class="entry">
-            <div class="entry-head research-head">
-              <div class="entry-left entry-title">{{ item.title }}</div>
-              <div class="entry-right">{{ item.label }}</div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "research" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"></path><path d="M15 4v3h3"></path><path d="M9 12h6"></path><path d="M9 16h4"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head research-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right">{{ item.label }}</div>
+              </div>
+              {% if item.summary %}
+                <div class="rich research-summary">{{ item.summary | safe }}</div>
+              {% endif %}
             </div>
-            {% if item.summary %}
-              <div class="rich research-summary">{{ item.summary | safe }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if honors %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M10 12l-2 8 4-2 4 2-2-8"></path></svg>
-          </span>鑽ｈ獕濂栭」
-        </h2>
-        {% for item in honors %}
-          <div class="entry">
-            <div class="entry-head">
-              <div class="entry-left entry-title">{{ item.title }}</div>
-              <div class="entry-right">{{ item.label }}</div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "honors" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M10 12l-2 8 4-2 4 2-2-8"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right">{{ item.label }}</div>
+              </div>
+              {% if item.summary %}
+                <div class="rich honor-summary">{{ item.summary | safe }}</div>
+              {% endif %}
             </div>
-            {% if item.summary %}
-              <div class="rich honor-summary">{{ item.summary | safe }}</div>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    {% if basics.summary %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg>
-          </span>涓汉绠€浠?
-        </h2>
-        <div class="rich self-summary">{{ basics.summary | safe }}</div>
-      </section>
-    {% endif %}
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endfor %}
   </div>
 </body>
 </html>

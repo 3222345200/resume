@@ -40,6 +40,7 @@ const elements = {
   avatarOffsetX: document.getElementById('avatar-offset-x'),
   avatarOffsetY: document.getElementById('avatar-offset-y'),
   layoutFontColorValue: document.getElementById('layout_font_color_value'),
+  sortableSections: document.getElementById('sortable-sections'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
@@ -60,6 +61,7 @@ const DEFAULT_LAYOUT_SETTINGS = {
   section_divider_gap: '4',
   font_color: '#111111',
 };
+const MOVABLE_SECTION_ORDER = ['skills', 'experience', 'projects', 'portfolio', 'research', 'honors'];
 
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {};
@@ -112,6 +114,125 @@ function syncLayoutColorValue(color) {
   if (elements.layoutFontColorValue) {
     elements.layoutFontColorValue.textContent = value;
   }
+}
+
+function applySectionUiLabels() {
+  const hint = document.querySelector('.section-order-hint');
+  if (hint) {
+    hint.textContent = '\u4e0b\u9762\u8fd9\u4e9b\u6a21\u5757\u652f\u6301\u8c03\u6574\u987a\u5e8f\uff0cPDF \u4e5f\u4f1a\u6309\u8fd9\u91cc\u7684\u987a\u5e8f\u8f93\u51fa\u3002\u57fa\u7840\u4fe1\u606f\u548c\u6559\u80b2\u7ecf\u5386\u4fdd\u6301\u56fa\u5b9a\u3002';
+  }
+
+  const labels = {
+    skills: { title: '\u4e13\u4e1a\u6280\u80fd', add: '', field: '\u6280\u80fd\u5173\u952e\u8bcd' },
+    experience: { title: '\u5de5\u4f5c / \u5b9e\u4e60\u7ecf\u5386', add: '\u65b0\u589e\u7ecf\u5386' },
+    projects: { title: '\u9879\u76ee\u7ecf\u5386', add: '\u65b0\u589e\u9879\u76ee' },
+    portfolio: { title: '\u4f5c\u54c1\u96c6', add: '\u65b0\u589e\u4f5c\u54c1' },
+    research: { title: '\u79d1\u7814\u7ecf\u5386', add: '\u65b0\u589e\u79d1\u7814' },
+    honors: { title: '\u8363\u8a89\u5956\u9879', add: '\u65b0\u589e\u5956\u9879' },
+  };
+
+  Object.entries(labels).forEach(([key, config]) => {
+    const card = document.querySelector(`[data-section-key="${key}"]`);
+    if (!card) {
+      return;
+    }
+    const title = card.querySelector('.section-toggle-title');
+    if (title) {
+      title.textContent = config.title;
+    }
+    const addButton = card.querySelector('[data-add-section]');
+    if (addButton && config.add) {
+      addButton.textContent = config.add;
+    }
+    const upButton = card.querySelector('[data-move-section="up"]');
+    const downButton = card.querySelector('[data-move-section="down"]');
+    if (upButton) {
+      upButton.textContent = '\u2191';
+      upButton.title = '\u4e0a\u79fb';
+      upButton.setAttribute('aria-label', '\u4e0a\u79fb');
+    }
+    if (downButton) {
+      downButton.textContent = '\u2193';
+      downButton.title = '\u4e0b\u79fb';
+      downButton.setAttribute('aria-label', '\u4e0b\u79fb');
+    }
+  });
+
+  const skillsLabel = document.getElementById('skills')?.closest('label');
+  if (skillsLabel && skillsLabel.firstChild?.nodeType === Node.TEXT_NODE) {
+    skillsLabel.firstChild.textContent = '\u6280\u80fd\u5173\u952e\u8bcd';
+  }
+}
+
+function normalizeSectionOrder(value) {
+  const incoming = Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+  const unique = [];
+  incoming.forEach((key) => {
+    if (MOVABLE_SECTION_ORDER.includes(key) && !unique.includes(key)) {
+      unique.push(key);
+    }
+  });
+  MOVABLE_SECTION_ORDER.forEach((key) => {
+    if (!unique.includes(key)) {
+      unique.push(key);
+    }
+  });
+  return unique;
+}
+
+function getCurrentSectionOrder() {
+  if (!elements.sortableSections) {
+    return [...MOVABLE_SECTION_ORDER];
+  }
+  return Array.from(elements.sortableSections.querySelectorAll('[data-section-key]')).map((card) => card.dataset.sectionKey);
+}
+
+function applySectionOrder(order) {
+  if (!elements.sortableSections) {
+    return;
+  }
+  const normalized = normalizeSectionOrder(order);
+  normalized.forEach((key) => {
+    const card = elements.sortableSections.querySelector(`[data-section-key="${key}"]`);
+    if (card) {
+      elements.sortableSections.appendChild(card);
+    }
+  });
+  syncSectionMoveButtons();
+}
+
+function syncSectionMoveButtons() {
+  const order = getCurrentSectionOrder();
+  order.forEach((key, index) => {
+    const card = elements.sortableSections?.querySelector(`[data-section-key="${key}"]`);
+    if (!card) {
+      return;
+    }
+    const upButton = card.querySelector('[data-move-section="up"]');
+    const downButton = card.querySelector('[data-move-section="down"]');
+    if (upButton) {
+      upButton.disabled = index === 0;
+    }
+    if (downButton) {
+      downButton.disabled = index === order.length - 1;
+    }
+  });
+}
+
+function moveSection(sectionKey, direction) {
+  const order = getCurrentSectionOrder();
+  const currentIndex = order.indexOf(sectionKey);
+  if (currentIndex === -1) {
+    return;
+  }
+  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+  if (targetIndex < 0 || targetIndex >= order.length) {
+    return;
+  }
+  const nextOrder = [...order];
+  [nextOrder[currentIndex], nextOrder[targetIndex]] = [nextOrder[targetIndex], nextOrder[currentIndex]];
+  applySectionOrder(nextOrder);
+  updatePreviewMessage();
 }
 
 function plainTextToRichHtml(value, mode = 'paragraphs') {
@@ -501,6 +622,7 @@ function defaultResume() {
       research: [],
       honors: [],
       skills: [],
+      section_order: [...MOVABLE_SECTION_ORDER],
     },
   };
 }
@@ -778,6 +900,7 @@ function getFormPayload() {
       research: collectRepeatList('research'),
       honors: collectRepeatList('honors'),
       skills: getRichTextValue(document.getElementById('skills')),
+      section_order: getCurrentSectionOrder(),
     },
   };
 }
@@ -797,6 +920,7 @@ function fillForm(resume) {
       research: current.content?.research || [],
       honors: current.content?.honors || [],
       skills: current.content?.skills || [],
+      section_order: normalizeSectionOrder(current.content?.section_order),
     },
   });
   const layout = { ...DEFAULT_LAYOUT_SETTINGS, ...(current.content?.layout || {}) };
@@ -815,6 +939,7 @@ function fillForm(resume) {
   document.getElementById('layout_font_color').value = layout.font_color;
   syncLayoutColorValue(layout.font_color);
   setRichTextValue(document.getElementById('skills'), current.content?.skills || []);
+  applySectionOrder(current.content?.section_order);
 
   setAvatar(current.content?.basics?.avatar_url || null, current.content?.basics?.avatar_crop || DEFAULT_AVATAR_CROP);
   mountRepeatList('education', current.content?.education || []);
@@ -1060,6 +1185,7 @@ async function restoreSession() {
 function bindEvents() {
   document.querySelectorAll('[data-rich-text="true"]').forEach((textarea) => ensureRichTextEditor(textarea));
   bindCollapsibleSections();
+  applySectionUiLabels();
 
   document.addEventListener('click', (event) => {
     if (!event.target.closest('.month-picker')) {
@@ -1142,11 +1268,24 @@ function bindEvents() {
       updatePreviewMessage();
     });
   });
+
+  document.querySelectorAll('[data-move-section]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const card = button.closest('[data-section-key]');
+      if (!card) {
+        return;
+      }
+      moveSection(card.dataset.sectionKey, button.dataset.moveSection);
+    });
+  });
+
+  syncSectionMoveButtons();
 }
 
 async function bootstrap() {
   bindEvents();
   applyAvatarFrameRatio();
+  applySectionOrder(MOVABLE_SECTION_ORDER);
   fillForm(defaultResume());
   updatePreviewMessage();
   const ok = await restoreSession();
