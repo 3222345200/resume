@@ -6,11 +6,12 @@ import subprocess
 import tempfile
 from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.models.resume import Resume
+from app.services.minio_storage import load_object_bytes
 
 APP_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_ROOT = APP_ROOT / "html_templates" / "pro_resume"
@@ -26,6 +27,14 @@ EDGE_CANDIDATES = [
 RUNTIME_ROOT = Path(tempfile.gettempdir()) / "resume_runtime_pdf"
 ALLOWED_RICH_TAGS = {"p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "a"}
 BLOCKED_TAGS = {"script", "style"}
+
+DEFAULT_LAYOUT = {
+    "section_title_size": "18px",
+    "content_font_size": "13.5px",
+    "content_line_height": "1.36",
+    "section_divider_gap": "4px",
+    "font_color": "#111111",
+}
 
 
 class RichTextSanitizer(HTMLParser):
@@ -144,6 +153,23 @@ def _visible_rich_text(value: object, *, list_mode: bool = False) -> str:
     return rendered if _has_visible_text(rendered) else ""
 
 
+def _layout_context(raw_layout: object) -> dict[str, str]:
+    layout = raw_layout if isinstance(raw_layout, dict) else {}
+    section_title_size = str(layout.get("section_title_size") or "18").strip()
+    content_font_size = str(layout.get("content_font_size") or "13.5").strip()
+    content_line_height = str(layout.get("content_line_height") or "1.36").strip()
+    section_divider_gap = str(layout.get("section_divider_gap") or "4").strip()
+    font_color = str(layout.get("font_color") or "#111111").strip()
+
+    return {
+        "section_title_size": f"{section_title_size if section_title_size in {'16', '18', '20'} else '18'}px",
+        "content_font_size": f"{content_font_size if content_font_size in {'12.5', '13.5', '14.5'} else '13.5'}px",
+        "content_line_height": content_line_height if content_line_height in {"1.28", "1.36", "1.5"} else "1.36",
+        "section_divider_gap": f"{section_divider_gap if section_divider_gap in {'2', '4', '6'} else '4'}px",
+        "font_color": font_color if len(font_color) == 7 and font_color.startswith("#") and all(ch in "0123456789abcdefABCDEF" for ch in font_color[1:]) else DEFAULT_LAYOUT["font_color"],
+    }
+
+
 def _build_environment() -> Environment:
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_ROOT)),
@@ -180,7 +206,38 @@ def _file_to_data_uri(path: Path) -> str:
     return f"data:{mime};base64,{encoded}"
 
 
+def _bytes_to_data_uri(data: bytes, filename: str) -> str:
+    mime = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+    }.get(Path(filename).suffix.lower(), "application/octet-stream")
+    encoded = base64.b64encode(data).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
+def _avatar_data_uri_from_storage_url(avatar_url: str | None) -> str | None:
+    if not avatar_url:
+        return None
+    path = urlparse(avatar_url).path or avatar_url
+    marker = '/api/uploads/avatar/'
+    if marker not in path:
+        return None
+    storage_path = path.split(marker, 1)[1].lstrip('/')
+    if '/' not in storage_path:
+        return None
+    bucket_name, object_name = storage_path.split('/', 1)
+    data = load_object_bytes(unquote(object_name), bucket_name=unquote(bucket_name))
+    if not data:
+        return None
+    return _bytes_to_data_uri(data, object_name)
+
+
 def _resolve_avatar_data_uri(avatar_url: str | None) -> str | None:
+    storage_data_uri = _avatar_data_uri_from_storage_url(avatar_url)
+    if storage_data_uri:
+        return storage_data_uri
     source = _resolve_local_path(avatar_url)
     if source:
         return _file_to_data_uri(source)
@@ -188,6 +245,23 @@ def _resolve_avatar_data_uri(avatar_url: str | None) -> str | None:
         if fallback.exists():
             return _file_to_data_uri(fallback)
     return None
+
+
+def _normalize_avatar_crop(value: object) -> dict[str, float]:
+    crop = value if isinstance(value, dict) else {}
+
+    def clamp(number: object, minimum: float, maximum: float, fallback: float) -> float:
+        try:
+            parsed = float(number)
+        except (TypeError, ValueError):
+            return fallback
+        return max(minimum, min(maximum, parsed))
+
+    return {
+        "scale": clamp(crop.get("scale"), 1.0, 3.0, 1.0),
+        "offset_x": clamp(crop.get("offset_x"), 0.0, 100.0, 50.0),
+        "offset_y": clamp(crop.get("offset_y"), 0.0, 100.0, 50.0),
+    }
 
 
 def _find_browser() -> Path:
@@ -296,6 +370,7 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
     ]
     skills = _visible_rich_text(content.get("skills"), list_mode=True)
     summary = _visible_rich_text(basics.get("summary"))
+    layout = _layout_context(content.get("layout"))
 
     return {
         "title": resume.title,
@@ -307,7 +382,9 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
             "job_target": plain_text(basics.get("job_target")),
             "summary": summary,
             "avatar_data_uri": _resolve_avatar_data_uri(basics.get("avatar_url")),
+            "avatar_crop": _normalize_avatar_crop(basics.get("avatar_crop")),
         },
+        "layout": layout,
         "education": education,
         "experience": experience,
         "projects": projects,

@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     minio_bucket: str = "resume-pdfs"
     minio_secure: bool = False
     minio_pdf_prefix: str = "resumes"
+    minio_avatar_prefix: str = "avatars"
     minio_presigned_expire_minutes: int = 60
 
     model_config = SettingsConfigDict(

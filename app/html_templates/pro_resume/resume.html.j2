@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <title>{{ title }}</title>
   <style>
+    :root {
+      --layout-section-title-size: {{ layout.section_title_size }};
+      --layout-content-font-size: {{ layout.content_font_size }};
+      --layout-content-line-height: {{ layout.content_line_height }};
+      --layout-section-divider-gap: {{ layout.section_divider_gap }};
+      --layout-entry-title-size: calc(var(--layout-content-font-size) + 1.9px);
+      --layout-emphasis-font-size: calc(var(--layout-content-font-size) + 0.5px);
+      --layout-font-color: {{ layout.font_color }};
+    }
+
     @page {
       size: A4;
       margin: 5mm 15mm;
@@ -16,7 +26,7 @@
     body {
       margin: 0;
       font-family: "Times New Roman", "SimSun", "Songti SC", serif;
-      color: #111111;
+      color: var(--layout-font-color);
       background: #ffffff;
       font-size: 12.4px;
       line-height: 1.4;
@@ -41,9 +51,10 @@
       position: absolute;
       bottom: 2px;
       right: 0;
-      width: 2.1cm;
-      height: 2.8cm;
+      width: 1.87cm;
+      height: 2.62cm;
       overflow: hidden;
+      background: #ffffff;
     }
 
     .avatar {
@@ -51,6 +62,8 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      background: #ffffff;
+      transform-origin: center center;
     }
 
     .name {
@@ -98,10 +111,10 @@
     }
 
     .section-title {
-      margin: 0 0 2pt;
-      padding-bottom: 2px;
-      border-bottom: 1.5pt solid #111111;
-      font-size: 18px;
+      margin: 0 0 calc(var(--layout-section-divider-gap) * 0.5);
+      padding-bottom: var(--layout-section-divider-gap);
+      border-bottom: 1.5pt solid var(--layout-font-color);
+      font-size: var(--layout-section-title-size);
       font-family: "FangSong", "STFangsong", serif;
       font-weight: 700;
       line-height: 1.15;
@@ -115,7 +128,7 @@
       height: 16px;
       margin-right: 8px;
       transform: translateY(1px);
-      color: #1f2937;
+      color: var(--layout-font-color);
     }
 
     .section-icon svg {
@@ -152,20 +165,67 @@
     }
 
     .entry-title {
-      font-size: 15.4px;
+      font-size: var(--layout-entry-title-size);
       font-family: "KaiTi", "STKaiti", serif;
-      line-height: 1.28;
+      line-height: var(--layout-content-line-height);
     }
 
     .entry-title strong {
       font-weight: 700;
     }
 
+    .education-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.3fr) minmax(4.5em, 0.65fr) auto;
+      column-gap: 1.1em;
+      align-items: start;
+    }
+
+    .education-head .entry-right {
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .education-cell {
+      min-width: 0;
+    }
+
+    .education-school,
+    .education-major,
+    .education-degree {
+      text-align: left;
+    }
+
+    .research-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 1em;
+      align-items: baseline;
+    }
+
+    .research-head .entry-left,
+    .research-head .entry-right {
+      display: block;
+      min-width: 0;
+    }
+
+    .research-head .entry-left {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .research-head .entry-right {
+      width: auto;
+      white-space: nowrap;
+    }
+
     .role-line {
       margin-top: -1px;
       margin-bottom: 2px;
       font-family: "KaiTi", "STKaiti", serif;
-      font-size: 13.5px;
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
       font-weight: 700;
     }
 
@@ -212,8 +272,8 @@
 
     .rich {
       font-family: "KaiTi", "STKaiti", "Kaiti SC", serif;
-      font-size: 13.5px;
-      line-height: 1.36;
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
       word-break: break-word;
     }
 
@@ -242,7 +302,8 @@
     .education-lines .line {
       margin: 0.08em 0;
       font-family: "KaiTi", "STKaiti", serif;
-      font-size: 14px;
+      font-size: var(--layout-emphasis-font-size);
+      line-height: var(--layout-content-line-height);
     }
 
     .education-lines .line::before {
@@ -253,8 +314,8 @@
 
     .skills-text {
       font-family: "KaiTi", "STKaiti", serif;
-      font-size: 13.5px;
-      line-height: 1.36;
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
     }
 
     .skills-text p {
@@ -264,7 +325,8 @@
     .project-prefix {
       margin-bottom: 0.1em;
       font-family: "KaiTi", "STKaiti", serif;
-      font-size: 14px;
+      font-size: var(--layout-emphasis-font-size);
+      line-height: var(--layout-content-line-height);
       font-weight: 700;
     }
 
@@ -297,7 +359,7 @@
     <div class="topbar">
       {% if basics.avatar_data_uri %}
         <div class="avatar-wrap">
-          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar">
+          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: {{ basics.avatar_crop.offset_x }}% {{ basics.avatar_crop.offset_y }}%; transform: scale({{ basics.avatar_crop.scale }});">
         </div>
       {% endif %}
 
@@ -322,11 +384,15 @@
         </h2>
         {% for item in education %}
           <div class="entry">
-            <div class="entry-head">
-              <div class="entry-left entry-title">
+            <div class="entry-head education-head">
+              <div class="entry-left entry-title education-cell education-school">
                 <strong>{{ item.school }}</strong>
-                {% if item.major %}<strong>&emsp;{{ item.major }}</strong>{% endif %}
-                {% if item.degree %}<strong>&emsp;{{ item.degree }}</strong>{% endif %}
+              </div>
+              <div class="entry-title education-cell education-major">
+                {% if item.major %}<strong>{{ item.major }}</strong>{% endif %}
+              </div>
+              <div class="entry-title education-cell education-degree">
+                {% if item.degree %}<strong>{{ item.degree }}</strong>{% endif %}
               </div>
               <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
             </div>
@@ -440,7 +506,7 @@
         </h2>
         {% for item in research %}
           <div class="entry">
-            <div class="entry-head">
+            <div class="entry-head research-head">
               <div class="entry-left entry-title">{{ item.title }}</div>
               <div class="entry-right">{{ item.label }}</div>
             </div>

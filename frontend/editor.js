@@ -8,6 +8,8 @@ const state = {
   currentResumeId: null,
   currentPdfUrl: null,
   currentAvatarUrl: null,
+  currentAvatarCrop: null,
+  renderedPayloadSignature: null,
 };
 
 const elements = {
@@ -34,13 +36,83 @@ const elements = {
   avatarPreview: document.getElementById('avatar-preview'),
   avatarStatus: document.getElementById('avatar-status'),
   avatarClear: document.getElementById('avatar-clear'),
+  avatarScale: document.getElementById('avatar-scale'),
+  avatarOffsetX: document.getElementById('avatar-offset-x'),
+  avatarOffsetY: document.getElementById('avatar-offset-y'),
+  layoutFontColorValue: document.getElementById('layout_font_color_value'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
+const DEFAULT_AVATAR_CROP = {
+  scale: 1,
+  offset_x: 50,
+  offset_y: 50,
+};
+const ONE_INCH_PHOTO_RATIO = 5 / 7;
 const MONTH_PICKER_MIN_YEAR = 1990;
 const MONTH_PICKER_MAX_YEAR = 2035;
 const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 const RICH_ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A']);
+const DEFAULT_LAYOUT_SETTINGS = {
+  section_title_size: '18',
+  content_font_size: '13.5',
+  content_line_height: '1.36',
+  section_divider_gap: '4',
+  font_color: '#111111',
+};
+
+function normalizeAvatarCrop(value) {
+  const crop = value && typeof value === 'object' ? value : {};
+  const clamp = (input, minimum, maximum, fallback) => {
+    const number = Number(input);
+    if (!Number.isFinite(number)) {
+      return fallback;
+    }
+    return Math.min(maximum, Math.max(minimum, number));
+  };
+
+  return {
+    scale: clamp(crop.scale, 1, 3, DEFAULT_AVATAR_CROP.scale),
+    offset_x: clamp(crop.offset_x, 0, 100, DEFAULT_AVATAR_CROP.offset_x),
+    offset_y: clamp(crop.offset_y, 0, 100, DEFAULT_AVATAR_CROP.offset_y),
+  };
+}
+
+function syncAvatarControls() {
+  const crop = normalizeAvatarCrop(state.currentAvatarCrop);
+  state.currentAvatarCrop = crop;
+  if (elements.avatarScale) {
+    elements.avatarScale.value = String(crop.scale);
+  }
+  if (elements.avatarOffsetX) {
+    elements.avatarOffsetX.value = String(crop.offset_x);
+  }
+  if (elements.avatarOffsetY) {
+    elements.avatarOffsetY.value = String(crop.offset_y);
+  }
+}
+
+function applyAvatarPreview() {
+  const crop = normalizeAvatarCrop(state.currentAvatarCrop);
+  state.currentAvatarCrop = crop;
+  elements.avatarPreview.style.objectFit = 'cover';
+  elements.avatarPreview.style.objectPosition = `${crop.offset_x}% ${crop.offset_y}%`;
+  elements.avatarPreview.style.transform = `scale(${crop.scale})`;
+  elements.avatarPreview.style.transformOrigin = 'center center';
+}
+
+function setAvatarCrop(value) {
+  state.currentAvatarCrop = normalizeAvatarCrop(value);
+  syncAvatarControls();
+  applyAvatarPreview();
+}
+
+function syncLayoutColorValue(color) {
+  const value = String(color || DEFAULT_LAYOUT_SETTINGS.font_color).toUpperCase();
+  if (elements.layoutFontColorValue) {
+    elements.layoutFontColorValue.textContent = value;
+  }
+}
 
 function plainTextToRichHtml(value, mode = 'paragraphs') {
   const lines = String(value || '')
@@ -419,7 +491,9 @@ function defaultResume() {
         summary: '',
         job_target: '',
         avatar_url: null,
+        avatar_crop: { ...DEFAULT_AVATAR_CROP },
       },
+      layout: { ...DEFAULT_LAYOUT_SETTINGS },
       education: [],
       experience: [],
       projects: [],
@@ -464,25 +538,42 @@ function handleUnauthorized() {
   redirectToLogin();
 }
 
-function setAvatar(url) {
+function applyAvatarFrameRatio() {
+  const frame = elements.avatarPreview?.closest('.avatar-preview-wrap');
+  if (!frame) {
+    return;
+  }
+  frame.style.aspectRatio = String(ONE_INCH_PHOTO_RATIO);
+}
+
+function setAvatar(url, crop = state.currentAvatarCrop || DEFAULT_AVATAR_CROP) {
   state.currentAvatarUrl = url || null;
+  setAvatarCrop(crop);
   if (state.currentAvatarUrl) {
     elements.avatarPreview.src = state.currentAvatarUrl;
-    elements.avatarStatus.textContent = '头像已上传，生成 PDF 时会使用这张照片。';
+    elements.avatarStatus.textContent = '照片已上传，可按一寸照比例调整后再导出 PDF。';
   } else {
     elements.avatarPreview.src = DEFAULT_AVATAR_PLACEHOLDER;
-    elements.avatarStatus.textContent = '未上传头像，将使用默认占位图。';
+    elements.avatarStatus.textContent = '未上传照片时，将使用默认占位图。';
   }
 }
 
 function resetPreview() {
   state.currentPdfUrl = null;
+  state.renderedPayloadSignature = null;
   elements.downloadLink.removeAttribute('href');
   elements.downloadLink.removeAttribute('download');
   elements.downloadLink.classList.add('hidden-link');
   elements.pdfPreview.removeAttribute('src');
   elements.pdfPreview.classList.add('hidden-preview');
   elements.previewEmpty.classList.remove('hidden-preview');
+}
+
+function buildResumeFilename() {
+  const name = document.getElementById('basics_name').value.trim();
+  const title = document.getElementById('title').value.trim();
+  const base = [name, title].filter(Boolean).join('_') || 'resume';
+  return `${base}.pdf`;
 }
 
 function setPreviewUrl(url) {
@@ -492,7 +583,7 @@ function setPreviewUrl(url) {
     return;
   }
 
-  const filename = `${document.getElementById('title').value.trim() || 'resume'}.pdf`;
+  const filename = buildResumeFilename();
   elements.downloadLink.href = state.currentPdfUrl;
   elements.downloadLink.download = filename;
   elements.downloadLink.target = '_blank';
@@ -501,6 +592,20 @@ function setPreviewUrl(url) {
   elements.pdfPreview.src = state.currentPdfUrl;
   elements.pdfPreview.classList.remove('hidden-preview');
   elements.previewEmpty.classList.add('hidden-preview');
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  }
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value ?? null);
+}
+
+function getPayloadSignature(payload) {
+  return stableStringify(payload);
 }
 
 function buildDateOptions(allowPresent = false) {
@@ -657,6 +762,14 @@ function getFormPayload() {
         summary: getRichTextValue(document.getElementById('basics_summary')),
         job_target: document.getElementById('basics_job_target').value.trim(),
         avatar_url: state.currentAvatarUrl,
+        avatar_crop: normalizeAvatarCrop(state.currentAvatarCrop),
+      },
+      layout: {
+        section_title_size: document.getElementById('layout_section_title_size').value,
+        content_font_size: document.getElementById('layout_content_font_size').value,
+        content_line_height: document.getElementById('layout_content_line_height').value,
+        section_divider_gap: document.getElementById('layout_section_divider_gap').value,
+        font_color: document.getElementById('layout_font_color').value,
       },
       education: collectRepeatList('education'),
       experience: collectRepeatList('experience'),
@@ -671,6 +784,22 @@ function getFormPayload() {
 
 function fillForm(resume) {
   const current = resume || defaultResume();
+  const renderedSignature = getPayloadSignature({
+    title: current.title || '',
+    template_id: current.template_id || state.templates[0]?.id || '',
+    content: {
+      basics: current.content?.basics || {},
+      layout: { ...DEFAULT_LAYOUT_SETTINGS, ...(current.content?.layout || {}) },
+      education: current.content?.education || [],
+      experience: current.content?.experience || [],
+      projects: current.content?.projects || [],
+      portfolio: current.content?.portfolio || [],
+      research: current.content?.research || [],
+      honors: current.content?.honors || [],
+      skills: current.content?.skills || [],
+    },
+  });
+  const layout = { ...DEFAULT_LAYOUT_SETTINGS, ...(current.content?.layout || {}) };
   document.getElementById('title').value = current.title || '';
   document.getElementById('template_id').value = current.template_id || state.templates[0]?.id || '';
   document.getElementById('basics_name').value = current.content?.basics?.name || '';
@@ -679,9 +808,15 @@ function fillForm(resume) {
   document.getElementById('basics_location').value = current.content?.basics?.location || '';
   setRichTextValue(document.getElementById('basics_summary'), current.content?.basics?.summary || '');
   document.getElementById('basics_job_target').value = current.content?.basics?.job_target || '';
+  document.getElementById('layout_section_title_size').value = layout.section_title_size;
+  document.getElementById('layout_content_font_size').value = layout.content_font_size;
+  document.getElementById('layout_content_line_height').value = layout.content_line_height;
+  document.getElementById('layout_section_divider_gap').value = layout.section_divider_gap;
+  document.getElementById('layout_font_color').value = layout.font_color;
+  syncLayoutColorValue(layout.font_color);
   setRichTextValue(document.getElementById('skills'), current.content?.skills || []);
 
-  setAvatar(current.content?.basics?.avatar_url || null);
+  setAvatar(current.content?.basics?.avatar_url || null, current.content?.basics?.avatar_crop || DEFAULT_AVATAR_CROP);
   mountRepeatList('education', current.content?.education || []);
   mountRepeatList('experience', current.content?.experience || []);
   mountRepeatList('projects', current.content?.projects || []);
@@ -690,6 +825,7 @@ function fillForm(resume) {
   mountRepeatList('honors', current.content?.honors || []);
 
   if (current.rendered_pdf_url) {
+    state.renderedPayloadSignature = renderedSignature;
     setPreviewUrl(current.rendered_pdf_url);
   } else {
     resetPreview();
@@ -773,8 +909,9 @@ async function request(path, options = {}) {
   return response.json();
 }
 
-async function uploadAvatar(file) {
+async function uploadAvatar(file, resumeId) {
   const formData = new FormData();
+  formData.append('resume_id', resumeId);
   formData.append('file', file);
   const response = await fetch('/api/uploads/avatar', {
     method: 'POST',
@@ -788,7 +925,7 @@ async function uploadAvatar(file) {
   }
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(error || '头像上传失败');
+    throw new Error(error || '照片上传失败');
   }
   return response.json();
 }
@@ -854,6 +991,12 @@ async function renderPdf() {
     }
 
     const payload = getFormPayload();
+    const payloadSignature = getPayloadSignature(payload);
+    if (state.currentPdfUrl && state.renderedPayloadSignature === payloadSignature) {
+      setPreviewUrl(state.currentPdfUrl);
+      showToast('内容未变化，已复用上次 PDF');
+      return;
+    }
     if (!payload.title) {
       showToast('标题不能为空');
       return;
@@ -863,6 +1006,7 @@ async function renderPdf() {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    state.renderedPayloadSignature = payloadSignature;
     if (result.resume) {
       state.currentResumeId = result.resume.id;
       await loadResumes();
@@ -888,7 +1032,7 @@ async function deleteResume() {
 
   await request(`/api/resumes/${state.currentResumeId}`, { method: 'DELETE' });
   state.currentResumeId = null;
-  setAvatar(null);
+  setAvatar(null, DEFAULT_AVATAR_CROP);
   resetPreview();
   await loadResumes();
   renderResumeList();
@@ -928,13 +1072,16 @@ function bindEvents() {
   });
 
   elements.form.addEventListener('input', updatePreviewMessage);
+  document.getElementById('layout_font_color')?.addEventListener('input', (event) => {
+    syncLayoutColorValue(event.target.value);
+  });
   elements.form.addEventListener('change', updatePreviewMessage);
   elements.saveButton.addEventListener('click', () => saveResume());
   elements.renderButton.addEventListener('click', renderPdf);
   elements.deleteButton.addEventListener('click', deleteResume);
   elements.newResumeButton.addEventListener('click', () => {
     state.currentResumeId = null;
-    setAvatar(null);
+    setAvatar(null, DEFAULT_AVATAR_CROP);
     resetPreview();
     fillForm(defaultResume());
     renderResumeList();
@@ -943,7 +1090,6 @@ function bindEvents() {
     clearToken();
     redirectToLogin();
   });
-
   elements.avatarFile.addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -951,21 +1097,41 @@ function bindEvents() {
     }
 
     try {
-      elements.avatarStatus.textContent = '头像上传中...';
-      const result = await uploadAvatar(file);
-      setAvatar(result.url);
-      showToast('头像上传成功');
+      elements.avatarStatus.textContent = '照片上传中...';
+      if (!state.currentResumeId) {
+        await saveResume({ silent: true });
+      }
+      if (!state.currentResumeId) {
+        throw new Error('请先创建简历后再上传照片');
+      }
+      const result = await uploadAvatar(file, state.currentResumeId);
+      setAvatar(result.url, DEFAULT_AVATAR_CROP);
+      showToast('照片上传成功');
     } catch (error) {
       console.error(error);
-      setAvatar(state.currentAvatarUrl);
+      setAvatar(state.currentAvatarUrl, state.currentAvatarCrop || DEFAULT_AVATAR_CROP);
       elements.avatarStatus.textContent = `上传失败：${String(error.message || error)}`;
-      showToast('头像上传失败');
+      showToast('照片上传失败');
     } finally {
       elements.avatarFile.value = '';
     }
   });
 
-  elements.avatarClear.addEventListener('click', () => setAvatar(null));
+  elements.avatarClear.addEventListener('click', () => {
+    setAvatar(null, DEFAULT_AVATAR_CROP);
+    updatePreviewMessage();
+  });
+
+  [elements.avatarScale, elements.avatarOffsetX, elements.avatarOffsetY].forEach((input) => {
+    input?.addEventListener('input', () => {
+      setAvatarCrop({
+        scale: elements.avatarScale.value,
+        offset_x: elements.avatarOffsetX.value,
+        offset_y: elements.avatarOffsetY.value,
+      });
+      updatePreviewMessage();
+    });
+  });
 
   document.querySelectorAll('[data-add-section]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -978,6 +1144,7 @@ function bindEvents() {
 
 async function bootstrap() {
   bindEvents();
+  applyAvatarFrameRatio();
   fillForm(defaultResume());
   updatePreviewMessage();
   const ok = await restoreSession();
@@ -992,3 +1159,4 @@ bootstrap().catch((error) => {
   console.error(error);
   showToast('页面初始化失败，请检查后端服务');
 });
+

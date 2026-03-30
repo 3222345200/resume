@@ -5,6 +5,12 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 DATE_VALUE_PATTERN = re.compile(r"^\d{4}\.\d{2}$")
 
+LAYOUT_SECTION_TITLE_SIZES = {"16", "18", "20"}
+LAYOUT_CONTENT_FONT_SIZES = {"12.5", "13.5", "14.5"}
+LAYOUT_CONTENT_LINE_HEIGHTS = {"1.28", "1.36", "1.5"}
+LAYOUT_SECTION_DIVIDER_GAPS = {"2", "4", "6"}
+HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
+
 
 def _parse_date_value(value: str) -> tuple[int, int] | None:
     if not value:
@@ -37,6 +43,11 @@ class BasicsSchema(BaseModel):
     summary: str = ""
     job_target: str = ""
     avatar_url: str | None = None
+    avatar_crop: dict[str, float] = Field(default_factory=lambda: {
+        "scale": 1,
+        "offset_x": 50,
+        "offset_y": 50,
+    })
 
     @field_validator("summary", mode="before")
     @classmethod
@@ -44,6 +55,64 @@ class BasicsSchema(BaseModel):
         if isinstance(value, list):
             return "\n".join(str(item).strip() for item in value if str(item).strip())
         return str(value or "")
+
+    @field_validator("avatar_crop", mode="before")
+    @classmethod
+    def normalize_avatar_crop(cls, value: object) -> dict[str, float]:
+        default = {"scale": 1.0, "offset_x": 50.0, "offset_y": 50.0}
+        if not isinstance(value, dict):
+            return default
+
+        def clamp(number: object, minimum: float, maximum: float, fallback: float) -> float:
+            try:
+                parsed = float(number)
+            except (TypeError, ValueError):
+                return fallback
+            return max(minimum, min(maximum, parsed))
+
+        return {
+            "scale": clamp(value.get("scale"), 1.0, 3.0, default["scale"]),
+            "offset_x": clamp(value.get("offset_x"), 0.0, 100.0, default["offset_x"]),
+            "offset_y": clamp(value.get("offset_y"), 0.0, 100.0, default["offset_y"]),
+        }
+
+
+class LayoutSchema(BaseModel):
+    section_title_size: str = "18"
+    content_font_size: str = "13.5"
+    content_line_height: str = "1.36"
+    section_divider_gap: str = "4"
+    font_color: str = "#111111"
+
+    @field_validator("section_title_size", mode="before")
+    @classmethod
+    def normalize_section_title_size(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if text in LAYOUT_SECTION_TITLE_SIZES else "18"
+
+    @field_validator("content_font_size", mode="before")
+    @classmethod
+    def normalize_content_font_size(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if text in LAYOUT_CONTENT_FONT_SIZES else "13.5"
+
+    @field_validator("content_line_height", mode="before")
+    @classmethod
+    def normalize_content_line_height(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if text in LAYOUT_CONTENT_LINE_HEIGHTS else "1.36"
+
+    @field_validator("section_divider_gap", mode="before")
+    @classmethod
+    def normalize_section_divider_gap(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if text in LAYOUT_SECTION_DIVIDER_GAPS else "4"
+
+    @field_validator("font_color", mode="before")
+    @classmethod
+    def normalize_font_color(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if HEX_COLOR_PATTERN.fullmatch(text) else "#111111"
 
 
 class EducationItemSchema(BaseModel):
@@ -172,6 +241,7 @@ class PortfolioItemSchema(BaseModel):
 
 class ResumeContentSchema(BaseModel):
     basics: BasicsSchema = Field(default_factory=BasicsSchema)
+    layout: LayoutSchema = Field(default_factory=LayoutSchema)
     education: list[EducationItemSchema] = Field(default_factory=list)
     experience: list[ExperienceItemSchema] = Field(default_factory=list)
     projects: list[ProjectItemSchema] = Field(default_factory=list)

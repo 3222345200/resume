@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
+from urllib.parse import unquote, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -34,12 +35,40 @@ def _resume_render_hash(resume: Resume) -> str:
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
+def _resume_download_name(resume: Resume) -> str:
+    content = resume.content if isinstance(resume.content, dict) else {}
+    basics = content.get("basics") if isinstance(content.get("basics"), dict) else {}
+    name = str(basics.get("name") or "").strip()
+    title = str(resume.title or "").strip()
+    base = "_".join(part for part in (name, title) if part) or "resume"
+    return f"{base}.pdf"
+
+
+def _resume_avatar_storage_ref(resume: Resume) -> tuple[str, str] | None:
+    content = resume.content if isinstance(resume.content, dict) else {}
+    basics = content.get("basics") if isinstance(content.get("basics"), dict) else {}
+    avatar_url = str(basics.get("avatar_url") or "").strip()
+    if not avatar_url:
+        return None
+    path = urlparse(avatar_url).path or avatar_url
+    marker = '/api/uploads/avatar/'
+    if marker not in path:
+        return None
+    storage_path = path.split(marker, 1)[1].lstrip('/')
+    if '/' not in storage_path:
+        return None
+    bucket_name, object_name = storage_path.split('/', 1)
+    return unquote(object_name), unquote(bucket_name)
+
+
 def _resume_pdf_url(resume: Resume) -> str | None:
     if not resume.pdf_object_key:
         return None
+    if resume.pdf_source_hash != _resume_render_hash(resume):
+        return None
     return get_presigned_pdf_url(
         resume.pdf_object_key,
-        f"{resume.title}.pdf",
+        _resume_download_name(resume),
         bucket_name=resume.pdf_bucket,
     )
 
@@ -194,8 +223,12 @@ def delete_resume(
     current_user: User = Depends(get_current_user),
 ) -> None:
     resume = _get_resume_or_404(resume_id, db, current_user)
-    object_name = resume.pdf_object_key
-    bucket_name = resume.pdf_bucket
+    pdf_object_name = resume.pdf_object_key
+    pdf_bucket_name = resume.pdf_bucket
+    avatar_ref = _resume_avatar_storage_ref(resume)
     db.delete(resume)
     db.commit()
-    delete_object(object_name, bucket_name=bucket_name)
+    delete_object(pdf_object_name, bucket_name=pdf_bucket_name)
+    if avatar_ref:
+        avatar_object_name, avatar_bucket_name = avatar_ref
+        delete_object(avatar_object_name, bucket_name=avatar_bucket_name)
