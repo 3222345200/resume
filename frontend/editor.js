@@ -41,6 +41,7 @@ const elements = {
   avatarOffsetY: document.getElementById('avatar-offset-y'),
   layoutFontColorValue: document.getElementById('layout_font_color_value'),
   sortableSections: document.getElementById('sortable-sections'),
+  addCustomSectionButton: document.getElementById('add-custom-section-btn'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
@@ -62,6 +63,7 @@ const DEFAULT_LAYOUT_SETTINGS = {
   font_color: '#111111',
 };
 const MOVABLE_SECTION_ORDER = ['skills', 'experience', 'projects', 'portfolio', 'research', 'honors'];
+const CUSTOM_SECTION_PREFIX = 'custom:';
 
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {};
@@ -122,6 +124,10 @@ function applySectionUiLabels() {
     hint.textContent = '\u4e0b\u9762\u8fd9\u4e9b\u6a21\u5757\u652f\u6301\u8c03\u6574\u987a\u5e8f\uff0cPDF \u4e5f\u4f1a\u6309\u8fd9\u91cc\u7684\u987a\u5e8f\u8f93\u51fa\u3002\u57fa\u7840\u4fe1\u606f\u548c\u6559\u80b2\u7ecf\u5386\u4fdd\u6301\u56fa\u5b9a\u3002';
   }
 
+  if (elements.addCustomSectionButton) {
+    elements.addCustomSectionButton.textContent = '\u65b0\u589e\u81ea\u5b9a\u4e49\u6a21\u5757';
+  }
+
   const labels = {
     skills: { title: '\u4e13\u4e1a\u6280\u80fd', add: '', field: '\u6280\u80fd\u5173\u952e\u8bcd' },
     experience: { title: '\u5de5\u4f5c / \u5b9e\u4e60\u7ecf\u5386', add: '\u65b0\u589e\u7ecf\u5386' },
@@ -164,15 +170,55 @@ function applySectionUiLabels() {
   }
 }
 
-function normalizeSectionOrder(value) {
+function slugifySectionId(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^[-_]+|[-_]+$/g, '')
+    .slice(0, 60);
+}
+
+function createCustomSectionId() {
+  return `section-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function getCustomSectionKey(id) {
+  return `${CUSTOM_SECTION_PREFIX}${id}`;
+}
+
+function normalizeCustomSections(value) {
+  const incoming = Array.isArray(value) ? value : [];
+  const usedIds = new Set();
+  return incoming.map((section, index) => {
+    const source = section && typeof section === 'object' ? section : {};
+    let id = slugifySectionId(source.id) || `section-${index + 1}`;
+    const baseId = id;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${baseId}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    return {
+      id,
+      title: String(source.title || '').trim(),
+      items: Array.isArray(source.items) ? source.items : [],
+    };
+  });
+}
+
+function normalizeSectionOrder(value, customSections = []) {
   const incoming = Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+  const customKeys = normalizeCustomSections(customSections).map((section) => getCustomSectionKey(section.id));
+  const allowed = [...MOVABLE_SECTION_ORDER, ...customKeys];
   const unique = [];
   incoming.forEach((key) => {
-    if (MOVABLE_SECTION_ORDER.includes(key) && !unique.includes(key)) {
+    if (allowed.includes(key) && !unique.includes(key)) {
       unique.push(key);
     }
   });
-  MOVABLE_SECTION_ORDER.forEach((key) => {
+  allowed.forEach((key) => {
     if (!unique.includes(key)) {
       unique.push(key);
     }
@@ -187,11 +233,27 @@ function getCurrentSectionOrder() {
   return Array.from(elements.sortableSections.querySelectorAll('[data-section-key]')).map((card) => card.dataset.sectionKey);
 }
 
-function applySectionOrder(order) {
+function getCustomSectionCards() {
+  if (!elements.sortableSections) {
+    return [];
+  }
+  return Array.from(elements.sortableSections.querySelectorAll('[data-custom-section="true"]'));
+}
+
+function syncCustomSectionTitle(card) {
+  const input = card?.querySelector('[data-custom-section-title="true"]');
+  const title = card?.querySelector('.section-toggle-title');
+  if (!input || !title) {
+    return;
+  }
+  title.textContent = input.value.trim() || '\u81ea\u5b9a\u4e49\u6a21\u5757';
+}
+
+function applySectionOrder(order, customSections = collectCustomSections()) {
   if (!elements.sortableSections) {
     return;
   }
-  const normalized = normalizeSectionOrder(order);
+  const normalized = normalizeSectionOrder(order, customSections);
   normalized.forEach((key) => {
     const card = elements.sortableSections.querySelector(`[data-section-key="${key}"]`);
     if (card) {
@@ -621,6 +683,7 @@ function defaultResume() {
       portfolio: [],
       research: [],
       honors: [],
+      custom_sections: [],
       skills: [],
       section_order: [...MOVABLE_SECTION_ORDER],
     },
@@ -871,7 +934,95 @@ function collectRepeatList(section) {
   });
 }
 
+function createCustomSectionCard(section = {}) {
+  const normalized = normalizeCustomSections([section])[0] || { id: createCustomSectionId(), title: '', items: [] };
+  const card = document.createElement('div');
+  card.className = 'full-width section-card';
+  card.dataset.collapsible = 'true';
+  card.dataset.sectionKey = getCustomSectionKey(normalized.id);
+  card.dataset.customSection = 'true';
+  card.dataset.customId = normalized.id;
+  card.innerHTML = `
+    <div class="section-title-row">
+      <button type="button" class="section-toggle" aria-expanded="true">
+        <span class="section-toggle-title">${normalized.title || '\u81ea\u5b9a\u4e49\u6a21\u5757'}</span>
+        <span class="section-toggle-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="section-actions">
+        <div class="section-order-actions" aria-label="section-order">
+          <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+          <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+        </div>
+        <button type="button" class="small-button" data-add-custom-item="true">新增条目</button>
+        <button type="button" class="text-button" data-remove-custom-section="true">删除</button>
+      </div>
+    </div>
+    <div class="section-card-body">
+      <div class="custom-section-header">
+        <label class="full-width">
+          <span>模块标题</span>
+          <input class="custom-section-title-input" data-custom-section-title="true" value="${escapeHtml(normalized.title || '')}" placeholder="例如：校园经历 / 社团经历 / 证书" />
+        </label>
+        <p class="custom-section-note">这一类模块会沿用项目经历风格，支持排序，也会一起输出到 PDF。</p>
+      </div>
+      <div class="repeat-list" data-custom-items="true"></div>
+    </div>
+  `;
+  const list = card.querySelector('[data-custom-items="true"]');
+  normalized.items.forEach((item) => list.appendChild(createRepeatItem('custom', item)));
+  card.querySelectorAll('[data-move-section]').forEach((button) => {
+    button.addEventListener('click', () => moveSection(card.dataset.sectionKey, button.dataset.moveSection));
+  });
+  card.querySelector('[data-add-custom-item="true"]')?.addEventListener('click', () => {
+    list.appendChild(createRepeatItem('custom', {}));
+    updatePreviewMessage();
+  });
+  card.querySelector('[data-remove-custom-section="true"]')?.addEventListener('click', () => {
+    card.remove();
+    syncSectionMoveButtons();
+    updatePreviewMessage();
+  });
+  card.querySelector('[data-custom-section-title="true"]')?.addEventListener('input', () => {
+    syncCustomSectionTitle(card);
+    updatePreviewMessage();
+  });
+  bindCollapsibleSections();
+  syncCustomSectionTitle(card);
+  return card;
+}
+
+function mountCustomSections(sections) {
+  getCustomSectionCards().forEach((card) => card.remove());
+  normalizeCustomSections(sections).forEach((section) => {
+    elements.sortableSections.appendChild(createCustomSectionCard(section));
+  });
+  syncSectionMoveButtons();
+}
+
+function collectCustomSections() {
+  return getCustomSectionCards().map((card, index) => {
+    const titleInput = card.querySelector('[data-custom-section-title="true"]');
+    const rawId = card.dataset.customId || `section-${index + 1}`;
+    const id = slugifySectionId(rawId) || `section-${index + 1}`;
+    card.dataset.customId = id;
+    card.dataset.sectionKey = getCustomSectionKey(id);
+    const items = Array.from(card.querySelectorAll('[data-custom-items="true"] .repeat-item')).map((item) => {
+      const result = {};
+      item.querySelectorAll('[data-field]').forEach((input) => {
+        result[input.dataset.field] = input.tagName === 'TEXTAREA' ? getRichTextValue(input) : input.value.trim();
+      });
+      return result;
+    });
+    return {
+      id,
+      title: titleInput?.value.trim() || '',
+      items,
+    };
+  });
+}
+
 function getFormPayload() {
+  const customSections = collectCustomSections();
   return {
     title: document.getElementById('title').value.trim(),
     template_id: document.getElementById('template_id').value,
@@ -899,8 +1050,9 @@ function getFormPayload() {
       portfolio: collectRepeatList('portfolio'),
       research: collectRepeatList('research'),
       honors: collectRepeatList('honors'),
+      custom_sections: customSections,
       skills: getRichTextValue(document.getElementById('skills')),
-      section_order: getCurrentSectionOrder(),
+      section_order: normalizeSectionOrder(getCurrentSectionOrder(), customSections),
     },
   };
 }
@@ -919,8 +1071,9 @@ function fillForm(resume) {
       portfolio: current.content?.portfolio || [],
       research: current.content?.research || [],
       honors: current.content?.honors || [],
+      custom_sections: normalizeCustomSections(current.content?.custom_sections || []),
       skills: current.content?.skills || [],
-      section_order: normalizeSectionOrder(current.content?.section_order),
+      section_order: normalizeSectionOrder(current.content?.section_order, current.content?.custom_sections || []),
     },
   });
   const layout = { ...DEFAULT_LAYOUT_SETTINGS, ...(current.content?.layout || {}) };
@@ -939,7 +1092,8 @@ function fillForm(resume) {
   document.getElementById('layout_font_color').value = layout.font_color;
   syncLayoutColorValue(layout.font_color);
   setRichTextValue(document.getElementById('skills'), current.content?.skills || []);
-  applySectionOrder(current.content?.section_order);
+  mountCustomSections(current.content?.custom_sections || []);
+  applySectionOrder(current.content?.section_order, current.content?.custom_sections || []);
 
   setAvatar(current.content?.basics?.avatar_url || null, current.content?.basics?.avatar_crop || DEFAULT_AVATAR_CROP);
   mountRepeatList('education', current.content?.education || []);
@@ -1267,6 +1421,17 @@ function bindEvents() {
       elements[`${section}List`].appendChild(createRepeatItem(section, {}));
       updatePreviewMessage();
     });
+  });
+  elements.addCustomSectionButton?.addEventListener('click', () => {
+    const card = createCustomSectionCard({
+      id: createCustomSectionId(),
+      title: '',
+      items: [{}],
+    });
+    elements.sortableSections.appendChild(card);
+    applySectionOrder(getCurrentSectionOrder(), collectCustomSections());
+    card.querySelector('[data-custom-section-title="true"]')?.focus();
+    updatePreviewMessage();
   });
 
   document.querySelectorAll('[data-move-section]').forEach((button) => {

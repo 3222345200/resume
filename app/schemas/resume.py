@@ -11,6 +11,7 @@ LAYOUT_CONTENT_LINE_HEIGHTS = {"1.28", "1.36", "1.5"}
 LAYOUT_SECTION_DIVIDER_GAPS = {"2", "4", "6"}
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
+CUSTOM_SECTION_PREFIX = "custom:"
 
 
 def _parse_date_value(value: str) -> tuple[int, int] | None:
@@ -240,6 +241,44 @@ class PortfolioItemSchema(BaseModel):
         return str(value or "")
 
 
+class CustomSectionItemSchema(BaseModel):
+    title: str = ""
+    subtitle: str = ""
+    start_date: str = ""
+    end_date: str = ""
+    description: str = ""
+    highlights: str = ""
+
+    @field_validator("description", "highlights", mode="before")
+    @classmethod
+    def normalize_rich_text_fields(cls, value: object) -> str:
+        if isinstance(value, list):
+            return "\n".join(str(item).strip() for item in value if str(item).strip())
+        return str(value or "")
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "CustomSectionItemSchema":
+        _validate_date_range(self.start_date, self.end_date)
+        return self
+
+
+class CustomSectionSchema(BaseModel):
+    id: str = ""
+    title: str = ""
+    items: list[CustomSectionItemSchema] = Field(default_factory=list)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def normalize_id(cls, value: object) -> str:
+        text = re.sub(r"[^a-zA-Z0-9_-]+", "-", str(value or "").strip()).strip("-_")
+        return text[:60]
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def normalize_title(cls, value: object) -> str:
+        return str(value or "").strip()
+
+
 class ResumeContentSchema(BaseModel):
     basics: BasicsSchema = Field(default_factory=BasicsSchema)
     layout: LayoutSchema = Field(default_factory=LayoutSchema)
@@ -249,6 +288,7 @@ class ResumeContentSchema(BaseModel):
     portfolio: list[PortfolioItemSchema] = Field(default_factory=list)
     research: list[ResearchItemSchema] = Field(default_factory=list)
     honors: list[HonorItemSchema] = Field(default_factory=list)
+    custom_sections: list[CustomSectionSchema] = Field(default_factory=list)
     skills: str = ""
     section_order: list[str] = Field(default_factory=lambda: list(MOVABLE_SECTION_ORDER))
 
@@ -259,19 +299,36 @@ class ResumeContentSchema(BaseModel):
             return "\n".join(str(item).strip() for item in value if str(item).strip())
         return str(value or "")
 
-    @field_validator("section_order", mode="before")
-    @classmethod
-    def normalize_section_order(cls, value: object) -> list[str]:
-        items = value if isinstance(value, list) else []
+    @model_validator(mode="after")
+    def normalize_custom_sections_and_order(self) -> "ResumeContentSchema":
+        normalized_custom_sections: list[CustomSectionSchema] = []
+        used_ids: set[str] = set()
+        for index, section in enumerate(self.custom_sections, start=1):
+            section_id = section.id or f"section-{index}"
+            base_id = section_id
+            suffix = 2
+            while section_id in used_ids:
+                section_id = f"{base_id}-{suffix}"
+                suffix += 1
+            section.id = section_id
+            used_ids.add(section_id)
+            normalized_custom_sections.append(section)
+        self.custom_sections = normalized_custom_sections
+
+        allowed_keys = list(MOVABLE_SECTION_ORDER) + [
+            f"{CUSTOM_SECTION_PREFIX}{section.id}" for section in self.custom_sections
+        ]
+        incoming = self.section_order if isinstance(self.section_order, list) else []
         unique: list[str] = []
-        for item in items:
+        for item in incoming:
             text = str(item or "").strip()
-            if text in MOVABLE_SECTION_ORDER and text not in unique:
+            if text in allowed_keys and text not in unique:
                 unique.append(text)
-        for key in MOVABLE_SECTION_ORDER:
+        for key in allowed_keys:
             if key not in unique:
                 unique.append(key)
-        return unique
+        self.section_order = unique
+        return self
 
 
 class ResumeBaseSchema(BaseModel):

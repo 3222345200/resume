@@ -36,6 +36,7 @@ DEFAULT_LAYOUT = {
     "font_color": "#111111",
 }
 MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
+CUSTOM_SECTION_PREFIX = "custom:"
 
 
 class RichTextSanitizer(HTMLParser):
@@ -297,7 +298,7 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         for item in (
             _compact_entry(
                 {
-                    "entry_type": plain_text(raw.get("entry_type")) or "瀹炰範缁忓巻",
+                    "entry_type": plain_text(raw.get("entry_type")) or "实习经历",
                     "company": plain_text(raw.get("company")),
                     "role": plain_text(raw.get("role")),
                     "department": plain_text(raw.get("department")),
@@ -369,28 +370,61 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         )
         if item
     ]
+    custom_sections = []
+    for index, raw_section in enumerate(content.get("custom_sections", []), start=1):
+        section_id = plain_text(raw_section.get("id")) or f"section-{index}"
+        title = plain_text(raw_section.get("title")) or "自定义模块"
+        items = [
+            item
+            for item in (
+                _compact_entry(
+                    {
+                        "title": plain_text(raw.get("title")),
+                        "subtitle": plain_text(raw.get("subtitle")),
+                        "start_date": date_label(raw.get("start_date")),
+                        "end_date": date_label(raw.get("end_date")),
+                        "description": _visible_rich_text(raw.get("description")),
+                        "highlights": _visible_rich_text(raw.get("highlights"), list_mode=True),
+                    }
+                )
+                for raw in raw_section.get("items", [])
+            )
+            if item
+        ]
+        custom_sections.append(
+            {
+                "key": f"{CUSTOM_SECTION_PREFIX}{section_id}",
+                "title": title,
+                "items": items,
+                "kind": "custom",
+            }
+        )
     skills = _visible_rich_text(content.get("skills"), list_mode=True)
     summary = _visible_rich_text(basics.get("summary"))
     layout = _layout_context(content.get("layout"))
 
+    custom_section_keys = [section["key"] for section in custom_sections]
+    allowed_keys = list(MOVABLE_SECTION_ORDER) + custom_section_keys
     requested_order = content.get("section_order") if isinstance(content.get("section_order"), list) else []
     normalized_order: list[str] = []
     for key in requested_order:
         text = str(key or "").strip()
-        if text in MOVABLE_SECTION_ORDER and text not in normalized_order:
+        if text in allowed_keys and text not in normalized_order:
             normalized_order.append(text)
-    for key in MOVABLE_SECTION_ORDER:
+    for key in allowed_keys:
         if key not in normalized_order:
             normalized_order.append(key)
 
     section_map = {
-        "skills": {"key": "skills", "title": "\u4e13\u4e1a\u6280\u80fd", "content": skills},
-        "experience": {"key": "experience", "title": "\u5de5\u4f5c / \u5b9e\u4e60\u7ecf\u5386", "items": experience},
-        "projects": {"key": "projects", "title": "\u9879\u76ee\u7ecf\u5386", "items": projects},
-        "portfolio": {"key": "portfolio", "title": "\u4f5c\u54c1\u96c6", "items": portfolio},
-        "research": {"key": "research", "title": "\u79d1\u7814\u7ecf\u5386", "items": research},
-        "honors": {"key": "honors", "title": "\u8363\u8a89\u5956\u9879", "items": honors},
+        "skills": {"key": "skills", "title": "专业技能", "content": skills},
+        "experience": {"key": "experience", "title": "工作 / 实习经历", "items": experience},
+        "projects": {"key": "projects", "title": "项目经历", "items": projects},
+        "portfolio": {"key": "portfolio", "title": "作品集", "items": portfolio},
+        "research": {"key": "research", "title": "科研经历", "items": research},
+        "honors": {"key": "honors", "title": "荣誉奖项", "items": honors},
     }
+    section_map.update({section["key"]: section for section in custom_sections})
+
     ordered_sections = []
     for key in normalized_order:
         section = section_map.get(key)
@@ -415,7 +449,6 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         "education": education,
         "ordered_sections": ordered_sections,
     }
-
 
 def render_resume_pdf(resume: Resume) -> bytes:
     browser_path = _find_browser()
@@ -459,3 +492,6 @@ def render_resume_pdf(resume: Resume) -> bytes:
         if not pdf_path.exists():
             raise RuntimeError("HTML ????? PDF ??????")
         return pdf_path.read_bytes()
+
+
+

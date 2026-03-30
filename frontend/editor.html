@@ -192,6 +192,9 @@
             </div>
           </div>
           <div class="full-width section-order-hint">Section order placeholder</div>
+          <div class="full-width custom-section-toolbar">
+            <button id="add-custom-section-btn" type="button" class="small-button">新增自定义模块</button>
+          </div>
 
           <div id="sortable-sections" class="full-width sortable-sections">
             <div class="full-width section-card" data-collapsible="true" data-section-key="skills">
@@ -437,6 +440,29 @@
         <label class="full-width">标题<input data-field="title" /></label>
         <label>标签<input data-field="label" placeholder="国家奖学金 / 竞赛一等奖" /></label>
         <label class="full-width">简介<textarea rows="4" data-field="summary"></textarea></label>
+      </div>
+    </div>
+  </template>
+
+  <template id="custom-template">
+    <div class="repeat-item" data-section="custom">
+      <div class="section-title-row compact">
+        <h4>自定义条目</h4>
+        <button type="button" class="text-button remove-btn">删除</button>
+      </div>
+      <div class="form-grid nested-grid">
+        <label>标题<input data-field="title" /></label>
+        <label>副标题<input data-field="subtitle" placeholder="例如：角色 / 组织 / 标签" /></label>
+        <label>开始时间<select data-field="start_date" data-date-select="true"></select></label>
+        <label>结束时间<select data-field="end_date" data-date-select="true" data-allow-present="true"></select></label>
+        <label class="full-width">
+          描述
+          <textarea rows="4" data-field="description" data-rich-text="true" data-rich-mode="paragraphs" placeholder="介绍这段经历的背景、职责或成果"></textarea>
+        </label>
+        <label class="full-width">
+          重点内容
+          <textarea rows="4" data-field="highlights" data-rich-text="true" data-rich-mode="list" placeholder="可继续补充要点列表"></textarea>
+        </label>
       </div>
     </div>
   </template>

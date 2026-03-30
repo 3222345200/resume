@@ -519,6 +519,32 @@
             </div>
           {% endfor %}
         </section>
+      {% elif section.get("kind") == "custom" %}
+        <section class="section">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title"><strong>{{ item.title }}</strong></div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.subtitle %}
+                <div class="role-line"><em>{{ item.subtitle }}</em></div>
+              {% endif %}
+              {% if item.description %}
+                <div class="rich">{{ item.description | safe }}</div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="project-prefix">重点内容</div>
+                <div class="rich project-list">{{ item.highlights | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
       {% elif section["key"] == "honors" %}
         <section class="section">
           <h2 class="section-title">
@@ -543,3 +569,4 @@
   </div>
 </body>
 </html>
+
