@@ -1,14 +1,14 @@
-import hashlib
+﻿import hashlib
 import json
 from datetime import datetime, timezone
 from urllib.parse import unquote, urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.core.security import get_current_user
+from app.core.security import decode_access_token, get_current_user, get_optional_current_user
 from app.models.resume import Resume
 from app.models.user import User
 from app.schemas.resume import (
@@ -220,9 +220,21 @@ def get_resume_pdf(
 @router.get("/{resume_id}/pdf/inline", include_in_schema=False)
 def preview_resume_pdf(
     resume_id: str,
+    token: str | None = Query(default=None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ) -> Response:
+    if current_user is None:
+        if not token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="请先登录")
+        payload = decode_access_token(token)
+        username = str(payload.get("sub") or "").strip()
+        if not username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="请先登录")
+        current_user = db.query(User).filter(User.username == username).first()
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="请先登录")
+
     resume = _get_resume_or_404(resume_id, db, current_user)
     if not resume.pdf_object_key or resume.pdf_source_hash != _resume_render_hash(resume):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not generated")
@@ -231,7 +243,7 @@ def preview_resume_pdf(
     if not pdf_bytes:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not found")
 
-    safe_name = _resume_download_name(resume).replace('"', '')
+    safe_name = "resume.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
