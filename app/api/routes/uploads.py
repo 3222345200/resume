@@ -1,7 +1,7 @@
 ﻿from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from fastapi.responses import FileResponse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,11 +11,21 @@ from app.core.security import get_current_user
 from app.models.resume import Resume
 from app.models.user import User
 from app.schemas.resume import UploadResponseSchema
-from app.services.minio_storage import UPLOADS_ROOT, build_avatar_proxy_url, get_presigned_avatar_url, upload_user_avatar
+from app.services.minio_storage import UPLOADS_ROOT, build_avatar_proxy_url, load_object_bytes, upload_user_avatar
 ALLOWED_SUFFIXES = {'.jpg', '.jpeg', '.png', '.webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024
 
 router = APIRouter(prefix='/uploads', tags=['uploads'])
+
+
+def _avatar_media_type(path: str) -> str:
+    suffix = Path(path).suffix.lower()
+    return {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp',
+    }.get(suffix, 'application/octet-stream')
 
 
 @router.post('/avatar', response_model=UploadResponseSchema, status_code=status.HTTP_201_CREATED)
@@ -54,8 +64,13 @@ def get_avatar(bucket_name: str, object_path: str):
             raise HTTPException(status_code=404, detail='头像不存在')
         return FileResponse(local_path)
 
-    avatar_url = get_presigned_avatar_url(object_path, bucket_name=bucket_name)
-    if not avatar_url:
+    avatar_bytes = load_object_bytes(object_path, bucket_name=bucket_name)
+    if not avatar_bytes:
         raise HTTPException(status_code=404, detail='头像不存在')
-    return RedirectResponse(url=avatar_url, status_code=307)
-
+    return Response(
+        content=avatar_bytes,
+        media_type=_avatar_media_type(object_path),
+        headers={
+            'Cache-Control': 'private, max-age=300',
+        },
+    )
