@@ -53,7 +53,7 @@ const DEFAULT_AVATAR_CROP = {
 const ONE_INCH_PHOTO_RATIO = 5 / 7;
 const MONTH_PICKER_MIN_YEAR = 1990;
 const MONTH_PICKER_MAX_YEAR = 2035;
-const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+const MONTH_LABELS = ['1�?, '2�?, '3�?, '4�?, '5�?, '6�?, '7�?, '8�?, '9�?, '10�?, '11�?, '12�?];
 const RICH_ALLOWED_TAGS = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A']);
 const DEFAULT_LAYOUT_SETTINGS = {
   section_title_size: '18',
@@ -490,7 +490,7 @@ function formatMonthPickerValue(value) {
   if (!parsed) {
     return value;
   }
-  return `${parsed.year}年${parsed.month}月`;
+  return `${parsed.year}�?{parsed.month}月`;
 }
 
 function closeAllMonthPickers(exceptInput = null) {
@@ -606,19 +606,19 @@ function createMonthPicker(input) {
     </button>
     <div class="month-picker-popover">
       <div class="month-picker-header">
-        <button type="button" class="month-picker-nav month-picker-prev" aria-label="上一年"></button>
+        <button type="button" class="month-picker-nav month-picker-prev" aria-label="上一�?></button>
         <div class="month-picker-title"></div>
-        <button type="button" class="month-picker-nav month-picker-next" aria-label="下一年"></button>
+        <button type="button" class="month-picker-nav month-picker-next" aria-label="下一�?></button>
       </div>
       ${allowPresent ? '<button type="button" class="month-picker-present">至今</button>' : ''}
       <div class="month-picker-weekdays">
         <span>一</span>
-        <span>二</span>
-        <span>三</span>
-        <span>四</span>
-        <span>五</span>
-        <span>六</span>
-        <span>日</span>
+        <span>�?/span>
+        <span>�?/span>
+        <span>�?/span>
+        <span>�?/span>
+        <span>�?/span>
+        <span>�?/span>
       </div>
       <div class="month-picker-grid"></div>
     </div>
@@ -662,7 +662,7 @@ function createMonthPicker(input) {
 
 function defaultResume() {
   return {
-    title: '新建简历',
+    title: '新建简�?,
     template_id: 'pro_resume',
     rendered_pdf_url: null,
     content: {
@@ -715,7 +715,7 @@ function applyCurrentUser(user) {
   state.currentUser = user || null;
   elements.currentUser.textContent = state.currentUser
     ? `已登录：${state.currentUser.username}`
-    : '未登录';
+    : '未登�?;
 }
 
 function handleUnauthorized() {
@@ -736,10 +736,10 @@ function setAvatar(url, crop = state.currentAvatarCrop || DEFAULT_AVATAR_CROP) {
   setAvatarCrop(crop);
   if (state.currentAvatarUrl) {
     elements.avatarPreview.src = state.currentAvatarUrl;
-    elements.avatarStatus.textContent = '照片已上传，可按一寸照比例调整后再导出 PDF。';
+    elements.avatarStatus.textContent = '照片已上传，可按一寸照比例调整后再导出 PDF�?;
   } else {
     elements.avatarPreview.src = DEFAULT_AVATAR_PLACEHOLDER;
-    elements.avatarStatus.textContent = '未上传照片时，将使用默认占位图。';
+    elements.avatarStatus.textContent = '未上传照片时，将使用默认占位图�?;
   }
 }
 
@@ -774,7 +774,10 @@ function setPreviewUrl(url) {
   elements.downloadLink.target = '_blank';
   elements.downloadLink.rel = 'noopener';
   elements.downloadLink.classList.remove('hidden-link');
-  elements.pdfPreview.src = state.currentPdfUrl;
+  const previewUrl = state.currentResumeId
+    ? `/api/resumes/${state.currentResumeId}/pdf/inline?t=${Date.now()}`
+    : state.currentPdfUrl;
+  elements.pdfPreview.src = previewUrl;
   elements.pdfPreview.classList.remove('hidden-preview');
   elements.previewEmpty.classList.add('hidden-preview');
 }
@@ -859,7 +862,7 @@ function validateSectionDateRanges() {
     const isValid = syncDateRangeState(item);
     if (!isValid) {
       item.querySelector('[data-field="end_date"]')?.nextElementSibling?.querySelector('.month-picker-trigger')?.focus();
-      showToast('开始日期不能晚于结束日期');
+      showToast('开始日期不能晚于结束日�?);
       return false;
     }
   }
@@ -961,9 +964,9 @@ function createCustomSectionCard(section = {}) {
       <div class="custom-section-header">
         <label class="full-width">
           <span>模块标题</span>
-          <input class="custom-section-title-input" data-custom-section-title="true" value="${escapeHtml(normalized.title || '')}" placeholder="例如：校园经历 / 社团经历 / 证书" />
+          <input class="custom-section-title-input" data-custom-section-title="true" value="${escapeHtml(normalized.title || '')}" placeholder="例如：校园经�?/ 社团经历 / 证书" />
         </label>
-        <p class="custom-section-note">这一类模块会沿用项目经历风格，支持排序，也会一起输出到 PDF。</p>
+        <p class="custom-section-note">这一类模块会沿用项目经历风格，支持排序，也会一起输出到 PDF�?/p>
       </div>
       <div class="repeat-list" data-custom-items="true"></div>
     </div>
@@ -1122,7 +1125,7 @@ function renderResumeList() {
     item.className = `resume-item${resume.id === state.currentResumeId ? ' active' : ''}`;
     item.innerHTML = `
       <strong>${resume.title}</strong>
-      <div class="meta-text">模板：${resume.template_id}</div>
+      <div class="meta-text">模板�?{resume.template_id}</div>
       <small>${new Date(resume.updated_at).toLocaleString('zh-CN')}</small>
     `;
     item.addEventListener('click', () => {
@@ -1142,7 +1145,7 @@ function renderTemplateOptions() {
 
 function updatePreviewMessage() {
   if (!state.currentPdfUrl) {
-    setPreviewMessage('生成 PDF 后，这里会直接显示简历预览。');
+    setPreviewMessage('生成 PDF 后，这里会直接显示简历预览�?);
   }
 }
 
@@ -1173,7 +1176,7 @@ async function request(path, options = {}) {
   const response = await fetch(path, { ...options, headers });
   if (response.status === 401) {
     handleUnauthorized();
-    throw new Error('登录已失效，请重新登录');
+    throw new Error('登录已失效，请重新登�?);
   }
   if (!response.ok) {
     const contentType = response.headers.get('content-type') || '';
@@ -1200,7 +1203,7 @@ async function uploadAvatar(file, resumeId) {
 
   if (response.status === 401) {
     handleUnauthorized();
-    throw new Error('登录已失效，请重新登录');
+    throw new Error('登录已失效，请重新登�?);
   }
   if (!response.ok) {
     const error = await response.text();
@@ -1273,7 +1276,7 @@ async function renderPdf() {
     const payloadSignature = getPayloadSignature(payload);
     if (state.currentPdfUrl && state.renderedPayloadSignature === payloadSignature) {
       setPreviewUrl(state.currentPdfUrl);
-      showToast('内容未变化，已复用上次 PDF');
+      showToast('内容未变化，已复用上�?PDF');
       return;
     }
     if (!payload.title) {
@@ -1292,11 +1295,11 @@ async function renderPdf() {
       fillForm(result.resume);
     }
     setPreviewUrl(result.pdf_url);
-    showToast('PDF 已生成');
+    showToast('PDF 已生�?);
   } catch (error) {
     console.error(error);
     resetPreview();
-    setPreviewMessage(`生成失败：${String(error.message || error)}`);
+    setPreviewMessage(`生成失败�?{String(error.message || error)}`);
     showToast('生成 PDF 失败');
   } finally {
     elements.renderButton.disabled = false;
@@ -1305,7 +1308,7 @@ async function renderPdf() {
 
 async function deleteResume() {
   if (!state.currentResumeId) {
-    showToast('当前没有可删除的简历');
+    showToast('当前没有可删除的简�?);
     return;
   }
 
@@ -1379,12 +1382,12 @@ function bindEvents() {
     }
 
     try {
-      elements.avatarStatus.textContent = '照片上传中...';
+      elements.avatarStatus.textContent = '照片上传�?..';
       if (!state.currentResumeId) {
         await saveResume({ silent: true });
       }
       if (!state.currentResumeId) {
-        throw new Error('请先创建简历后再上传照片');
+        throw new Error('请先创建简历后再上传照�?);
       }
       const result = await uploadAvatar(file, state.currentResumeId);
       setAvatar(result.url, DEFAULT_AVATAR_CROP);
@@ -1392,7 +1395,7 @@ function bindEvents() {
     } catch (error) {
       console.error(error);
       setAvatar(state.currentAvatarUrl, state.currentAvatarCrop || DEFAULT_AVATAR_CROP);
-      elements.avatarStatus.textContent = `上传失败：${String(error.message || error)}`;
+      elements.avatarStatus.textContent = `上传失败�?{String(error.message || error)}`;
       showToast('照片上传失败');
     } finally {
       elements.avatarFile.value = '';
@@ -1463,6 +1466,6 @@ async function bootstrap() {
 
 bootstrap().catch((error) => {
   console.error(error);
-  showToast('页面初始化失败，请检查后端服务');
+  showToast('页面初始化失败，请检查后端服�?);
 });
 

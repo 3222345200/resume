@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from urllib.parse import unquote, urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,7 +19,7 @@ from app.schemas.resume import (
     ResumeUpdateSchema,
 )
 from app.services.html_pdf import render_resume_pdf
-from app.services.minio_storage import delete_object, get_presigned_pdf_url, upload_user_pdf
+from app.services.minio_storage import delete_object, get_presigned_pdf_url, load_object_bytes, upload_user_pdf
 from app.services.templates import normalize_template_id
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
@@ -215,6 +215,31 @@ def get_resume_pdf(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not generated")
     return RenderResponseSchema(message="PDF ready", pdf_url=pdf_url)
 
+
+
+@router.get("/{resume_id}/pdf/inline", include_in_schema=False)
+def preview_resume_pdf(
+    resume_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Response:
+    resume = _get_resume_or_404(resume_id, db, current_user)
+    if not resume.pdf_object_key or resume.pdf_source_hash != _resume_render_hash(resume):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not generated")
+
+    pdf_bytes = load_object_bytes(resume.pdf_object_key, bucket_name=resume.pdf_bucket)
+    if not pdf_bytes:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF not found")
+
+    safe_name = _resume_download_name(resume).replace('"', '')
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{safe_name}"',
+            "Cache-Control": "no-store",
+        },
+    )
 
 @router.delete("/{resume_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_resume(
