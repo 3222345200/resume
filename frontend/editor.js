@@ -776,7 +776,7 @@ function setPreviewUrl(url) {
   elements.downloadLink.target = '_blank';
   elements.downloadLink.rel = 'noopener';
   elements.downloadLink.classList.remove('hidden-link');
-  const previewVersion = encodeURIComponent(state.renderedPayloadSignature || state.currentResumeId || 'latest');
+  const previewVersion = encodeURIComponent(shortHash(state.renderedPayloadSignature || state.currentResumeId || 'latest'));
   const previewUrl = state.currentResumeId
     ? `/api/resumes/${state.currentResumeId}/pdf/inline?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}`
     : state.currentPdfUrl;
@@ -793,6 +793,16 @@ function stableStringify(value) {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
   }
   return JSON.stringify(value ?? null);
+}
+
+function shortHash(value) {
+  const text = String(value || "");
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16);
 }
 
 function getPayloadSignature(payload) {
