@@ -249,7 +249,7 @@ def preview_resume_pdf(
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'inline; filename="{safe_name}"',
-            "Cache-Control": "no-store",
+            "Cache-Control": "private, max-age=300",
         },
     )
 

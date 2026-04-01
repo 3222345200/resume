@@ -776,8 +776,9 @@ function setPreviewUrl(url) {
   elements.downloadLink.target = '_blank';
   elements.downloadLink.rel = 'noopener';
   elements.downloadLink.classList.remove('hidden-link');
+  const previewVersion = encodeURIComponent(state.renderedPayloadSignature || state.currentResumeId || 'latest');
   const previewUrl = state.currentResumeId
-    ? `/api/resumes/${state.currentResumeId}/pdf/inline?t=${Date.now()}&token=${encodeURIComponent(state.authToken || "")}`
+    ? `/api/resumes/${state.currentResumeId}/pdf/inline?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}`
     : state.currentPdfUrl;
   elements.pdfPreview.src = previewUrl;
   elements.pdfPreview.classList.remove('hidden-preview');
