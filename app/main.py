@@ -12,6 +12,7 @@ from app.api.routes.templates import router as templates_router
 from app.api.routes.uploads import router as uploads_router
 from app.core.config import settings
 from app.core.db import engine
+from app.core.logging import configure_logging, get_logger, log_requests
 from app.db.base import Base
 from app.db.bootstrap import ensure_runtime_schema
 from app.services.minio_storage import ensure_bucket_exists
@@ -21,10 +22,14 @@ FRONTEND_DIR = BASE_DIR / 'frontend'
 UPLOADS_DIR = BASE_DIR / 'uploads'
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
+configure_logging()
+logger = get_logger('main')
+
 app = FastAPI(
     title=settings.app_name,
     debug=settings.app_debug,
 )
+app.middleware('http')(log_requests)
 
 app.mount('/assets', StaticFiles(directory=str(FRONTEND_DIR)), name='assets')
 app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
@@ -37,9 +42,11 @@ app.include_router(uploads_router, prefix='/api')
 
 @app.on_event('startup')
 def on_startup() -> None:
+    logger.info('startup_begin app_env=%s debug=%s', settings.app_env, settings.app_debug)
     Base.metadata.create_all(bind=engine)
     ensure_runtime_schema(engine)
     ensure_bucket_exists()
+    logger.info('startup_complete')
 
 
 @app.get('/', include_in_schema=False)
