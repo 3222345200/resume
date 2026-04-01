@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     minio_access_key: str = "resumeadmin"
     minio_secret_key: str = "ResumeMinio#2026"
     minio_bucket: str = "resume-pdfs"
+    minio_region: str = "us-east-1"
     minio_secure: bool = False
     minio_pdf_prefix: str = "resumes"
     minio_avatar_prefix: str = "avatars"

@@ -21,6 +21,7 @@ def _build_client(endpoint: str) -> Minio:
         access_key=settings.minio_access_key,
         secret_key=settings.minio_secret_key,
         secure=settings.minio_secure,
+        region=settings.minio_region,
         http_client=PoolManager(
             timeout=Timeout(connect=1.0, read=2.0),
             retries=Retry(total=0, connect=0, read=0, redirect=0),
