@@ -42,6 +42,7 @@ const elements = {
   layoutFontColorValue: document.getElementById('layout_font_color_value'),
   sortableSections: document.getElementById('sortable-sections'),
   addCustomSectionButton: document.getElementById('add-custom-section-btn'),
+  editorShell: document.getElementById('editor-shell'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
@@ -716,6 +717,7 @@ function applyCurrentUser(user) {
   elements.currentUser.textContent = state.currentUser
     ? `已登录：${state.currentUser.username}`
     : '未登�?;
+  elements.editorShell?.classList.remove('hidden-auth');
 }
 
 function handleUnauthorized() {
