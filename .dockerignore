@@ -1,0 +1,11 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+uvicorn.out.log
+uvicorn.err.log
+postgres_data
+minio_data
