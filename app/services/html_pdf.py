@@ -2,6 +2,8 @@
 
 import base64
 import html
+import os
+import shutil
 import subprocess
 import tempfile
 from html.parser import HTMLParser
@@ -19,10 +21,14 @@ TEMPLATE_FILE = "resume.html.j2"
 DEFAULT_AVATAR_CANDIDATES = [
     APP_ROOT.parent / "frontend" / "default-avatar.jpg",
 ]
-EDGE_CANDIDATES = [
+BROWSER_CANDIDATES = [
     Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
     Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
     Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe"),
+    Path("/usr/bin/google-chrome"),
+    Path("/usr/bin/chromium"),
+    Path("/usr/bin/chromium-browser"),
+    Path("/usr/bin/microsoft-edge"),
 ]
 RUNTIME_ROOT = Path(tempfile.gettempdir()) / "resume_runtime_pdf"
 ALLOWED_RICH_TAGS = {"p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "a"}
@@ -188,10 +194,17 @@ def _build_environment() -> Environment:
 def _resolve_local_path(path_or_url: str | None) -> Path | None:
     if not path_or_url:
         return None
+
     parsed = urlparse(path_or_url)
     raw_path = parsed.path or path_or_url
-    cleaned = raw_path.lstrip("/").replace("/", "\\")
-    for candidate in (Path(path_or_url), Path(cleaned), Path(".") / cleaned):
+
+    candidates = [
+        Path(path_or_url),
+        Path(raw_path),
+        Path(".") / raw_path.lstrip("/"),
+    ]
+
+    for candidate in candidates:
         if candidate.exists() and candidate.is_file():
             return candidate
     return None
@@ -223,13 +236,13 @@ def _avatar_data_uri_from_storage_url(avatar_url: str | None) -> str | None:
     if not avatar_url:
         return None
     path = urlparse(avatar_url).path or avatar_url
-    marker = '/api/uploads/avatar/'
+    marker = "/api/uploads/avatar/"
     if marker not in path:
         return None
-    storage_path = path.split(marker, 1)[1].lstrip('/')
-    if '/' not in storage_path:
+    storage_path = path.split(marker, 1)[1].lstrip("/")
+    if "/" not in storage_path:
         return None
-    bucket_name, object_name = storage_path.split('/', 1)
+    bucket_name, object_name = storage_path.split("/", 1)
     data = load_object_bytes(unquote(object_name), bucket_name=unquote(bucket_name))
     if not data:
         return None
@@ -267,10 +280,22 @@ def _normalize_avatar_crop(value: object) -> dict[str, float]:
 
 
 def _find_browser() -> Path:
-    for candidate in EDGE_CANDIDATES:
+    env_browser = os.getenv("CHROME_BIN") or os.getenv("BROWSER_PATH")
+    if env_browser:
+        candidate = Path(env_browser)
         if candidate.exists():
             return candidate
-    raise RuntimeError("未找到可用的 Edge 或 Chrome 浏览器，无法生成 PDF。")
+
+    for command in ("google-chrome", "chromium", "chromium-browser", "microsoft-edge"):
+        resolved = shutil.which(command)
+        if resolved:
+            return Path(resolved)
+
+    for candidate in BROWSER_CANDIDATES:
+        if candidate.exists():
+            return candidate
+
+    raise RuntimeError("未找到可用的浏览器（Chrome / Chromium / Edge），无法生成 PDF。")
 
 
 def _context_from_resume(resume: Resume) -> dict[str, object]:
@@ -450,6 +475,7 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         "ordered_sections": ordered_sections,
     }
 
+
 def render_resume_pdf(resume: Resume) -> bytes:
     browser_path = _find_browser()
     env = _build_environment()
@@ -490,8 +516,5 @@ def render_resume_pdf(resume: Resume) -> bytes:
             raise RuntimeError((result.stderr or result.stdout or "HTML to PDF generation failed").strip())
 
         if not pdf_path.exists():
-            raise RuntimeError("HTML ????? PDF ??????")
+            raise RuntimeError("HTML 转 PDF 失败，未生成 PDF 文件。")
         return pdf_path.read_bytes()
-
-
-
