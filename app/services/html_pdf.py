@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import base64
 import html
@@ -475,6 +475,10 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         "ordered_sections": ordered_sections,
     }
 
+def render_resume_html(resume: Resume) -> str:
+    env = _build_environment()
+    template = env.get_template(TEMPLATE_FILE)
+    return template.render(**_context_from_resume(resume))
 
 def render_resume_pdf(resume: Resume) -> bytes:
     browser_path = _find_browser()
@@ -489,7 +493,7 @@ def render_resume_pdf(resume: Resume) -> bytes:
         profile_path = workspace / "edge-profile"
         profile_path.mkdir(parents=True, exist_ok=True)
 
-        html_path.write_text(template.render(**_context_from_resume(resume)), encoding="utf-8")
+        html_path.write_text(render_resume_html(resume), encoding="utf-8")
 
         command = [
             str(browser_path),

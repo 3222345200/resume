@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from urllib.parse import unquote, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,7 @@ from app.schemas.resume import (
     ResumeReadSchema,
     ResumeUpdateSchema,
 )
-from app.services.html_pdf import render_resume_pdf
+from app.services.html_pdf import render_resume_html, render_resume_pdf
 from app.services.minio_storage import delete_object, get_presigned_pdf_url, load_object_bytes, upload_user_pdf
 from app.services.templates import normalize_template_id
 
@@ -231,6 +232,33 @@ def get_resume_pdf(
     return RenderResponseSchema(message='PDF ready', pdf_url=pdf_url)
 
 
+
+@router.get('/{resume_id}/preview', include_in_schema=False)
+def preview_resume_html(
+    resume_id: str,
+    token: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+) -> HTMLResponse:
+    if current_user is None:
+        if not token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='请先登录')
+        payload = decode_access_token(token)
+        username = str(payload.get('sub') or '').strip()
+        if not username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='请先登录')
+        current_user = db.query(User).filter(User.username == username).first()
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='请先登录')
+
+    resume = _get_resume_or_404(resume_id, db, current_user)
+    logger.info('resume_html_preview_served user_id=%s resume_id=%s', current_user.id, resume.id)
+    return HTMLResponse(
+        content=render_resume_html(resume),
+        headers={
+            'Cache-Control': 'private, max-age=0, must-revalidate',
+        },
+    )
 @router.get('/{resume_id}/pdf/inline', include_in_schema=False)
 def preview_resume_pdf(
     resume_id: str,

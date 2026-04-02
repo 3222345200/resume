@@ -860,6 +860,17 @@ function resetPreview() {
   elements.previewEmpty.classList.remove('hidden-preview');
 }
 
+
+function setHtmlPreview() {
+  if (!state.currentResumeId) {
+    resetPreview();
+    return;
+  }
+  const previewVersion = encodeURIComponent(shortHash(`${state.currentResumeId}:${Date.now()}`));
+  elements.pdfPreview.src = `/api/resumes/${state.currentResumeId}/preview?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}`;
+  elements.pdfPreview.classList.remove('hidden-preview');
+  elements.previewEmpty.classList.add('hidden-preview');
+}
 function buildResumeFilename() {
   const name = document.getElementById('basics_name').value.trim();
   const title = document.getElementById('title').value.trim();
@@ -870,7 +881,9 @@ function buildResumeFilename() {
 function setPreviewUrl(url) {
   state.currentPdfUrl = url || null;
   if (!state.currentPdfUrl) {
-    resetPreview();
+    elements.downloadLink.removeAttribute('href');
+    elements.downloadLink.removeAttribute('download');
+    elements.downloadLink.classList.add('hidden-link');
     return;
   }
 
@@ -879,14 +892,7 @@ function setPreviewUrl(url) {
   elements.downloadLink.download = filename;
   elements.downloadLink.target = '_blank';
   elements.downloadLink.rel = 'noopener';
-  elements.downloadLink.classList.remove('hidden-link');
-  const previewVersion = encodeURIComponent(shortHash(state.renderedPayloadSignature || state.currentResumeId || 'latest'));
-  const previewUrl = state.currentResumeId
-    ? `/api/resumes/${state.currentResumeId}/pdf/inline?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}`
-    : state.currentPdfUrl;
-  elements.pdfPreview.src = previewUrl;
-  elements.pdfPreview.classList.remove('hidden-preview');
-  elements.previewEmpty.classList.add('hidden-preview');
+  elements.downloadLink.classList.add('hidden-link');
 }
 
 function stableStringify(value) {
@@ -1282,6 +1288,9 @@ function fillForm(resume) {
   if (current.rendered_pdf_url) {
     state.renderedPayloadSignature = renderedSignature;
     setPreviewUrl(current.rendered_pdf_url);
+  }
+  if (current.id) {
+    setHtmlPreview();
   } else {
     resetPreview();
   }
@@ -1442,6 +1451,7 @@ async function saveResume({ silent = false } = {}) {
   state.currentResumeId = saved.id;
   await loadResumes();
   fillForm(saved);
+  setHtmlPreview();
 
   if (!silent) {
     showToast('简历已保存');
@@ -1453,8 +1463,6 @@ async function renderPdf() {
   try {
     elements.renderButton.disabled = true;
     setPreviewMessage('正在生成 PDF，请稍等...');
-    elements.previewEmpty.classList.remove('hidden-preview');
-    elements.pdfPreview.classList.add('hidden-preview');
 
     if (!validateSectionDateRanges()) {
       return;
@@ -1469,13 +1477,19 @@ async function renderPdf() {
 
     const payload = getFormPayload();
     const payloadSignature = getPayloadSignature(payload);
-    if (state.currentPdfUrl && state.renderedPayloadSignature === payloadSignature) {
-      setPreviewUrl(state.currentPdfUrl);
-      showToast('内容未变化，已复用上次 PDF');
-      return;
-    }
     if (!payload.title) {
       showToast('标题不能为空');
+      return;
+    }
+
+    if (state.currentPdfUrl && state.renderedPayloadSignature === payloadSignature) {
+      const cachedLink = document.createElement('a');
+      cachedLink.href = state.currentPdfUrl;
+      cachedLink.download = buildResumeFilename();
+      cachedLink.target = '_blank';
+      cachedLink.rel = 'noopener';
+      cachedLink.click();
+      showToast('内容未变化，已复用上次 PDF');
       return;
     }
 
@@ -1490,10 +1504,16 @@ async function renderPdf() {
       fillForm(result.resume);
     }
     setPreviewUrl(result.pdf_url);
-    showToast('PDF 已生成');
+    setHtmlPreview();
+    const downloadLink = document.createElement('a');
+    downloadLink.href = result.pdf_url;
+    downloadLink.download = buildResumeFilename();
+    downloadLink.target = '_blank';
+    downloadLink.rel = 'noopener';
+    downloadLink.click();
+    showToast('PDF 已生成并开始下载');
   } catch (error) {
     console.error(error);
-    resetPreview();
     setPreviewMessage(`生成失败：${String(error.message || error)}`);
     showToast('生成 PDF 失败');
   } finally {
