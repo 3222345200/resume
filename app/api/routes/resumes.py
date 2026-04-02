@@ -1,7 +1,7 @@
 import hashlib
 import json
 from datetime import datetime, timezone
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse
@@ -231,6 +231,52 @@ def get_resume_pdf(
     logger.info('resume_pdf_ready user_id=%s resume_id=%s', current_user.id, resume.id)
     return RenderResponseSchema(message='PDF ready', pdf_url=pdf_url)
 
+
+@router.get('/{resume_id}/pdf/download', include_in_schema=False)
+def download_resume_pdf(
+    resume_id: str,
+    token: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+) -> Response:
+    if current_user is None:
+        if not token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='璇峰厛鐧诲綍')
+        payload = decode_access_token(token)
+        username = str(payload.get('sub') or '').strip()
+        if not username:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='璇峰厛鐧诲綍')
+        current_user = db.query(User).filter(User.username == username).first()
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='璇峰厛鐧诲綍')
+
+    resume = _get_resume_or_404(resume_id, db, current_user)
+    if not resume.pdf_object_key or resume.pdf_source_hash != _resume_render_hash(resume):
+        logger.warning('resume_pdf_download_missing user_id=%s resume_id=%s', current_user.id, resume.id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='PDF not generated')
+
+    pdf_bytes = load_object_bytes(resume.pdf_object_key, bucket_name=resume.pdf_bucket)
+    if not pdf_bytes:
+        logger.warning(
+            'resume_pdf_download_storage_missing user_id=%s resume_id=%s object_key=%s',
+            current_user.id,
+            resume.id,
+            resume.pdf_object_key,
+        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='PDF not found')
+
+    download_name = _resume_download_name(resume).replace('"', '').strip() or 'resume.pdf'
+    ascii_name = 'resume.pdf'
+    encoded_name = quote(download_name.encode('utf-8'))
+    logger.info('resume_pdf_download_served user_id=%s resume_id=%s', current_user.id, resume.id)
+    return Response(
+        content=pdf_bytes,
+        media_type='application/pdf',
+        headers={
+            'Content-Disposition': f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{encoded_name}",
+            'Cache-Control': 'private, max-age=300',
+        },
+    )
 
 
 @router.get('/{resume_id}/preview', include_in_schema=False)

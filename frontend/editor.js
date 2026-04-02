@@ -871,6 +871,30 @@ function setHtmlPreview() {
   elements.pdfPreview.classList.remove('hidden-preview');
   elements.previewEmpty.classList.add('hidden-preview');
 }
+function buildPdfDownloadUrl() {
+  if (!state.currentResumeId) {
+    return '';
+  }
+  const fallbackVersion = `${state.currentResumeId}:${Date.now()}`;
+  const version = encodeURIComponent(shortHash(state.renderedPayloadSignature || fallbackVersion));
+  const token = encodeURIComponent(state.authToken || '');
+  return `/api/resumes/${state.currentResumeId}/pdf/download?v=${version}&token=${token}`;
+}
+
+function triggerPdfDownload() {
+  const downloadUrl = buildPdfDownloadUrl();
+  if (!downloadUrl) {
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = downloadUrl;
+  link.download = buildResumeFilename();
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
 function buildResumeFilename() {
   const name = document.getElementById('basics_name').value.trim();
   const title = document.getElementById('title').value.trim();
@@ -887,10 +911,8 @@ function setPreviewUrl(url) {
     return;
   }
 
-  const filename = buildResumeFilename();
-  elements.downloadLink.href = state.currentPdfUrl;
-  elements.downloadLink.download = filename;
-  elements.downloadLink.target = '_blank';
+  elements.downloadLink.href = buildPdfDownloadUrl();
+  elements.downloadLink.download = buildResumeFilename();
   elements.downloadLink.rel = 'noopener';
   elements.downloadLink.classList.add('hidden-link');
 }
@@ -1483,12 +1505,7 @@ async function renderPdf() {
     }
 
     if (state.currentPdfUrl && state.renderedPayloadSignature === payloadSignature) {
-      const cachedLink = document.createElement('a');
-      cachedLink.href = state.currentPdfUrl;
-      cachedLink.download = buildResumeFilename();
-      cachedLink.target = '_blank';
-      cachedLink.rel = 'noopener';
-      cachedLink.click();
+      triggerPdfDownload();
       showToast('内容未变化，已复用上次 PDF');
       return;
     }
@@ -1505,12 +1522,7 @@ async function renderPdf() {
     }
     setPreviewUrl(result.pdf_url);
     setHtmlPreview();
-    const downloadLink = document.createElement('a');
-    downloadLink.href = result.pdf_url;
-    downloadLink.download = buildResumeFilename();
-    downloadLink.target = '_blank';
-    downloadLink.rel = 'noopener';
-    downloadLink.click();
+    triggerPdfDownload();
     showToast('PDF 已生成并开始下载');
   } catch (error) {
     console.error(error);
