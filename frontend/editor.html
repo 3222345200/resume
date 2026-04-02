@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles.css?v=20260402-sidebar-html-preview" />
+  <link rel="stylesheet" href="/assets/styles.css?v=20260402-editor-sections-step8" />
 </head>
 <body>
     <div id="editor-shell" class="page-shell hidden-auth">
@@ -18,22 +18,24 @@
       <span class="sidebar-reopen-arrow">&gt;</span>
     </button>
     <aside class="sidebar">
-      <div class="sidebar-topbar">
-        <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse sidebar">&lt;</button>
-      </div>      <div class="brand-stack">
+      <div class="brand-stack">
         <div class="brand-lockup">
-          <img class="brand-logo" src="/assets/brand-mark.svg" alt="职跃 OfferPilot 标志" />
-          <div>
-            <p class="eyebrow">职跃 OfferPilot</p>
-            <h1>求职工作台</h1>
+          <img class="brand-logo" src="/assets/brand-mark.svg" alt="&#32844;&#36291; OfferPilot &#26631;&#24535;" />
+          <div class="brand-copy">
+            <p class="eyebrow">&#32844;&#36291; OfferPilot</p>
+            <div class="brand-title-row">
+              <h1>&#27714;&#32844;&#24037;&#20316;&#21488;</h1>
+              <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse sidebar">&lt;</button>
+            </div>
           </div>
         </div>
-        <p class="sidebar-copy">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
-        <p id="current-user" class="meta-text">未登录</p>
+        <p class="sidebar-copy">&#20174;&#31616;&#21382;&#32534;&#36753;&#24320;&#22987;&#65292;&#36880;&#27493;&#25193;&#23637;&#21040;&#23436;&#25972;&#30340;&#27714;&#32844;&#26448;&#26009;&#19982;&#25237;&#36882;&#31649;&#29702;&#12290;</p>
+        <p id="current-user" class="meta-text">&#26410;&#30331;&#24405;</p>
       </div>
 
-      <button id="new-resume-btn" class="primary-button" type="button">新建简历</button>
-      <button id="logout-btn" class="ghost-button" type="button">退出登录</button>
+
+      <button id="new-resume-btn" class="primary-button" type="button">&#26032;&#24314;&#31616;&#21382;</button>
+      <button id="logout-btn" class="ghost-button" type="button">&#36864;&#20986;&#30331;&#24405;</button>
 
       <div class="resume-list-wrap">
         <div class="section-title-row">
@@ -59,7 +61,7 @@
           </div>
         </div>
 
-        <form id="resume-form" class="form-grid">
+        <form id="resume-form" class="form-grid editor-form">
           <label>
             标题
             <input id="title" name="title" placeholder="例如：Java 后端简历" required />
@@ -69,37 +71,39 @@
             <select id="template_id" name="template_id"></select>
           </label>
 
-          <div class="full-width section-card" data-collapsible="true">
+          <div class="full-width section-card editor-module-panel" data-collapsible="true" data-editor-section-key="layout">
             <div class="section-title-row">
               <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">版式设置</span>
+                <span class="section-toggle-heading">
+                  <span class="section-toggle-title">版式设置</span>
+                  <span class="section-toggle-note">这里控制 PDF 的整体版式，建议先调整字号和行距，排版会更稳定。</span>
+                </span>
                 <span class="section-toggle-chevron" aria-hidden="true"></span>
               </button>
             </div>
             <div class="section-card-body">
               <div class="form-grid nested-grid layout-grid">
-                <p class="full-width field-note">这里控制 PDF 的整体版式，建议先调整字号和行距，再决定颜色，排版会更稳定。</p>
                 <label>
                   模块标题字号
                   <select id="layout_section_title_size">
-                    <option value="16">紧凑</option>
-                    <option value="18">默认</option>
-                    <option value="20">舒展</option>
+                    <option value="16">小号</option>
+                    <option value="18">中号</option>
+                    <option value="20">大号</option>
                   </select>
                 </label>
                 <label>
                   正文字号
                   <select id="layout_content_font_size">
-                    <option value="12.5">紧凑</option>
-                    <option value="13.5">默认</option>
-                    <option value="14.5">舒展</option>
+                    <option value="12.5">小号</option>
+                    <option value="13.5">中号</option>
+                    <option value="14.5">大号</option>
                   </select>
                 </label>
                 <label>
                   正文行距
                   <select id="layout_content_line_height">
                     <option value="1.28">紧凑</option>
-                    <option value="1.36">默认</option>
+                    <option value="1.36">适中</option>
                     <option value="1.5">舒展</option>
                   </select>
                 </label>
@@ -107,14 +111,13 @@
                   标题下边距
                   <select id="layout_section_divider_gap">
                     <option value="2">紧凑</option>
-                    <option value="4">默认</option>
+                    <option value="4">适中</option>
                     <option value="6">舒展</option>
                   </select>
                 </label>
-                <div class="full-width layout-color-card">
+                <div class="layout-color-card">
                   <div class="layout-color-copy">
                     <strong>文字颜色</strong>
-                    <span>建议使用深色，打印和 PDF 预览都会更稳定。</span>
                   </div>
                   <label class="layout-color-picker" for="layout_font_color">
                     <input id="layout_font_color" type="color" value="#111111" />
@@ -125,197 +128,203 @@
             </div>
           </div>
 
-
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">基础信息</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-            </div>
-            <div class="section-card-body">
-            <div class="nested-grid basics-layout">
-              <div class="avatar-column">
-                <div class="avatar-editor-wrap">
-                  <div class="avatar-preview-wrap avatar-preview-frame">
-                    <img
-                      id="avatar-preview"
-                      class="avatar-preview"
-                      src="/assets/default-avatar.jpg"
-                      alt="一寸照片预览"
-                    />
-                  </div>
-                  <div class="avatar-frame-note">这里按照一寸照比例预览，下载 PDF 时会使用同样的裁切结果和固定尺寸。</div>
+          <div class="full-width editor-sections-layout">
+            <aside class="section-nav-panel">
+              <div class="section-nav-copy">
+                <h3>编辑模块</h3>
+                <p class="meta-text">&#24038;&#20391;&#36873;&#27169;&#22359;&#65292;&#21491;&#20391;&#32534;&#36753;&#24403;&#21069;&#20869;&#23481;&#12290;</p>
+              </div>
+              <div id="editor-section-nav" class="editor-section-nav"></div>
+              <button id="section-nav-add-custom-btn" type="button" class="small-button section-nav-add-button">新增自定义模块</button>
+            </aside>
+            <div id="section-workspace" class="section-workspace">
+              <div class="full-width section-card editor-module-panel" data-collapsible="true" data-editor-section-key="basics">
+                <div class="section-title-row">
+                  <button type="button" class="section-toggle" aria-expanded="true">
+                    <span class="section-toggle-title">基础信息</span>
+                    <span class="section-toggle-chevron" aria-hidden="true"></span>
+                  </button>
                 </div>
-                <div class="avatar-actions">
-                  <label class="upload-label">
-                    上传照片
-                    <input id="avatar-file" type="file" accept="image/*" hidden />
-                  </label>
-                  <button id="avatar-clear" class="ghost-button" type="button">移除照片</button>
-                  <div class="avatar-adjustments">
-                    <label for="avatar-scale">
-                      缩放
-                      <input id="avatar-scale" type="range" min="1" max="3" step="0.01" value="1" />
+                <div class="section-card-body">
+                  <div class="nested-grid basics-layout">
+                    <div class="avatar-column">
+                      <div class="avatar-editor-wrap">
+                        <div class="avatar-preview-wrap avatar-preview-frame">
+                          <img id="avatar-preview" class="avatar-preview" src="/assets/default-avatar.jpg" alt="一寸照片预览" />
+                        </div>
+                        <div class="avatar-frame-note">这里按照一寸照比例预览，下载 PDF 时会使用同样的裁切结果和固定尺寸。</div>
+                      </div>
+                      <div class="avatar-actions">
+                        <label class="upload-label">
+                          上传照片
+                          <input id="avatar-file" type="file" accept="image/*" hidden />
+                        </label>
+                        <button id="avatar-clear" class="ghost-button" type="button">移除照片</button>
+                        <div class="avatar-adjustments">
+                          <label for="avatar-scale">
+                            缩放
+                            <input id="avatar-scale" type="range" min="1" max="3" step="0.01" value="1" />
+                          </label>
+                          <label for="avatar-offset-x">
+                            左右位置
+                            <input id="avatar-offset-x" type="range" min="0" max="100" step="1" value="50" />
+                          </label>
+                          <label for="avatar-offset-y">
+                            上下位置
+                            <input id="avatar-offset-y" type="range" min="0" max="100" step="1" value="50" />
+                          </label>
+                        </div>
+                        <div id="avatar-status" class="avatar-status">未上传照片时，将使用默认占位图。支持图片格式，大小不能超过 5MB。</div>
+                      </div>
+                    </div>
+                    <div class="basics-fields form-grid">
+                      <label>姓名<input id="basics_name" /></label>
+                      <label>电话<input id="basics_phone" /></label>
+                      <label>邮箱<input id="basics_email" /></label>
+                      <label>意向城市<input id="basics_location" /></label>
+                      <label class="full-width">求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
+                      <label class="full-width">
+                        个人简介
+                        <textarea id="basics_summary" rows="4" data-rich-text="true" data-rich-mode="paragraphs" placeholder="一句话介绍自己，突出方向和优势"></textarea>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="full-width section-card editor-module-panel" data-collapsible="true" data-editor-section-key="education">
+                <div class="section-title-row">
+                  <button type="button" class="section-toggle" aria-expanded="true">
+                    <span class="section-toggle-title">&#25945;&#32946;&#32463;&#21382;</span>
+                    <span class="section-toggle-chevron" aria-hidden="true"></span>
+                  </button>
+                  <button type="button" class="small-button" data-add-section="education">新增教育</button>
+                </div>
+                <div class="section-card-body">
+                  <div id="education-list" class="repeat-list"></div>
+                </div>
+              </div>
+
+              <div class="full-width custom-section-toolbar" hidden>
+                <button id="add-custom-section-btn" type="button" class="small-button">新增自定义模块</button>
+              </div>
+
+              <div id="sortable-sections" class="full-width sortable-sections">
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="skills" data-editor-section-key="skills">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#19987;&#19994;&#25216;&#33021;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="section-card-body">
+                    <label class="full-width">
+                      skills field
+                      <textarea id="skills" rows="5" data-rich-text="true" data-rich-mode="list" placeholder="skills placeholder"></textarea>
                     </label>
-                    <label for="avatar-offset-x">
-                      左右位置
-                      <input id="avatar-offset-x" type="range" min="0" max="100" step="1" value="50" />
-                    </label>
-                    <label for="avatar-offset-y">
-                      上下位置
-                      <input id="avatar-offset-y" type="range" min="0" max="100" step="1" value="50" />
-                    </label>
-                  </div>
-                  <div id="avatar-status" class="avatar-status">未上传照片时，将使用默认占位图。支持图片格式，大小不能超过 5MB。</div>
-                </div>
-              </div>
-              <div class="basics-fields form-grid">
-                <label>姓名<input id="basics_name" /></label>
-                <label>电话<input id="basics_phone" /></label>
-                <label>邮箱<input id="basics_email" /></label>
-                <label>意向城市<input id="basics_location" /></label>
-                <label class="full-width">求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
-                <label class="full-width">
-                  个人简介
-                  <textarea id="basics_summary" rows="4" data-rich-text="true" data-rich-mode="paragraphs" placeholder="一句话介绍自己，突出方向和优势"></textarea>
-                </label>
-              </div>
-            </div>
-            </div>
-          </div>
-
-          <div class="full-width section-card" data-collapsible="true">
-            <div class="section-title-row">
-              <button type="button" class="section-toggle" aria-expanded="true">
-                <span class="section-toggle-title">教育经历</span>
-                <span class="section-toggle-chevron" aria-hidden="true"></span>
-              </button>
-              <button type="button" class="small-button" data-add-section="education">新增教育</button>
-            </div>
-            <div class="section-card-body">
-              <div id="education-list" class="repeat-list"></div>
-            </div>
-          </div>
-          <div class="full-width section-order-hint">Section order placeholder</div>
-          <div class="full-width custom-section-toolbar">
-            <button id="add-custom-section-btn" type="button" class="small-button">新增自定义模块</button>
-          </div>
-
-          <div id="sortable-sections" class="full-width sortable-sections">
-            <div class="full-width section-card" data-collapsible="true" data-section-key="skills">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">skills</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
                   </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <label class="full-width">
-                  skills field
-                  <textarea id="skills" rows="5" data-rich-text="true" data-rich-mode="list" placeholder="skills placeholder"></textarea>
-                </label>
-              </div>
-            </div>
 
-            <div class="full-width section-card" data-collapsible="true" data-section-key="experience">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">experience</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="experience" data-editor-section-key="experience">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#24037;&#20316;/&#23454;&#20064;&#32463;&#21382;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                      <button type="button" class="small-button" data-add-section="experience">add</button>
+                    </div>
                   </div>
-                  <button type="button" class="small-button" data-add-section="experience">add</button>
+                  <div class="section-card-body">
+                    <div id="experience-list" class="repeat-list"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <div id="experience-list" class="repeat-list"></div>
-              </div>
-            </div>
 
-            <div class="full-width section-card" data-collapsible="true" data-section-key="projects">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">projects</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="projects" data-editor-section-key="projects">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#39033;&#30446;&#32463;&#21382;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                      <button type="button" class="small-button" data-add-section="projects">add</button>
+                    </div>
                   </div>
-                  <button type="button" class="small-button" data-add-section="projects">add</button>
+                  <div class="section-card-body">
+                    <div id="projects-list" class="repeat-list"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <div id="projects-list" class="repeat-list"></div>
-              </div>
-            </div>
 
-            <div class="full-width section-card" data-collapsible="true" data-section-key="portfolio">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">portfolio</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="portfolio" data-editor-section-key="portfolio">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#20316;&#21697;&#38598;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                      <button type="button" class="small-button" data-add-section="portfolio">add</button>
+                    </div>
                   </div>
-                  <button type="button" class="small-button" data-add-section="portfolio">add</button>
+                  <div class="section-card-body">
+                    <div id="portfolio-list" class="repeat-list"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <div id="portfolio-list" class="repeat-list"></div>
-              </div>
-            </div>
 
-            <div class="full-width section-card" data-collapsible="true" data-section-key="research">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">research</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="research" data-editor-section-key="research">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#31185;&#30740;&#32463;&#21382;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                      <button type="button" class="small-button" data-add-section="research">add</button>
+                    </div>
                   </div>
-                  <button type="button" class="small-button" data-add-section="research">add</button>
+                  <div class="section-card-body">
+                    <div id="research-list" class="repeat-list"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <div id="research-list" class="repeat-list"></div>
-              </div>
-            </div>
 
-            <div class="full-width section-card" data-collapsible="true" data-section-key="honors">
-              <div class="section-title-row">
-                <button type="button" class="section-toggle" aria-expanded="true">
-                  <span class="section-toggle-title">honors</span>
-                  <span class="section-toggle-chevron" aria-hidden="true"></span>
-                </button>
-                <div class="section-actions">
-                  <div class="section-order-actions" aria-label="section-order">
-                    <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
-                    <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                <div class="full-width section-card editor-module-panel" data-collapsible="true" data-section-key="honors" data-editor-section-key="honors">
+                  <div class="section-title-row">
+                    <button type="button" class="section-toggle" aria-expanded="true">
+                      <span class="section-toggle-title">&#33635;&#35465;&#22870;&#39033;</span>
+                      <span class="section-toggle-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="section-actions">
+                      <div class="section-order-actions" aria-label="section-order">
+                        <button type="button" class="icon-button" data-move-section="up" title="up" aria-label="up">&#8593;</button>
+                        <button type="button" class="icon-button" data-move-section="down" title="down" aria-label="down">&#8595;</button>
+                      </div>
+                      <button type="button" class="small-button" data-add-section="honors">add</button>
+                    </div>
                   </div>
-                  <button type="button" class="small-button" data-add-section="honors">add</button>
+                  <div class="section-card-body">
+                    <div id="honors-list" class="repeat-list"></div>
+                  </div>
                 </div>
-              </div>
-              <div class="section-card-body">
-                <div id="honors-list" class="repeat-list"></div>
               </div>
             </div>
           </div>
@@ -331,9 +340,9 @@
 
   <template id="education-template">
     <div class="repeat-item" data-section="education">
-      <div class="section-title-row compact">
-        <h4>教育条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label>学校<input data-field="school" /></label>
@@ -360,9 +369,9 @@
 
   <template id="experience-template">
     <div class="repeat-item" data-section="experience">
-      <div class="section-title-row compact">
-        <h4>经历条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label>
@@ -388,9 +397,9 @@
 
   <template id="projects-template">
     <div class="repeat-item" data-section="projects">
-      <div class="section-title-row compact">
-        <h4>项目条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label>项目名<input data-field="name" /></label>
@@ -407,23 +416,23 @@
 
   <template id="research-template">
     <div class="repeat-item" data-section="research">
-      <div class="section-title-row compact">
-        <h4>科研条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label class="full-width">标题<input data-field="title" /></label>
         <label>标签<input data-field="label" placeholder="JSA 在投（二作）" /></label>
-        <label class="full-width">简介<textarea rows="4" data-field="summary"></textarea></label>
+        <label class="full-width">简介<textarea rows="4" data-field="summary" data-rich-text="true" data-rich-mode="paragraphs" placeholder="介绍研究方向、课题内容和阶段成果"></textarea></label>
       </div>
     </div>
   </template>
 
   <template id="portfolio-template">
     <div class="repeat-item" data-section="portfolio">
-      <div class="section-title-row compact">
-        <h4>作品条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label class="full-width">标题<input data-field="title" /></label>
@@ -438,9 +447,9 @@
 
   <template id="honors-template">
     <div class="repeat-item" data-section="honors">
-      <div class="section-title-row compact">
-        <h4>奖项条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label class="full-width">标题<input data-field="title" /></label>
@@ -452,9 +461,9 @@
 
   <template id="custom-template">
     <div class="repeat-item" data-section="custom">
-      <div class="section-title-row compact">
-        <h4>自定义条目</h4>
-        <button type="button" class="text-button remove-btn">删除</button>
+      <div class="repeat-item-toolbar">
+        <div class="section-order-actions" aria-label="item-order"></div>
+        <button type="button" class="text-button remove-btn">&#21024;&#38500;</button>
       </div>
       <div class="form-grid nested-grid">
         <label>标题<input data-field="title" /></label>
@@ -473,8 +482,20 @@
     </div>
   </template>
 
-  <script src="/assets/editor.js?v=20260402-sidebar-html-preview"></script>
+  <div id="confirm-dialog" class="confirm-dialog" hidden>
+    <div class="confirm-dialog-card" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+      <h3 id="confirm-dialog-title">&#30830;&#35748;&#25805;&#20316;</h3>
+      <p id="confirm-dialog-message">&#27492;&#25805;&#20316;&#25191;&#34892;&#21518;&#23558;&#26080;&#27861;&#25764;&#38144;&#65292;&#26159;&#21542;&#32487;&#32493;&#65311;</p>
+      <div class="confirm-dialog-actions">
+        <button id="confirm-dialog-cancel" type="button" class="ghost-button">&#21462;&#28040;</button>
+        <button id="confirm-dialog-confirm" type="button" class="primary-button confirm-danger-button">&#30830;&#35748;</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/editor.js?v=20260402-editor-sections-step4"></script>
 </body>
 </html>
+
 
 

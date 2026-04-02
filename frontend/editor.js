@@ -11,6 +11,7 @@ const state = {
   currentAvatarUrl: null,
   currentAvatarCrop: null,
   renderedPayloadSignature: null,
+  activeEditorSectionKey: 'basics',
 };
 
 const elements = {
@@ -47,6 +48,14 @@ const elements = {
   sidebarToggle: document.getElementById('sidebar-toggle'),
   sidebarReopen: document.getElementById('sidebar-reopen'),
   sidebarLogoToggle: document.getElementById('sidebar-logo-toggle'),
+  editorSectionNav: document.getElementById('editor-section-nav'),
+  sectionWorkspace: document.getElementById('section-workspace'),
+  sectionNavAddCustomButton: document.getElementById('section-nav-add-custom-btn'),
+  confirmDialog: document.getElementById('confirm-dialog'),
+  confirmDialogTitle: document.getElementById('confirm-dialog-title'),
+  confirmDialogMessage: document.getElementById('confirm-dialog-message'),
+  confirmDialogCancel: document.getElementById('confirm-dialog-cancel'),
+  confirmDialogConfirm: document.getElementById('confirm-dialog-confirm'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
@@ -70,6 +79,26 @@ const DEFAULT_LAYOUT_SETTINGS = {
 };
 const MOVABLE_SECTION_ORDER = ['skills', 'experience', 'projects', 'portfolio', 'research', 'honors'];
 const CUSTOM_SECTION_PREFIX = 'custom:';
+const SECTION_DELETE_LABELS = {
+  education: '\u6559\u80b2\u7ecf\u5386',
+  experience: '\u5de5\u4f5c/\u5b9e\u4e60\u7ecf\u5386',
+  projects: '\u9879\u76ee\u7ecf\u5386',
+  portfolio: '\u4f5c\u54c1\u96c6',
+  research: '\u79d1\u7814\u7ecf\u5386',
+  honors: '\u8363\u8a89\u5956\u9879',
+  custom: '\u6761\u76ee',
+};
+const REPEAT_ITEM_TITLE_FIELDS = {
+  education: ['school', 'major'],
+  experience: ['company', 'role', 'department'],
+  projects: ['name', 'description'],
+  portfolio: ['title', 'link'],
+  research: ['title', 'label'],
+  honors: ['title', 'label'],
+  custom: ['title', 'subtitle'],
+};
+
+let confirmDialogResolver = null;
 
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {};
@@ -180,6 +209,7 @@ async function getAutoAvatarCrop(file) {
   }
 }
 
+
 function syncLayoutColorValue(color) {
   const value = String(color || DEFAULT_LAYOUT_SETTINGS.font_color).toUpperCase();
   if (elements.layoutFontColorValue) {
@@ -190,24 +220,26 @@ function syncLayoutColorValue(color) {
 function applySectionUiLabels() {
   const hint = document.querySelector('.section-order-hint');
   if (hint) {
-    hint.textContent = '\u4e0b\u9762\u8fd9\u4e9b\u6a21\u5757\u652f\u6301\u8c03\u6574\u987a\u5e8f\uff0cPDF \u4e5f\u4f1a\u6309\u8fd9\u91cc\u7684\u987a\u5e8f\u8f93\u51fa\u3002\u57fa\u7840\u4fe1\u606f\u548c\u6559\u80b2\u7ecf\u5386\u4fdd\u6301\u56fa\u5b9a\u3002';
+    hint.textContent = '下面这些模块支持调整顺序，PDF 也会按这里的顺序输出。基础信息和教育经历保持固定。';
   }
 
   if (elements.addCustomSectionButton) {
-    elements.addCustomSectionButton.textContent = '\u65b0\u589e\u81ea\u5b9a\u4e49\u6a21\u5757';
+    elements.addCustomSectionButton.textContent = '新增自定义模块';
   }
 
   const labels = {
-    skills: { title: '\u4e13\u4e1a\u6280\u80fd', add: '', field: '\u6280\u80fd\u5173\u952e\u8bcd' },
-    experience: { title: '\u5de5\u4f5c / \u5b9e\u4e60\u7ecf\u5386', add: '\u65b0\u589e\u7ecf\u5386' },
-    projects: { title: '\u9879\u76ee\u7ecf\u5386', add: '\u65b0\u589e\u9879\u76ee' },
-    portfolio: { title: '\u4f5c\u54c1\u96c6', add: '\u65b0\u589e\u4f5c\u54c1' },
-    research: { title: '\u79d1\u7814\u7ecf\u5386', add: '\u65b0\u589e\u79d1\u7814' },
-    honors: { title: '\u8363\u8a89\u5956\u9879', add: '\u65b0\u589e\u5956\u9879' },
+    basics: { title: '基础信息' },
+    education: { title: '教育经历' },
+    skills: { title: '专业技能', add: '', field: '技能关键词' },
+    experience: { title: '\u5de5\u4f5c/\u5b9e\u4e60\u7ecf\u5386', add: '\u65b0\u589e\u7ecf\u5386' },
+    projects: { title: '项目经历', add: '新增项目' },
+    portfolio: { title: '作品集', add: '新增作品' },
+    research: { title: '科研经历', add: '新增科研' },
+    honors: { title: '荣誉奖项', add: '新增奖项' },
   };
 
   Object.entries(labels).forEach(([key, config]) => {
-    const card = document.querySelector(`[data-section-key="${key}"]`);
+    const card = document.querySelector(`[data-editor-section-key="${key}"]`) || document.querySelector(`[data-section-key="${key}"]`);
     if (!card) {
       return;
     }
@@ -222,21 +254,22 @@ function applySectionUiLabels() {
     const upButton = card.querySelector('[data-move-section="up"]');
     const downButton = card.querySelector('[data-move-section="down"]');
     if (upButton) {
-      upButton.textContent = '\u2191';
-      upButton.title = '\u4e0a\u79fb';
-      upButton.setAttribute('aria-label', '\u4e0a\u79fb');
+      upButton.textContent = '↑';
+      upButton.title = '上移';
+      upButton.setAttribute('aria-label', '上移');
     }
     if (downButton) {
-      downButton.textContent = '\u2193';
-      downButton.title = '\u4e0b\u79fb';
-      downButton.setAttribute('aria-label', '\u4e0b\u79fb');
+      downButton.textContent = '↓';
+      downButton.title = '下移';
+      downButton.setAttribute('aria-label', '下移');
     }
   });
 
   const skillsLabel = document.getElementById('skills')?.closest('label');
   if (skillsLabel && skillsLabel.firstChild?.nodeType === Node.TEXT_NODE) {
-    skillsLabel.firstChild.textContent = '\u6280\u80fd\u5173\u952e\u8bcd';
+    skillsLabel.firstChild.textContent = '技能关键词';
   }
+  renderEditorSectionNav();
 }
 
 function slugifySectionId(value) {
@@ -295,6 +328,158 @@ function normalizeSectionOrder(value, customSections = []) {
   return unique;
 }
 
+function getEditorSectionCards() {
+  if (!elements.sectionWorkspace) {
+    return [];
+  }
+  return Array.from(elements.sectionWorkspace.querySelectorAll('[data-editor-section-key]'));
+}
+
+function getEditorSectionKey(card) {
+  return card?.dataset.editorSectionKey || card?.dataset.sectionKey || '';
+}
+
+function getEditorSectionTitle(card) {
+  const sectionKey = getEditorSectionKey(card);
+  const builtInTitles = {
+    basics: '\u57fa\u7840\u4fe1\u606f',
+    education: '\u6559\u80b2\u7ecf\u5386',
+    skills: '\u4e13\u4e1a\u6280\u80fd',
+    experience: '\u5de5\u4f5c/\u5b9e\u4e60\u7ecf\u5386',
+    projects: '\u9879\u76ee\u7ecf\u5386',
+    portfolio: '\u4f5c\u54c1\u96c6',
+    research: '\u79d1\u7814\u7ecf\u5386',
+    honors: '\u8363\u8a89\u5956\u9879',
+  };
+  if (builtInTitles[sectionKey]) {
+    return builtInTitles[sectionKey];
+  }
+  const title = card?.querySelector('.section-toggle-title')?.textContent?.trim();
+  return title || '\u81ea\u5b9a\u4e49\u6a21\u5757';
+}
+
+function ensureActiveEditorSection() {
+  const cards = getEditorSectionCards();
+  if (cards.length === 0) {
+    state.activeEditorSectionKey = null;
+    return;
+  }
+  const available = cards.map((card) => getEditorSectionKey(card));
+  if (!available.includes(state.activeEditorSectionKey) || state.activeEditorSectionKey === 'layout') {
+    state.activeEditorSectionKey = available.includes('basics') ? 'basics' : available[0];
+  }
+}
+
+function syncEditorSectionPanels() {
+  ensureActiveEditorSection();
+  getEditorSectionCards().forEach((card) => {
+    const key = getEditorSectionKey(card);
+    card.hidden = key !== state.activeEditorSectionKey;
+  });
+}
+
+function setActiveEditorSection(sectionKey) {
+  if (!sectionKey) {
+    return;
+  }
+  state.activeEditorSectionKey = sectionKey;
+  syncEditorSectionPanels();
+  renderEditorSectionNav();
+}
+
+function getEditorSectionSubtitle(card) {
+  return '\u70b9\u51fb\u5207\u6362\u7f16\u8f91';
+}
+
+function isSectionReorderable(sectionKey) {
+  return getCurrentSectionOrder().includes(sectionKey);
+}
+
+function moveSectionBefore(sectionKey, targetSectionKey) {
+  const order = getCurrentSectionOrder();
+  const currentIndex = order.indexOf(sectionKey);
+  const targetIndex = order.indexOf(targetSectionKey);
+  if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) {
+    return;
+  }
+
+  const nextOrder = [...order];
+  nextOrder.splice(currentIndex, 1);
+  const insertIndex = nextOrder.indexOf(targetSectionKey);
+  nextOrder.splice(insertIndex, 0, sectionKey);
+  applySectionOrder(nextOrder);
+  updatePreviewMessage();
+}
+
+
+function renderEditorSectionNav() {
+  if (!elements.editorSectionNav) {
+    return;
+  }
+
+  ensureActiveEditorSection();
+  elements.editorSectionNav.innerHTML = '';
+
+  getEditorSectionCards().forEach((card) => {
+    const sectionKey = getEditorSectionKey(card);
+    if (sectionKey === 'layout') {
+      return;
+    }
+
+    const item = document.createElement('div');
+    const isReorderable = isSectionReorderable(sectionKey);
+    item.className = `editor-section-nav-item${state.activeEditorSectionKey === sectionKey ? ' is-active' : ''}${isReorderable ? ' is-reorderable' : ''}`;
+    item.dataset.sectionKey = sectionKey;
+    item.innerHTML = `
+      <button type="button" class="editor-section-nav-button">
+        <strong>${escapeHtml(getEditorSectionTitle(card))}</strong>
+        <span>${escapeHtml(getEditorSectionSubtitle(card))}</span>
+      </button>
+      ${isReorderable ? '<button type="button" class="editor-section-drag-handle" draggable="true" aria-label="\u62d6\u52a8\u6392\u5e8f" title="\u62d6\u52a8\u6392\u5e8f"><span></span><span></span><span></span></button>' : ''}
+    `;
+
+    item.querySelector('.editor-section-nav-button')?.addEventListener('click', () => {
+      setActiveEditorSection(sectionKey);
+      expandSectionCard(card);
+    });
+
+    const handle = item.querySelector('.editor-section-drag-handle');
+    if (handle) {
+      handle.addEventListener('dragstart', (event) => {
+        item.classList.add('is-dragging');
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', sectionKey);
+      });
+      handle.addEventListener('dragend', () => {
+        item.classList.remove('is-dragging');
+        elements.editorSectionNav?.querySelectorAll('.is-drop-target').forEach((node) => node.classList.remove('is-drop-target'));
+      });
+      item.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!item.classList.contains('is-dragging')) {
+          item.classList.add('is-drop-target');
+        }
+      });
+      item.addEventListener('dragleave', () => {
+        item.classList.remove('is-drop-target');
+      });
+      item.addEventListener('drop', (event) => {
+        event.preventDefault();
+        item.classList.remove('is-drop-target');
+        const sourceSectionKey = event.dataTransfer.getData('text/plain');
+        if (!sourceSectionKey || sourceSectionKey === sectionKey) {
+          return;
+        }
+        moveSectionBefore(sourceSectionKey, sectionKey);
+      });
+    }
+
+    elements.editorSectionNav.appendChild(item);
+  });
+
+  syncEditorSectionPanels();
+}
+
 function getCurrentSectionOrder() {
   if (!elements.sortableSections) {
     return [...MOVABLE_SECTION_ORDER];
@@ -330,6 +515,7 @@ function applySectionOrder(order, customSections = collectCustomSections()) {
     }
   });
   syncSectionMoveButtons();
+  renderEditorSectionNav();
 }
 
 function syncSectionMoveButtons() {
@@ -573,6 +759,115 @@ function closeAllMonthPickers(exceptInput = null) {
   });
 }
 
+function closeAllCustomSelects(exceptSelect = null) {
+  document.querySelectorAll('.custom-select.is-open').forEach((selectUi) => {
+    const nativeSelect = selectUi.previousElementSibling;
+    if (nativeSelect === exceptSelect) {
+      return;
+    }
+    selectUi.classList.remove('is-open');
+    selectUi.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', 'false');
+  });
+}
+
+function syncCustomSelectSelection(select) {
+  const customSelect = select.nextElementSibling;
+  if (!customSelect?.classList.contains('custom-select')) {
+    return;
+  }
+
+  const selectedOption = select.selectedOptions?.[0] || select.options?.[select.selectedIndex] || null;
+  const triggerLabel = customSelect.querySelector('.custom-select-value');
+  if (triggerLabel) {
+    triggerLabel.textContent = selectedOption?.textContent?.trim() || '???';
+  }
+
+  customSelect.querySelectorAll('.custom-select-option').forEach((button) => {
+    button.classList.toggle('is-selected', button.dataset.value === select.value);
+  });
+}
+
+function rebuildCustomSelectOptions(select) {
+  const customSelect = select.nextElementSibling;
+  if (!customSelect?.classList.contains('custom-select')) {
+    return;
+  }
+
+  const list = customSelect.querySelector('.custom-select-options');
+  if (!list) {
+    return;
+  }
+
+  list.innerHTML = '';
+  Array.from(select.options).forEach((option) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'custom-select-option';
+    item.dataset.value = option.value;
+    item.textContent = option.textContent || '';
+    item.disabled = option.disabled;
+    item.classList.toggle('is-selected', option.value === select.value);
+    item.addEventListener('click', () => {
+      select.value = option.value;
+      select.dispatchEvent(new Event('input', { bubbles: true }));
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      syncCustomSelectSelection(select);
+      closeAllCustomSelects();
+    });
+      list.appendChild(item);
+  });
+
+  syncCustomSelectSelection(select);
+}
+
+function toggleCustomSelect(select) {
+  const customSelect = select.nextElementSibling;
+  if (!customSelect?.classList.contains('custom-select')) {
+    return;
+  }
+
+  const willOpen = !customSelect.classList.contains('is-open');
+  closeAllCustomSelects(willOpen ? select : null);
+  customSelect.classList.toggle('is-open', willOpen);
+  customSelect.querySelector('.custom-select-trigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+  if (willOpen) {
+    rebuildCustomSelectOptions(select);
+  }
+}
+
+function ensureCustomSelect(select) {
+  if (!select || select.dataset.dateSelect === 'true' || select.multiple) {
+    return;
+  }
+
+  let customSelect = select.nextElementSibling;
+  if (!customSelect?.classList.contains('custom-select')) {
+    select.classList.add('custom-select-native');
+    customSelect = document.createElement('div');
+    customSelect.className = 'custom-select';
+    customSelect.innerHTML = `
+      <button type="button" class="custom-select-trigger" aria-expanded="false">
+        <span class="custom-select-value">???</span>
+        <span class="custom-select-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="custom-select-popover">
+        <div class="custom-select-options"></div>
+      </div>
+    `;
+    select.insertAdjacentElement('afterend', customSelect);
+    customSelect.querySelector('.custom-select-trigger')?.addEventListener('click', (event) => {
+      event.preventDefault();
+      toggleCustomSelect(select);
+    });
+  }
+
+  rebuildCustomSelectOptions(select);
+}
+
+function ensureAllCustomSelects() {
+  document.querySelectorAll('select:not([data-date-select="true"])').forEach((select) => ensureCustomSelect(select));
+}
+
 function setMonthPickerYear(input, year) {
   const picker = input.nextElementSibling;
   if (!picker) {
@@ -596,22 +891,20 @@ function syncMonthPickerSelection(input) {
   trigger.classList.toggle('is-placeholder', !input.value);
 
   const parsed = parseDateValue(input.value);
-  if (parsed && input.value !== '至今') {
-    setMonthPickerYear(input, parsed.year);
-  }
 
   picker.querySelectorAll('.month-picker-month').forEach((button) => {
     const buttonYear = Number(button.dataset.year);
     const buttonMonth = Number(button.dataset.month);
-    const isSelected = parsed && input.value !== '至今' && parsed.year === buttonYear && parsed.month === buttonMonth;
+    const isSelected = parsed && input.value !== '???' && parsed.year === buttonYear && parsed.month === buttonMonth;
     button.classList.toggle('is-selected', Boolean(isSelected));
   });
 
   const presentButton = picker.querySelector('.month-picker-present');
   if (presentButton) {
-    presentButton.classList.toggle('is-selected', input.value === '至今');
+    presentButton.classList.toggle('is-selected', input.value === '???');
   }
 }
+
 
 function rebuildMonthPickerGrid(input) {
   const picker = input.nextElementSibling;
@@ -655,7 +948,8 @@ function toggleMonthPicker(input) {
   picker.classList.toggle('is-open', willOpen);
   picker.querySelector('.month-picker-trigger')?.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   if (willOpen) {
-    syncMonthPickerSelection(input);
+    setMonthPickerYear(input, parseDateValue(input.value)?.year || new Date().getFullYear());
+    rebuildMonthPickerGrid(input);
   }
 }
 
@@ -796,6 +1090,60 @@ function showToast(message) {
   setTimeout(() => toast.remove(), 2400);
 }
 
+function isConfirmDialogOpen() {
+  return Boolean(elements.confirmDialog && !elements.confirmDialog.hidden);
+}
+
+function closeConfirmDialog(confirmed = false) {
+  if (!elements.confirmDialog) {
+    return;
+  }
+
+  elements.confirmDialog.classList.remove('is-visible');
+  elements.confirmDialog.hidden = true;
+  document.body.classList.remove('dialog-open');
+
+  const resolver = confirmDialogResolver;
+  confirmDialogResolver = null;
+  resolver?.(confirmed);
+}
+
+function openConfirmDialog(options = {}) {
+  if (!elements.confirmDialog) {
+    return Promise.resolve(window.confirm(options.message || '\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f'));
+  }
+
+  if (confirmDialogResolver) {
+    closeConfirmDialog(false);
+  }
+
+  const {
+    title = '\u786e\u8ba4\u64cd\u4f5c',
+    message = '\u6b64\u64cd\u4f5c\u6267\u884c\u540e\u5c06\u65e0\u6cd5\u64a4\u9500\uff0c\u662f\u5426\u7ee7\u7eed\uff1f',
+    confirmText = '\u786e\u8ba4',
+    cancelText = '\u53d6\u6d88',
+  } = options;
+
+  elements.confirmDialogTitle.textContent = title;
+  elements.confirmDialogMessage.textContent = message;
+  elements.confirmDialogConfirm.textContent = confirmText;
+  elements.confirmDialogCancel.textContent = cancelText;
+  elements.confirmDialog.hidden = false;
+  document.body.classList.add('dialog-open');
+  requestAnimationFrame(() => {
+    elements.confirmDialog.classList.add('is-visible');
+    elements.confirmDialogConfirm.focus();
+  });
+
+  return new Promise((resolve) => {
+    confirmDialogResolver = resolve;
+  });
+}
+
+function getDeleteLabel(section) {
+  return SECTION_DELETE_LABELS[section] || '\u5185\u5bb9';
+}
+
 function setPreviewMessage(message) {
   elements.previewEmpty.textContent = message;
 }
@@ -867,7 +1215,7 @@ function setHtmlPreview() {
     return;
   }
   const previewVersion = encodeURIComponent(shortHash(`${state.currentResumeId}:${Date.now()}`));
-  elements.pdfPreview.src = `/api/resumes/${state.currentResumeId}/preview?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}`;
+  elements.pdfPreview.src = `/api/resumes/${state.currentResumeId}/preview?v=${previewVersion}&token=${encodeURIComponent(state.authToken || "")}` + "#zoom=page-width";
   elements.pdfPreview.classList.remove('hidden-preview');
   elements.previewEmpty.classList.add('hidden-preview');
 }
@@ -1025,6 +1373,36 @@ function arrayToMultiline(items = []) {
   return items.join('\n');
 }
 
+function getRepeatItemTitle(section, item, index = 0) {
+  const titleMap = {
+    education: '\u6559\u80b2\u6761\u76ee',
+    experience: '\u5de5\u4f5c/\u5b9e\u4e60\u6761\u76ee',
+    projects: '\u9879\u76ee\u6761\u76ee',
+    portfolio: '\u4f5c\u54c1\u6761\u76ee',
+    research: '\u79d1\u7814\u6761\u76ee',
+    honors: '\u8363\u8a89\u6761\u76ee',
+    custom: '\u81ea\u5b9a\u4e49\u6761\u76ee',
+  };
+
+  return titleMap[section] || `\u6761\u76ee ${index + 1}`;
+}
+
+
+function syncRepeatItemTitles(container) {
+  if (!container) {
+    return;
+  }
+
+  const items = Array.from(container.querySelectorAll(':scope > .repeat-item'));
+  items.forEach((item, index) => {
+    const section = item.dataset.section || '';
+    const titleNode = item.querySelector('[data-repeat-item-title="true"]');
+    if (titleNode) {
+      titleNode.textContent = getRepeatItemTitle(section, item, index);
+    }
+  });
+}
+
 function hydrateDynamicField(input, field, data) {
   const sourceValue = field === 'description' ? (data.description || data.tech_stack || '') : (data[field] || '');
   const value = Array.isArray(sourceValue) ? arrayToMultiline(sourceValue) : sourceValue;
@@ -1041,6 +1419,9 @@ function hydrateDynamicField(input, field, data) {
     setRichTextValue(input, value);
   } else {
     input.value = value;
+    if (input.tagName === 'SELECT') {
+      ensureCustomSelect(input);
+    }
   }
   input.addEventListener('input', updatePreviewMessage);
   input.addEventListener('change', updatePreviewMessage);
@@ -1078,6 +1459,7 @@ function moveRepeatItem(item, direction) {
     container.insertBefore(sibling, item);
   }
   syncRepeatItemMoveButtons(container);
+  syncRepeatItemTitles(container);
   revealSectionTarget(item);
   updatePreviewMessage();
 }
@@ -1085,27 +1467,44 @@ function moveRepeatItem(item, direction) {
 function createRepeatItem(section, data = {}) {
   const template = document.getElementById(`${section}-template`);
   const node = template.content.firstElementChild.cloneNode(true);
-  const titleRow = node.querySelector('.section-title-row.compact');
-  const removeButton = node.querySelector('.remove-btn');
-  if (titleRow && removeButton) {
-    const actions = document.createElement('div');
-    actions.className = 'section-order-actions';
-    actions.setAttribute('aria-label', 'item-order');
+  const toolbar = node.querySelector('.repeat-item-toolbar');
+  const actions = node.querySelector('.section-order-actions');
+  if (toolbar && !toolbar.querySelector('[data-repeat-item-title="true"]')) {
+    const title = document.createElement('div');
+    title.className = 'repeat-item-title';
+    title.dataset.repeatItemTitle = 'true';
+    toolbar.insertBefore(title, actions || toolbar.firstChild);
+  }
+  if (actions) {
     actions.innerHTML = `
       <button type="button" class="icon-button" data-move-item="up" title="上移" aria-label="上移">&#8593;</button>
       <button type="button" class="icon-button" data-move-item="down" title="下移" aria-label="下移">&#8595;</button>
     `;
-    removeButton.insertAdjacentElement('beforebegin', actions);
   }
   node.querySelectorAll('[data-field]').forEach((input) => {
     hydrateDynamicField(input, input.dataset.field, data);
+    input.addEventListener('input', () => syncRepeatItemTitles(node.parentElement));
+    input.addEventListener('change', () => syncRepeatItemTitles(node.parentElement));
   });
+  const titleNode = node.querySelector('[data-repeat-item-title="true"]');
+  if (titleNode) {
+    titleNode.textContent = getRepeatItemTitle(section, node, 0);
+  }
   node.querySelector('[data-move-item="up"]')?.addEventListener('click', () => moveRepeatItem(node, 'up'));
   node.querySelector('[data-move-item="down"]')?.addEventListener('click', () => moveRepeatItem(node, 'down'));
-  node.querySelector('.remove-btn').addEventListener('click', () => {
+  node.querySelector('.remove-btn')?.addEventListener('click', async () => {
+    const confirmed = await openConfirmDialog({
+      title: `确认删除${getDeleteLabel(section)}`,
+      message: '删除后将无法恢复，确认继续吗？',
+      confirmText: '确认删除',
+    });
+    if (!confirmed) {
+      return;
+    }
     const container = node.parentElement;
     node.remove();
     syncRepeatItemMoveButtons(container);
+    syncRepeatItemTitles(container);
     updatePreviewMessage();
   });
   return node;
@@ -1116,6 +1515,7 @@ function mountRepeatList(section, list) {
   target.innerHTML = '';
   list.forEach((item) => target.appendChild(createRepeatItem(section, item)));
   syncRepeatItemMoveButtons(target);
+  syncRepeatItemTitles(target);
 }
 function collectRepeatList(section) {
   return Array.from(elements[`${section}List`].querySelectorAll('.repeat-item')).map((item) => {
@@ -1140,6 +1540,7 @@ function createCustomSectionCard(section = {}) {
   card.className = 'full-width section-card';
   card.dataset.collapsible = 'true';
   card.dataset.sectionKey = getCustomSectionKey(normalized.id);
+  card.dataset.editorSectionKey = card.dataset.sectionKey;
   card.dataset.customSection = 'true';
   card.dataset.customId = normalized.id;
   card.innerHTML = `
@@ -1181,13 +1582,26 @@ function createCustomSectionCard(section = {}) {
     revealSectionTarget(item);
     updatePreviewMessage();
   });
-  card.querySelector('[data-remove-custom-section="true"]')?.addEventListener('click', () => {
+  card.querySelector('[data-remove-custom-section="true"]')?.addEventListener('click', async () => {
+    const sectionTitle = card.querySelector('[data-custom-section-title="true"]')?.value.trim() || '\u81ea\u5b9a\u4e49\u6a21\u5757';
+    const confirmed = await openConfirmDialog({
+      title: '\u786e\u8ba4\u5220\u9664\u81ea\u5b9a\u4e49\u6a21\u5757',
+      message: `\u6a21\u5757\u201c${sectionTitle}\u201d\u5220\u9664\u540e\uff0c\u91cc\u9762\u7684\u6761\u76ee\u4e5f\u4f1a\u4e00\u8d77\u5220\u9664\u3002\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f`,
+      confirmText: '\u786e\u8ba4\u5220\u9664',
+    });
+    if (!confirmed) {
+      return;
+    }
+    const nextCard = card.previousElementSibling || card.nextElementSibling;
     card.remove();
+    state.activeEditorSectionKey = getEditorSectionKey(nextCard) || 'basics';
     syncSectionMoveButtons();
+    renderEditorSectionNav();
     updatePreviewMessage();
   });
   card.querySelector('[data-custom-section-title="true"]')?.addEventListener('input', () => {
     syncCustomSectionTitle(card);
+    renderEditorSectionNav();
     updatePreviewMessage();
   });
   bindCollapsibleSections();
@@ -1201,6 +1615,7 @@ function mountCustomSections(sections) {
     elements.sortableSections.appendChild(createCustomSectionCard(section));
   });
   syncSectionMoveButtons();
+  renderEditorSectionNav();
 }
 
 function collectCustomSections() {
@@ -1210,6 +1625,7 @@ function collectCustomSections() {
     const id = slugifySectionId(rawId) || `section-${index + 1}`;
     card.dataset.customId = id;
     card.dataset.sectionKey = getCustomSectionKey(id);
+    card.dataset.editorSectionKey = card.dataset.sectionKey;
     const items = Array.from(card.querySelectorAll('[data-custom-items="true"] .repeat-item')).map((item) => {
       const result = {};
       item.querySelectorAll('[data-field]').forEach((input) => {
@@ -1295,6 +1711,7 @@ function fillForm(resume) {
   document.getElementById('layout_section_divider_gap').value = layout.section_divider_gap;
   document.getElementById('layout_font_color').value = layout.font_color;
   syncLayoutColorValue(layout.font_color);
+  ensureAllCustomSelects();
   setRichTextValue(document.getElementById('skills'), current.content?.skills || []);
   mountCustomSections(current.content?.custom_sections || []);
   applySectionOrder(current.content?.section_order, current.content?.custom_sections || []);
@@ -1316,6 +1733,8 @@ function fillForm(resume) {
   } else {
     resetPreview();
   }
+  state.activeEditorSectionKey = 'basics';
+  renderEditorSectionNav();
   updatePreviewMessage();
 }
 
@@ -1345,6 +1764,7 @@ function renderTemplateOptions() {
   elements.templateSelect.innerHTML = state.templates
     .map((template) => `<option value="${template.id}">${template.name}</option>`)
     .join('');
+  ensureCustomSelect(elements.templateSelect);
 }
 
 function updatePreviewMessage() {
@@ -1367,6 +1787,7 @@ function revealSectionTarget(target) {
     return;
   }
   const card = target.closest('.section-card');
+  setActiveEditorSection(getEditorSectionKey(card));
   expandSectionCard(card);
   target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const focusTarget = target.matches('input, select, textarea, button')
@@ -1467,12 +1888,16 @@ async function saveResume({ silent = false } = {}) {
     return null;
   }
 
+  const currentSectionKey = state.activeEditorSectionKey;
   const path = state.currentResumeId ? `/api/resumes/${state.currentResumeId}` : '/api/resumes';
   const method = state.currentResumeId ? 'PUT' : 'POST';
   const saved = await request(path, { method, body: JSON.stringify(payload) });
   state.currentResumeId = saved.id;
   await loadResumes();
   fillForm(saved);
+  if (currentSectionKey) {
+    setActiveEditorSection(currentSectionKey);
+  }
   setHtmlPreview();
 
   if (!silent) {
@@ -1535,7 +1960,16 @@ async function renderPdf() {
 
 async function deleteResume() {
   if (!state.currentResumeId) {
-    showToast('当前没有可删除的简历');
+    showToast('\u5f53\u524d\u6ca1\u6709\u53ef\u5220\u9664\u7684\u7b80\u5386');
+    return;
+  }
+
+  const confirmed = await openConfirmDialog({
+    title: '\u786e\u8ba4\u5220\u9664\u7b80\u5386',
+    message: '\u5220\u9664\u540e\u8be5\u7b80\u5386\u53ca\u5df2\u751f\u6210\u7684\u9884\u89c8\u5185\u5bb9\u5c06\u65e0\u6cd5\u6062\u590d\uff0c\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f',
+    confirmText: '\u786e\u8ba4\u5220\u9664',
+  });
+  if (!confirmed) {
     return;
   }
 
@@ -1545,7 +1979,7 @@ async function deleteResume() {
   resetPreview();
   await loadResumes();
   renderResumeList();
-  showToast('简历已删除');
+  showToast('\u7b80\u5386\u5df2\u5220\u9664');
 }
 
 async function restoreSession() {
@@ -1570,18 +2004,35 @@ function bindEvents() {
   document.querySelectorAll('[data-rich-text="true"]').forEach((textarea) => ensureRichTextEditor(textarea));
   bindCollapsibleSections();
   applySectionUiLabels();
+  ensureAllCustomSelects();
 
   document.addEventListener('click', (event) => {
     if (!event.target.closest('.month-picker')) {
       closeAllMonthPickers();
     }
+    if (!event.target.closest('.custom-select')) {
+      closeAllCustomSelects();
+    }
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
+      if (isConfirmDialogOpen()) {
+        closeConfirmDialog(false);
+        return;
+      }
       closeAllMonthPickers();
+      closeAllCustomSelects();
     }
   });
+
+  elements.confirmDialog?.addEventListener('click', (event) => {
+    if (event.target === elements.confirmDialog) {
+      closeConfirmDialog(false);
+    }
+  });
+  elements.confirmDialogCancel?.addEventListener('click', () => closeConfirmDialog(false));
+  elements.confirmDialogConfirm?.addEventListener('click', () => closeConfirmDialog(true));
 
   elements.form.addEventListener('input', updatePreviewMessage);
   document.getElementById('layout_font_color')?.addEventListener('input', (event) => {
@@ -1650,7 +2101,15 @@ function bindEvents() {
     }
   });
 
-  elements.avatarClear.addEventListener('click', () => {
+  elements.avatarClear.addEventListener('click', async () => {
+    const confirmed = await openConfirmDialog({
+      title: '\u786e\u8ba4\u79fb\u9664\u7167\u7247',
+      message: '\u79fb\u9664\u540e\u4f1a\u6062\u590d\u4e3a\u9ed8\u8ba4\u5360\u4f4d\u56fe\uff0c\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f',
+      confirmText: '\u786e\u8ba4\u79fb\u9664',
+    });
+    if (!confirmed) {
+      return;
+    }
     setAvatar(null, DEFAULT_AVATAR_CROP);
     updatePreviewMessage();
   });
@@ -1678,7 +2137,7 @@ function bindEvents() {
       updatePreviewMessage();
     });
   });
-  elements.addCustomSectionButton?.addEventListener('click', () => {
+  const handleAddCustomSection = () => {
     const card = createCustomSectionCard({
       id: createCustomSectionId(),
       title: '',
@@ -1688,7 +2147,10 @@ function bindEvents() {
     applySectionOrder(getCurrentSectionOrder(), collectCustomSections());
     revealSectionTarget(card.querySelector('[data-custom-section-title="true"]') || card);
     updatePreviewMessage();
-  });
+  };
+
+  elements.addCustomSectionButton?.addEventListener('click', handleAddCustomSection);
+  elements.sectionNavAddCustomButton?.addEventListener('click', handleAddCustomSection);
 
   document.querySelectorAll('[data-move-section]').forEach((button) => {
     button.addEventListener('click', () => {
@@ -1701,6 +2163,7 @@ function bindEvents() {
   });
 
   syncSectionMoveButtons();
+  renderEditorSectionNav();
 }
 
 async function bootstrap() {
