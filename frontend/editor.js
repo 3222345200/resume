@@ -1,4 +1,5 @@
-﻿const TOKEN_KEY = 'resume_auth_token';
+const TOKEN_KEY = 'resume_auth_token';
+const SIDEBAR_COLLAPSED_KEY = 'resume_sidebar_collapsed';
 
 const state = {
   authToken: localStorage.getItem(TOKEN_KEY),
@@ -43,6 +44,9 @@ const elements = {
   sortableSections: document.getElementById('sortable-sections'),
   addCustomSectionButton: document.getElementById('add-custom-section-btn'),
   editorShell: document.getElementById('editor-shell'),
+  sidebarToggle: document.getElementById('sidebar-toggle'),
+  sidebarReopen: document.getElementById('sidebar-reopen'),
+  sidebarLogoToggle: document.getElementById('sidebar-logo-toggle'),
 };
 
 const DEFAULT_AVATAR_PLACEHOLDER = '/assets/default-avatar.jpg';
@@ -52,6 +56,7 @@ const DEFAULT_AVATAR_CROP = {
   offset_y: 50,
 };
 const ONE_INCH_PHOTO_RATIO = 5 / 7;
+const MAX_AVATAR_FILE_SIZE = 5 * 1024 * 1024;
 const MONTH_PICKER_MIN_YEAR = 1990;
 const MONTH_PICKER_MAX_YEAR = 2035;
 const MONTH_LABELS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -97,19 +102,82 @@ function syncAvatarControls() {
   }
 }
 
+function getAvatarTransform(crop) {
+  const normalized = normalizeAvatarCrop(crop);
+  const moveStrength = 0.45 + (normalized.scale - 1) * 0.9;
+  const translateX = (50 - normalized.offset_x) * moveStrength;
+  const translateY = (50 - normalized.offset_y) * moveStrength;
+  return `translate(${translateX}%, ${translateY}%) scale(${normalized.scale})`;
+}
+
 function applyAvatarPreview() {
   const crop = normalizeAvatarCrop(state.currentAvatarCrop);
   state.currentAvatarCrop = crop;
   elements.avatarPreview.style.objectFit = 'cover';
-  elements.avatarPreview.style.objectPosition = `${crop.offset_x}% ${crop.offset_y}%`;
-  elements.avatarPreview.style.transform = `scale(${crop.scale})`;
+  elements.avatarPreview.style.objectPosition = '50% 50%';
+  elements.avatarPreview.style.transform = getAvatarTransform(crop);
   elements.avatarPreview.style.transformOrigin = 'center center';
+}
+
+function buildAvatarDisplayUrl(url) {
+  if (!url) {
+    return null;
+  }
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${Date.now()}`;
 }
 
 function setAvatarCrop(value) {
   state.currentAvatarCrop = normalizeAvatarCrop(value);
   syncAvatarControls();
   applyAvatarPreview();
+}
+
+async function getImageSize(file) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve({ width: image.naturalWidth || 0, height: image.naturalHeight || 0 });
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('image-load-failed'));
+    };
+
+    image.src = objectUrl;
+  });
+}
+
+async function getAutoAvatarCrop(file) {
+  try {
+    const { width, height } = await getImageSize(file);
+    if (!width || !height) {
+      return { ...DEFAULT_AVATAR_CROP };
+    }
+
+    const imageRatio = width / height;
+    const targetRatio = ONE_INCH_PHOTO_RATIO;
+    const portraitBias = imageRatio < targetRatio;
+    const ratioGap = portraitBias
+      ? targetRatio / imageRatio
+      : imageRatio / targetRatio;
+
+    const scale = portraitBias
+      ? Math.min(1.32, Math.max(1, 1 + (ratioGap - 1) * 0.45))
+      : Math.min(1.16, Math.max(1, 1 + (ratioGap - 1) * 0.12));
+
+    return normalizeAvatarCrop({
+      scale,
+      offset_x: 50,
+      offset_y: portraitBias ? 38 : 42,
+    });
+  } catch {
+    return { ...DEFAULT_AVATAR_CROP };
+  }
 }
 
 function syncLayoutColorValue(color) {
@@ -407,10 +475,10 @@ function ensureRichTextEditor(textarea) {
   textarea.insertAdjacentElement('afterend', wrapper);
 
   const surface = wrapper.querySelector('.rich-surface');
-  const sync = () => {
+  const sync = ({ normalizeSurface = false } = {}) => {
     const sanitized = sanitizeRichHtml(surface.innerHTML);
     textarea.value = sanitized;
-    if (surface.innerHTML !== sanitized) {
+    if (normalizeSurface && surface.innerHTML !== sanitized) {
       surface.innerHTML = sanitized;
     }
     updatePreviewMessage();
@@ -420,20 +488,20 @@ function ensureRichTextEditor(textarea) {
     button.addEventListener('click', () => {
       surface.focus();
       document.execCommand(button.dataset.command, false);
-      sync();
+      sync({ normalizeSurface: true });
     });
   });
 
   wrapper.querySelector('[data-action="indent"]')?.addEventListener('click', () => {
     surface.focus();
     document.execCommand('indent', false);
-    sync();
+    sync({ normalizeSurface: true });
   });
 
   wrapper.querySelector('[data-action="outdent"]')?.addEventListener('click', () => {
     surface.focus();
     document.execCommand('outdent', false);
-    sync();
+    sync({ normalizeSurface: true });
   });
 
   wrapper.querySelector('[data-action="link"]')?.addEventListener('click', () => {
@@ -444,11 +512,11 @@ function ensureRichTextEditor(textarea) {
       return;
     }
     document.execCommand('createLink', false, href);
-    sync();
+    sync({ normalizeSurface: true });
   });
 
-  surface.addEventListener('input', sync);
-  surface.addEventListener('blur', sync);
+  surface.addEventListener('input', () => sync());
+  surface.addEventListener('blur', () => sync({ normalizeSurface: true }));
   textarea.dataset.richReady = 'true';
 }
 
@@ -695,6 +763,31 @@ function redirectToLogin() {
   window.location.href = '/login';
 }
 
+function applySidebarCollapsed(collapsed) {
+  const isCollapsed = Boolean(collapsed);
+  elements.editorShell?.classList.toggle('sidebar-collapsed', isCollapsed);
+  if (elements.sidebarToggle) {
+    elements.sidebarToggle.textContent = isCollapsed ? '>' : '<';
+    elements.sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+    elements.sidebarToggle.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+  }
+  if (elements.sidebarReopen) {
+    elements.sidebarReopen.hidden = !isCollapsed;
+    elements.sidebarReopen.style.display = isCollapsed ? 'inline-flex' : 'none';
+    elements.sidebarReopen.setAttribute('aria-hidden', String(!isCollapsed));
+  }
+  if (elements.sidebarLogoToggle) {
+    elements.sidebarLogoToggle.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'OfferPilot');
+    elements.sidebarLogoToggle.setAttribute('aria-expanded', String(!isCollapsed));
+  }
+}
+
+function toggleSidebarCollapsed() {
+  const collapsed = !elements.editorShell?.classList.contains('sidebar-collapsed');
+  applySidebarCollapsed(collapsed);
+  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+}
+
 function showToast(message) {
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -737,13 +830,24 @@ function setAvatar(url, crop = state.currentAvatarCrop || DEFAULT_AVATAR_CROP) {
   state.currentAvatarUrl = url || null;
   setAvatarCrop(crop);
   if (state.currentAvatarUrl) {
-    elements.avatarPreview.src = state.currentAvatarUrl;
+    elements.avatarPreview.src = buildAvatarDisplayUrl(state.currentAvatarUrl) || state.currentAvatarUrl;
     elements.avatarStatus.textContent = '照片已上传，可按一寸照比例调整后再导出 PDF。';
   } else {
     elements.avatarPreview.src = DEFAULT_AVATAR_PLACEHOLDER;
-    elements.avatarStatus.textContent = '未上传照片时，将使用默认占位图。';
+    elements.avatarStatus.textContent = '未上传照片时，将使用默认占位图。支持图片格式，大小不能超过 5MB。';
   }
 }
+
+elements.avatarPreview?.addEventListener('error', () => {
+  elements.avatarPreview.src = DEFAULT_AVATAR_PLACEHOLDER;
+  elements.avatarStatus.textContent = '照片加载失败，请重新上传。';
+});
+
+elements.avatarPreview?.addEventListener('load', () => {
+  if (state.currentAvatarUrl) {
+    elements.avatarStatus.textContent = '照片已上传，可按一寸照比例调整后再导出 PDF。';
+  }
+});
 
 function resetPreview() {
   state.currentPdfUrl = null;
@@ -914,14 +1018,66 @@ function hydrateDynamicField(input, field, data) {
   input.addEventListener('change', updatePreviewMessage);
 }
 
+function syncRepeatItemMoveButtons(container) {
+  if (!container) {
+    return;
+  }
+  const items = Array.from(container.querySelectorAll(':scope > .repeat-item'));
+  items.forEach((item, index) => {
+    const upButton = item.querySelector('[data-move-item="up"]');
+    const downButton = item.querySelector('[data-move-item="down"]');
+    if (upButton) {
+      upButton.disabled = index === 0;
+    }
+    if (downButton) {
+      downButton.disabled = index === items.length - 1;
+    }
+  });
+}
+
+function moveRepeatItem(item, direction) {
+  const container = item?.parentElement;
+  if (!container || !item) {
+    return;
+  }
+  const sibling = direction === 'up' ? item.previousElementSibling : item.nextElementSibling;
+  if (!sibling) {
+    return;
+  }
+  if (direction === 'up') {
+    container.insertBefore(item, sibling);
+  } else {
+    container.insertBefore(sibling, item);
+  }
+  syncRepeatItemMoveButtons(container);
+  revealSectionTarget(item);
+  updatePreviewMessage();
+}
+
 function createRepeatItem(section, data = {}) {
   const template = document.getElementById(`${section}-template`);
   const node = template.content.firstElementChild.cloneNode(true);
+  const titleRow = node.querySelector('.section-title-row.compact');
+  const removeButton = node.querySelector('.remove-btn');
+  if (titleRow && removeButton) {
+    const actions = document.createElement('div');
+    actions.className = 'section-order-actions';
+    actions.setAttribute('aria-label', 'item-order');
+    actions.innerHTML = `
+      <button type="button" class="icon-button" data-move-item="up" title="上移" aria-label="上移">&#8593;</button>
+      <button type="button" class="icon-button" data-move-item="down" title="下移" aria-label="下移">&#8595;</button>
+    `;
+    removeButton.insertAdjacentElement('beforebegin', actions);
+  }
   node.querySelectorAll('[data-field]').forEach((input) => {
     hydrateDynamicField(input, input.dataset.field, data);
   });
+  node.querySelector('[data-move-item="up"]')?.addEventListener('click', () => moveRepeatItem(node, 'up'));
+  node.querySelector('[data-move-item="down"]')?.addEventListener('click', () => moveRepeatItem(node, 'down'));
   node.querySelector('.remove-btn').addEventListener('click', () => {
+    const container = node.parentElement;
     node.remove();
+    syncRepeatItemMoveButtons(container);
     updatePreviewMessage();
   });
   return node;
@@ -931,8 +1087,8 @@ function mountRepeatList(section, list) {
   const target = elements[`${section}List`];
   target.innerHTML = '';
   list.forEach((item) => target.appendChild(createRepeatItem(section, item)));
+  syncRepeatItemMoveButtons(target);
 }
-
 function collectRepeatList(section) {
   return Array.from(elements[`${section}List`].querySelectorAll('.repeat-item')).map((item) => {
     const result = {};
@@ -990,7 +1146,11 @@ function createCustomSectionCard(section = {}) {
     button.addEventListener('click', () => moveSection(card.dataset.sectionKey, button.dataset.moveSection));
   });
   card.querySelector('[data-add-custom-item="true"]')?.addEventListener('click', () => {
-    list.appendChild(createRepeatItem('custom', {}));
+    expandSectionCard(card);
+    const item = createRepeatItem('custom', {});
+    list.appendChild(item);
+    syncRepeatItemMoveButtons(list);
+    revealSectionTarget(item);
     updatePreviewMessage();
   });
   card.querySelector('[data-remove-custom-section="true"]')?.addEventListener('click', () => {
@@ -1160,6 +1320,28 @@ function updatePreviewMessage() {
   if (!state.currentPdfUrl) {
     setPreviewMessage('生成 PDF 后，这里会直接显示简历预览。');
   }
+}
+
+function expandSectionCard(card) {
+  if (!card) {
+    return;
+  }
+  const toggle = card.querySelector('.section-toggle');
+  toggle?.setAttribute('aria-expanded', 'true');
+  card.classList.remove('is-collapsed');
+}
+
+function revealSectionTarget(target) {
+  if (!target) {
+    return;
+  }
+  const card = target.closest('.section-card');
+  expandSectionCard(card);
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const focusTarget = target.matches('input, select, textarea, button')
+    ? target
+    : target.querySelector('input, select, textarea, button');
+  focusTarget?.focus({ preventScroll: true });
 }
 
 function bindCollapsibleSections() {
@@ -1388,9 +1570,29 @@ function bindEvents() {
     clearToken();
     redirectToLogin();
   });
+  elements.sidebarToggle?.addEventListener('click', toggleSidebarCollapsed);
+  elements.sidebarReopen?.addEventListener('click', () => {
+    applySidebarCollapsed(false);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, '0');
+  });
+  elements.sidebarLogoToggle?.addEventListener('click', () => {
+    if (!elements.editorShell?.classList.contains('sidebar-collapsed')) {
+      return;
+    }
+    applySidebarCollapsed(false);
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, '0');
+  });
   elements.avatarFile.addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_FILE_SIZE) {
+      setAvatar(state.currentAvatarUrl, state.currentAvatarCrop || DEFAULT_AVATAR_CROP);
+      elements.avatarStatus.textContent = '上传失败：照片大小不能超过 5MB。';
+      showToast('照片大小不能超过 5MB');
+      elements.avatarFile.value = '';
       return;
     }
 
@@ -1402,8 +1604,9 @@ function bindEvents() {
       if (!state.currentResumeId) {
         throw new Error('请先创建简历后再上传照片');
       }
+      const autoCrop = await getAutoAvatarCrop(file);
       const result = await uploadAvatar(file, state.currentResumeId);
-      setAvatar(result.url, DEFAULT_AVATAR_CROP);
+      setAvatar(result.url, autoCrop);
       showToast('照片上传成功');
     } catch (error) {
       console.error(error);
@@ -1434,7 +1637,12 @@ function bindEvents() {
   document.querySelectorAll('[data-add-section]').forEach((button) => {
     button.addEventListener('click', () => {
       const section = button.dataset.addSection;
-      elements[`${section}List`].appendChild(createRepeatItem(section, {}));
+      const card = button.closest('.section-card');
+      expandSectionCard(card);
+      const item = createRepeatItem(section, {});
+      elements[`${section}List`].appendChild(item);
+      syncRepeatItemMoveButtons(elements[`${section}List`]);
+      revealSectionTarget(item);
       updatePreviewMessage();
     });
   });
@@ -1446,7 +1654,7 @@ function bindEvents() {
     });
     elements.sortableSections.appendChild(card);
     applySectionOrder(getCurrentSectionOrder(), collectCustomSections());
-    card.querySelector('[data-custom-section-title="true"]')?.focus();
+    revealSectionTarget(card.querySelector('[data-custom-section-title="true"]') || card);
     updatePreviewMessage();
   });
 
@@ -1464,6 +1672,7 @@ function bindEvents() {
 }
 
 async function bootstrap() {
+  applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
   bindEvents();
   applyAvatarFrameRatio();
   applySectionOrder(MOVABLE_SECTION_ORDER);
@@ -1481,4 +1690,19 @@ bootstrap().catch((error) => {
   console.error(error);
   showToast('页面初始化失败，请检查后端服务');
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

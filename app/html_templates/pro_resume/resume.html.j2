@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -25,7 +25,7 @@
 
     body {
       margin: 0;
-      font-family: "Times New Roman", "SimSun", "Songti SC", serif;
+      font-family: "KaiTi", "STKaiti", serif;
       color: var(--layout-font-color);
       background: #ffffff;
       font-size: 12.4px;
@@ -78,7 +78,7 @@
 
     .contact {
       text-align: center;
-      font-size: 12.5px;
+      font-size: var(--layout-content-font-size);
       line-height: 1.35;
     }
 
@@ -95,11 +95,18 @@
       margin: 0 0.16em;
     }
 
+    
+
+
     .job-target {
+      display: inline-block;
+      font-family: "KaiTi", "STKaiti", serif;
+      font-size: var(--layout-content-font-size);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+    .job-target-row {
       margin-top: 1px;
-      font-family: "KaiTi", "STKaiti", "Kaiti SC", serif;
-      font-size: 13.2px;
-      line-height: 1.25;
     }
 
     .section {
@@ -359,33 +366,28 @@
     <div class="topbar">
       {% if basics.avatar_data_uri %}
         <div class="avatar-wrap">
-          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: {{ basics.avatar_crop.offset_x }}% {{ basics.avatar_crop.offset_y }}%; transform: scale({{ basics.avatar_crop.scale }});">
+          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: 50% 50%; transform: translate({{ (50 - basics.avatar_crop.offset_x) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%, {{ (50 - basics.avatar_crop.offset_y) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%) scale({{ basics.avatar_crop.scale }});">
         </div>
       {% endif %}
 
       <h1 class="name">{{ basics.name or title }}</h1>
 
       <div class="contact">
-        {% if basics.phone %}<strong>(+86){{ basics.phone }}</strong>{% endif %}
-        {% if basics.phone and basics.email %}<span class="divider-dot">|</span>{% endif %}
-        {% if basics.email %}<strong><em>{{ basics.email }}</em></strong>{% endif %}
-        {% if basics.job_target %}
-          <div class="job-target">求职意向：{{ basics.job_target }}</div>
+        <div>
+          {% if basics.phone %}<strong>(+86){{ basics.phone }}</strong>{% endif %}
+          {% if basics.phone and basics.email %}<span class="divider-dot">|</span>{% endif %}
+          {% if basics.email %}<strong><em>{{ basics.email }}</em></strong>{% endif %}
+        </div>
+        {% if basics.job_target or basics.location or basics.city %}
+          <div class="job-target-row">
+            {% if basics.job_target %}<span class="job-target">求职意向：{{ basics.job_target }}</span>{% endif %}
+            {% if basics.job_target and (basics.location or basics.city) %}<span class="divider-dot">|</span>{% endif %}
+            {% if basics.location or basics.city %}<span class="job-target">意向城市：{{ basics.location or basics.city }}</span>{% endif %}
+          </div>
         {% endif %}
       </div>
     </div>
-    {% if basics.summary %}
-      <section class="section">
-        <h2 class="section-title">
-          <span class="section-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg>
-          </span>个人简介
-        </h2>
-        <div class="rich self-summary">{{ basics.summary | safe }}</div>
-      </section>
-    {% endif %}
-
-    {% if education %}
+{% if education %}
       <section class="section">
         <h2 class="section-title">
           <span class="section-icon" aria-hidden="true">
@@ -566,8 +568,20 @@
         </section>
       {% endif %}
     {% endfor %}
+
+            {% if basics.summary %}
+      <section class="section">
+        <h2 class="section-title">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg>
+          </span>个人简介
+        </h2>
+        <div class="rich self-summary">{{ basics.summary | safe }}</div>
+      </section>
+    {% endif %}
   </div>
 </body>
 </html>
+
 
 

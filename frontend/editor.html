@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -9,12 +9,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/assets/styles.css?v=20260402-sidebar-fix-9" />
 </head>
 <body>
-  <div id="editor-shell" class="page-shell hidden-auth">
+    <div id="editor-shell" class="page-shell hidden-auth">
+    <button id="sidebar-reopen" class="sidebar-reopen" type="button" aria-label="Expand sidebar" hidden>
+      <img class="sidebar-reopen-logo" src="/assets/brand-mark.svg" alt="Expand sidebar" />
+      <span class="sidebar-reopen-arrow">&gt;</span>
+    </button>
     <aside class="sidebar">
-      <div class="brand-stack">
+      <div class="sidebar-topbar">
+        <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-expanded="true" aria-label="Collapse sidebar">&lt;</button>
+      </div>      <div class="brand-stack">
         <div class="brand-lockup">
           <img class="brand-logo" src="/assets/brand-mark.svg" alt="职跃 OfferPilot 标志" />
           <div>
@@ -161,14 +167,14 @@
                       <input id="avatar-offset-y" type="range" min="0" max="100" step="1" value="50" />
                     </label>
                   </div>
-                  <div id="avatar-status" class="avatar-status">未上传照片时，将使用默认占位图。</div>
+                  <div id="avatar-status" class="avatar-status">未上传照片时，将使用默认占位图。支持图片格式，大小不能超过 5MB。</div>
                 </div>
               </div>
               <div class="basics-fields form-grid">
                 <label>姓名<input id="basics_name" /></label>
                 <label>电话<input id="basics_phone" /></label>
                 <label>邮箱<input id="basics_email" /></label>
-                <label>城市<input id="basics_location" /></label>
+                <label>意向城市<input id="basics_location" /></label>
                 <label class="full-width">求职意向<input id="basics_job_target" placeholder="后端开发" /></label>
                 <label class="full-width">
                   个人简介
@@ -467,7 +473,7 @@
     </div>
   </template>
 
-  <script src="/assets/editor.js"></script>
+  <script src="/assets/editor.js?v=20260402-sidebar-fix-8"></script>
 </body>
 </html>
 
