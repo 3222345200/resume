@@ -130,7 +130,7 @@ function normalizeCurrentResume(resume, fallbackTemplateId = 'pro_resume') {
       ...(cloned.content?.layout || {}),
       section_title_font_family: cloned.content?.layout?.section_title_font_family || cloned.content?.layout?.font_family || defaultContent().layout.section_title_font_family,
       content_font_family: cloned.content?.layout?.content_font_family || cloned.content?.layout?.font_family || defaultContent().layout.content_font_family,
-      font_family: cloned.content?.layout?.font_family || cloned.content?.layout?.content_font_family || defaultContent().layout.font_family,
+      font_family: cloned.content?.layout?.content_font_family || cloned.content?.layout?.font_family || defaultContent().layout.font_family,
       section_title_color: cloned.content?.layout?.section_title_color || cloned.content?.layout?.font_color || defaultContent().layout.section_title_color,
       content_font_color: cloned.content?.layout?.content_font_color || cloned.content?.layout?.font_color || defaultContent().layout.content_font_color,
       font_color: cloned.content?.layout?.font_color || cloned.content?.layout?.content_font_color || defaultContent().layout.font_color,
@@ -291,6 +291,7 @@ export const useResumeStore = defineStore('resume', {
     async saveCurrentResume() {
       this.currentResume = normalizeCurrentResume(this.currentResume, this.templates[0]?.id || 'pro_resume')
       this.currentResume.content.section_order = normalizeSectionOrder(this.currentResume.content)
+      this.currentResume.content.layout.font_family = this.currentResume.content.layout.content_font_family
       const payload = {
         title: this.currentResume.title.trim(),
         template_id: this.currentResume.template_id,

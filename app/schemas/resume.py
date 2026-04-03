@@ -128,20 +128,32 @@ class LayoutSchema(BaseModel):
         text = str(value or "").strip()
         return text if HEX_COLOR_PATTERN.fullmatch(text) else "#111111"
 
+    @model_validator(mode="before")
+    @classmethod
+    def fill_legacy_layout_fields(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+
+        normalized = dict(data)
+        legacy_font_family = str(normalized.get("font_family") or "").strip()
+        legacy_font_color = str(normalized.get("font_color") or "").strip()
+
+        if not str(normalized.get("section_title_font_family") or "").strip() and legacy_font_family:
+            normalized["section_title_font_family"] = legacy_font_family
+        if not str(normalized.get("content_font_family") or "").strip() and legacy_font_family:
+            normalized["content_font_family"] = legacy_font_family
+        if not str(normalized.get("section_title_color") or "").strip() and legacy_font_color:
+            normalized["section_title_color"] = legacy_font_color
+        if not str(normalized.get("content_font_color") or "").strip() and legacy_font_color:
+            normalized["content_font_color"] = legacy_font_color
+
+        return normalized
+
     @model_validator(mode="after")
     def sync_legacy_layout_fields(self) -> "LayoutSchema":
-        if self.section_title_color == "#111111" and self.font_color != "#111111":
-            self.section_title_color = self.font_color
-        if self.content_font_color == "#111111" and self.font_color != "#111111":
-            self.content_font_color = self.font_color
-        if self.section_title_font_family == "fangsong" and self.font_family != "kaiti":
-            self.section_title_font_family = self.font_family
-        if self.content_font_family == "kaiti" and self.font_family != "kaiti":
-            self.content_font_family = self.font_family
         self.font_color = self.content_font_color
         self.font_family = self.content_font_family
         return self
-
 
 class EducationItemSchema(BaseModel):
     school: str = ""

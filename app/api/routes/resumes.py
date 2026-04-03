@@ -1,4 +1,4 @@
-﻿import hashlib
+import hashlib
 import json
 from datetime import datetime, timezone
 from urllib.parse import quote, unquote, urlparse
@@ -15,6 +15,7 @@ from app.models.resume import Resume
 from app.models.user import User
 from app.schemas.resume import (
     RenderResponseSchema,
+    ResumeContentSchema,
     ResumeCreateSchema,
     ResumeListResponseSchema,
     ResumeReadSchema,
@@ -28,19 +29,23 @@ router = APIRouter(prefix='/resumes', tags=['resumes'])
 logger = get_logger('resumes')
 
 
+def _normalize_resume_content(resume: Resume) -> dict:
+    return ResumeContentSchema.model_validate(resume.content or {}).model_dump()
+
+
 def _resume_render_hash(resume: Resume) -> str:
     payload = {
         'template_signature': get_resume_template_signature(),
         'title': resume.title,
         'template_id': normalize_template_id(resume.template_id),
-        'content': resume.content or {},
+        'content': _normalize_resume_content(resume),
     }
     serialized = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
     return hashlib.sha256(serialized.encode('utf-8')).hexdigest()
 
 
 def _resume_download_name(resume: Resume) -> str:
-    content = resume.content if isinstance(resume.content, dict) else {}
+    content = _normalize_resume_content(resume)
     basics = content.get('basics') if isinstance(content.get('basics'), dict) else {}
     name = str(basics.get('name') or '').strip()
     title = str(resume.title or '').strip()
@@ -49,7 +54,7 @@ def _resume_download_name(resume: Resume) -> str:
 
 
 def _resume_avatar_storage_ref(resume: Resume) -> tuple[str, str] | None:
-    content = resume.content if isinstance(resume.content, dict) else {}
+    content = _normalize_resume_content(resume)
     basics = content.get('basics') if isinstance(content.get('basics'), dict) else {}
     avatar_url = str(basics.get('avatar_url') or '').strip()
     if not avatar_url:
@@ -82,7 +87,7 @@ def _to_read_schema(resume: Resume) -> ResumeReadSchema:
         id=resume.id,
         title=resume.title,
         template_id=normalize_template_id(resume.template_id),
-        content=resume.content,
+        content=_normalize_resume_content(resume),
         rendered_pdf_url=_resume_pdf_url(resume),
         created_at=resume.created_at.isoformat(),
         updated_at=resume.updated_at.isoformat(),
@@ -115,6 +120,7 @@ def _get_resume_or_404(resume_id: str, db: Session, current_user: User) -> Resum
     )
     if resume is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Resume not found')
+    resume.content = _normalize_resume_content(resume)
     return resume
 
 
