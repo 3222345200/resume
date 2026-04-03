@@ -11,7 +11,10 @@
     <div class="repeat-editor-list">
       <article v-for="(item, index) in items" :key="index" class="repeat-editor-item">
         <div class="repeat-item-head">
-          <strong>{{ shortName }} {{ index + 1 }}</strong>
+          <div class="repeat-item-title-wrap">
+            <strong>{{ shortName }} {{ index + 1 }}</strong>
+            <slot name="item-head-extra" :item="item" :index="index"></slot>
+          </div>
           <div class="repeat-inline-actions">
             <button class="mini-move-btn" type="button" :disabled="index === 0" @click="moveItem(index, -1)">上移</button>
             <button class="mini-move-btn" type="button" :disabled="index === items.length - 1" @click="moveItem(index, 1)">下移</button>

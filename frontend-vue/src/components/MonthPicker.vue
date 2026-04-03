@@ -1,5 +1,9 @@
 ﻿<template>
-  <div ref="pickerRoot" class="month-picker-wrap">
+  <div
+    ref="pickerRoot"
+    class="month-picker-wrap"
+    :class="{ 'has-present-btn': allowPresent }"
+  >
     <button type="button" class="month-picker-trigger" @click="togglePanel">
       <span>{{ displayText }}</span>
       <span class="month-picker-arrow" :class="{ open: panelOpen }" aria-hidden="true"></span>
@@ -14,7 +18,6 @@
     >
       至今
     </button>
-
     <div v-if="panelOpen" class="month-picker-panel">
       <div class="month-picker-head">
         <strong>{{ panelYear }}年</strong>

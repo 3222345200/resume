@@ -28,13 +28,24 @@
         </label>
       </form>
 
-      <section class="layout-setting-panel">
-        <button class="layout-setting-toggle" type="button" @click="layoutCollapsed = !layoutCollapsed">
+      <section class="layout-setting-panel" :class="{ 'is-expanded': !layoutCollapsed }">
+        <button v-if="layoutCollapsed" class="layout-setting-toggle" type="button" @click="layoutCollapsed = false">
           <span class="layout-setting-title">版式设置</span>
           <span class="layout-setting-tip">这里控制 PDF 的整体版式，建议先调整字号和行距，排版会更稳定。</span>
-          <span class="section-toggle-chevron" :class="{ 'is-collapsed': layoutCollapsed }" aria-hidden="true"></span>        </button>
+          <span class="section-toggle-chevron is-collapsed" aria-hidden="true"></span>
+        </button>
 
-        <div v-show="!layoutCollapsed" class="layout-setting-groups">
+        <div v-else class="layout-setting-groups">
+          <button
+            class="layout-setting-inline-toggle"
+            type="button"
+            aria-label="收起版式设置"
+            title="收起版式设置"
+            @click="layoutCollapsed = true"
+          >
+            <span class="section-toggle-chevron" aria-hidden="true"></span>
+          </button>
+
           <div class="layout-setting-group">
             <div class="layout-setting-group-title">标题样式</div>
             <div class="layout-setting-fields">
@@ -171,9 +182,9 @@
               <form class="basics-field-grid" @submit.prevent>
                 <label class="plain-field"><span>姓名</span><input v-model.trim="draft.content.basics.name" /></label>
                 <label class="plain-field"><span>电话</span><input v-model.trim="draft.content.basics.phone" /></label>
-                <label class="plain-field"><span>邮箱</span><input v-model.trim="draft.content.basics.email" /></label>
-                <label class="plain-field"><span>意向城市</span><input v-model.trim="draft.content.basics.location" /></label>
-                <label class="plain-field full-row"><span>求职意向</span><input v-model.trim="draft.content.basics.job_target" placeholder="例如：后端开发" /></label>
+                <label class="plain-field basics-email-field"><span>邮箱</span><input v-model.trim="draft.content.basics.email" /></label>
+                <label class="plain-field basics-city-field"><span>意向城市</span><input v-model.trim="draft.content.basics.location" /></label>
+                <label class="plain-field basics-job-target-field"><span>求职意向</span><input v-model.trim="draft.content.basics.job_target" placeholder="例如：后端开发" /></label>
                 <div class="single-rich-field full-row"><span>个人简介</span><RichTextEditor v-model="draft.content.basics.summary" placeholder="用一段话概括你的方向、优势和背景" /></div>
               </form>
             </div>
@@ -188,15 +199,15 @@
               :create-item="createEducationItem"
             >
               <template #default="{ item }">
-                <div class="repeat-item-grid">
+                <div class="repeat-item-grid education-item-grid">
                   <label><span>学校</span><input v-model.trim="item.school" /></label>
                   <label><span>专业</span><input v-model.trim="item.major" /></label>
                   <label>
                     <span>学历</span>
                     <CustomSelect v-model="item.degree" :options="degreeOptions" placeholder="请选择学历" />
                   </label>
-                  <label><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
-                  <label><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
+                  <label class="item-start-date-field"><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
+                  <label class="item-end-date-field"><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
                   <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
                 </div>
               </template>
@@ -211,15 +222,17 @@
 
             <div v-else-if="sectionBlock.kind === 'experience'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
               <ResumeRepeatSection :items="draft.content.experience" title="工作/实习经历" short-name="经历" eyebrow="Experience" :create-item="createExperienceItem">
+                <template #item-head-extra="{ item }">
+                  <CustomSelect v-model="item.entry_type" :options="experienceTypeOptions" />
+                </template>
                 <template #default="{ item }">
-                  <div class="repeat-item-grid">
-                    <label><span>经历类型</span><CustomSelect v-model="item.entry_type" :options="experienceTypeOptions" /></label>
+                  <div class="repeat-item-grid experience-item-grid">
                     <label><span>公司</span><input v-model.trim="item.company" /></label>
                     <label><span>地点</span><input v-model.trim="item.location" /></label>
                     <label><span>部门</span><input v-model.trim="item.department" /></label>
                     <label><span>岗位</span><input v-model.trim="item.role" /></label>
-                    <label><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
-                    <label><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
+                    <label class="item-start-date-field"><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
+                    <label class="item-end-date-field"><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
                     <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
                   </div>
                 </template>
