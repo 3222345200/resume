@@ -240,6 +240,14 @@ export const useResumeStore = defineStore('resume', {
       return `/api/resumes/${resumeId}/preview?v=${Date.now()}&token=${token}`
     },
 
+    buildPdfDownloadUrl(resumeId) {
+      if (!resumeId) {
+        return ''
+      }
+      const token = encodeURIComponent(getToken())
+      return `/api/resumes/${resumeId}/pdf/download?v=${Date.now()}&token=${token}`
+    },
+
     async bootstrapEditor() {
       this.loading = true
       try {
@@ -329,7 +337,7 @@ export const useResumeStore = defineStore('resume', {
       }
       await this.refreshResumeList(saved.id)
       this.previewUrl = this.buildPreviewUrl(saved.id)
-      return result.pdf_url
+      return this.buildPdfDownloadUrl(saved.id) || result.pdf_url
     },
 
     async uploadAvatar(file) {
