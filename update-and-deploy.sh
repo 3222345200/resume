@@ -4,6 +4,8 @@ set -eu
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 ENV_FILE="${1:-.env.docker}"
 BRANCH="${2:-main}"
+NODE_IMAGE="${NODE_IMAGE:-node:20-alpine}"
+NPM_CACHE_VOLUME="${NPM_CACHE_VOLUME:-resume-frontend-npm-cache}"
 
 cd "$ROOT_DIR"
 
@@ -18,16 +20,30 @@ if [ ! -d .git ]; then
   exit 1
 fi
 
-echo "[1/4] Fetch latest code..."
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker is required on this server."
+  exit 1
+fi
+
+echo "[1/5] Fetch latest code..."
 git fetch origin
 
-echo "[2/4] Switch to branch: $BRANCH"
+echo "[2/5] Switch to branch: $BRANCH"
 git checkout "$BRANCH"
 
-echo "[3/4] Pull latest commit..."
+echo "[3/5] Pull latest commit..."
 git pull --ff-only origin "$BRANCH"
 
-echo "[4/4] Build and start containers..."
+echo "[4/5] Build Vue frontend in a temporary Node container..."
+docker volume create "$NPM_CACHE_VOLUME" >/dev/null
+docker run --rm \
+  -v "$ROOT_DIR/frontend-vue:/app" \
+  -v "$NPM_CACHE_VOLUME:/root/.npm" \
+  -w /app \
+  "$NODE_IMAGE" \
+  sh -lc "npm ci --prefer-offline --no-audit && npm run build"
+
+echo "[5/5] Build and start containers..."
 docker compose --env-file "$ENV_FILE" up -d --build
 
 echo "Done."

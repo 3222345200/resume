@@ -39,7 +39,22 @@ DEFAULT_LAYOUT = {
     "content_font_size": "13.5px",
     "content_line_height": "1.36",
     "section_divider_gap": "4px",
+    "section_title_font_family": "\"FangSong\", \"STFangsong\", \"FangSong_GB2312\", serif",
+    "content_font_family": "\"KaiTi\", \"STKaiti\", \"Kaiti SC\", serif",
+    "font_family": "\"KaiTi\", \"STKaiti\", \"Kaiti SC\", serif",
+    "section_title_color": "#111111",
+    "content_font_color": "#111111",
     "font_color": "#111111",
+}
+SECTION_TITLE_SIZE_OPTIONS = {"14", "15", "16", "17", "18", "19", "20", "21", "22", "24", "26", "28"}
+CONTENT_FONT_SIZE_OPTIONS = {"10", "10.5", "11", "11.5", "12", "12.5", "13", "13.5", "14", "14.5", "15", "16", "17", "18"}
+CONTENT_LINE_HEIGHT_OPTIONS = {"1.0", "1.1", "1.15", "1.2", "1.25", "1.3", "1.36", "1.4", "1.45", "1.5", "1.6", "1.75", "2.0"}
+SECTION_DIVIDER_GAP_OPTIONS = {"0", "1", "2", "3", "4", "5", "6", "8", "10", "12", "14", "16"}
+FONT_FAMILY_OPTIONS = {
+    "songti": "\"SimSun\", \"Songti SC\", \"STSong\", serif",
+    "fangsong": "\"FangSong\", \"STFangsong\", \"FangSong_GB2312\", serif",
+    "kaiti": "\"KaiTi\", \"STKaiti\", \"Kaiti SC\", serif",
+    "heiti": "\"SimHei\", \"Microsoft YaHei\", \"Noto Sans SC\", sans-serif",
 }
 MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
 CUSTOM_SECTION_PREFIX = "custom:"
@@ -161,20 +176,34 @@ def _visible_rich_text(value: object, *, list_mode: bool = False) -> str:
     return rendered if _has_visible_text(rendered) else ""
 
 
+def _normalize_hex_color(value: str, fallback: str) -> str:
+    return value if len(value) == 7 and value.startswith("#") and all(ch in "0123456789abcdefABCDEF" for ch in value[1:]) else fallback
+
+
 def _layout_context(raw_layout: object) -> dict[str, str]:
     layout = raw_layout if isinstance(raw_layout, dict) else {}
     section_title_size = str(layout.get("section_title_size") or "18").strip()
     content_font_size = str(layout.get("content_font_size") or "13.5").strip()
     content_line_height = str(layout.get("content_line_height") or "1.36").strip()
     section_divider_gap = str(layout.get("section_divider_gap") or "4").strip()
-    font_color = str(layout.get("font_color") or "#111111").strip()
+    fallback_font_family_key = str(layout.get("font_family") or "kaiti").strip()
+    section_title_font_family_key = str(layout.get("section_title_font_family") or fallback_font_family_key or "fangsong").strip()
+    content_font_family_key = str(layout.get("content_font_family") or fallback_font_family_key or "kaiti").strip()
+    fallback_color = str(layout.get("font_color") or "#111111").strip()
+    section_title_color = str(layout.get("section_title_color") or fallback_color or "#111111").strip()
+    content_font_color = str(layout.get("content_font_color") or fallback_color or "#111111").strip()
 
     return {
-        "section_title_size": f"{section_title_size if section_title_size in {'16', '18', '20'} else '18'}px",
-        "content_font_size": f"{content_font_size if content_font_size in {'12.5', '13.5', '14.5'} else '13.5'}px",
-        "content_line_height": content_line_height if content_line_height in {"1.28", "1.36", "1.5"} else "1.36",
-        "section_divider_gap": f"{section_divider_gap if section_divider_gap in {'2', '4', '6'} else '4'}px",
-        "font_color": font_color if len(font_color) == 7 and font_color.startswith("#") and all(ch in "0123456789abcdefABCDEF" for ch in font_color[1:]) else DEFAULT_LAYOUT["font_color"],
+        "section_title_size": f"{section_title_size if section_title_size in SECTION_TITLE_SIZE_OPTIONS else '18'}px",
+        "content_font_size": f"{content_font_size if content_font_size in CONTENT_FONT_SIZE_OPTIONS else '13.5'}px",
+        "content_line_height": content_line_height if content_line_height in CONTENT_LINE_HEIGHT_OPTIONS else "1.36",
+        "section_divider_gap": f"{section_divider_gap if section_divider_gap in SECTION_DIVIDER_GAP_OPTIONS else '4'}px",
+        "section_title_font_family": FONT_FAMILY_OPTIONS.get(section_title_font_family_key, DEFAULT_LAYOUT["section_title_font_family"]),
+        "content_font_family": FONT_FAMILY_OPTIONS.get(content_font_family_key, DEFAULT_LAYOUT["content_font_family"]),
+        "font_family": FONT_FAMILY_OPTIONS.get(fallback_font_family_key, DEFAULT_LAYOUT["font_family"]),
+        "section_title_color": _normalize_hex_color(section_title_color, DEFAULT_LAYOUT["section_title_color"]),
+        "content_font_color": _normalize_hex_color(content_font_color, DEFAULT_LAYOUT["content_font_color"]),
+        "font_color": _normalize_hex_color(fallback_color, DEFAULT_LAYOUT["font_color"]),
     }
 
 
@@ -474,6 +503,12 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         "education": education,
         "ordered_sections": ordered_sections,
     }
+
+def get_resume_template_signature() -> str:
+    template_path = TEMPLATE_ROOT / TEMPLATE_FILE
+    template_stat = template_path.stat()
+    return f"{template_stat.st_mtime_ns}:{template_stat.st_size}"
+
 
 def render_resume_html(resume: Resume) -> str:
     env = _build_environment()

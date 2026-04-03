@@ -19,6 +19,7 @@ RUN apt-get update \
 COPY pyproject.toml README.md ./
 COPY app ./app
 COPY frontend ./frontend
+COPY frontend-vue/dist ./frontend-vue/dist
 COPY uploads ./uploads
 COPY server-fonts /usr/local/share/fonts/resume
 

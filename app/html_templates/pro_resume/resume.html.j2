@@ -11,12 +11,17 @@
       --layout-section-divider-gap: {{ layout.section_divider_gap }};
       --layout-entry-title-size: calc(var(--layout-content-font-size) + 1.9px);
       --layout-emphasis-font-size: calc(var(--layout-content-font-size) + 0.5px);
-      --layout-font-color: {{ layout.font_color }};
+      --layout-section-title-font-family: {{ layout.section_title_font_family }};
+      --layout-content-font-family: {{ layout.content_font_family }};
+      --layout-font-family: {{ layout.content_font_family }};
+      --layout-section-title-color: {{ layout.section_title_color }};
+      --layout-content-font-color: {{ layout.content_font_color }};
+      --layout-font-color: {{ layout.content_font_color }};
     }
 
     @page {
       size: A4;
-      margin: 5mm 15mm;
+      margin: 0;
     }
 
     * {
@@ -25,8 +30,8 @@
 
     body {
       margin: 0;
-      font-family: "KaiTi", "STKaiti", serif;
-      color: var(--layout-font-color);
+      font-family: var(--layout-content-font-family);
+      color: var(--layout-content-font-color);
       background: #ffffff;
       font-size: 12.4px;
       line-height: 1.4;
@@ -36,9 +41,20 @@
     }
 
     .page {
-      width: 100%;
+      width: 210mm;
+      height: 297mm;
+      padding: 5mm 15mm;
       background: #ffffff;
+      overflow: hidden;
+      break-after: page;
+      page-break-after: always;
     }
+
+    .page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+
     @media screen {
       html {
         background: #eef2f7;
@@ -53,14 +69,8 @@
       }
 
       .page {
-        width: min(210mm, calc(100% - 2px));
-        min-height: calc(297mm - 6mm);
-        margin: 0 auto 10px;
-        padding: 4mm 13mm;
-        background: #ffffff;
+        margin: 0 auto 12px;
         box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
-        transform: scale(1.06);
-        transform-origin: top center;
       }
     }
 
@@ -93,7 +103,7 @@
     .name {
       margin: 18px 0 3px;
       text-align: center;
-      font-family: "FangSong", "STFangsong", "SimSun", serif;
+      font-family: var(--layout-section-title-font-family);
       font-size: 22px;
       font-weight: 700;
       letter-spacing: 0.015em;
@@ -114,9 +124,39 @@
       font-style: italic;
     }
 
-    .divider-dot {
+    .contact-line {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      flex-wrap: wrap;
+    }
+
+    .contact-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28em;
+    }
+
+    .contact-icon {
+      width: 0.92em;
+      height: 0.92em;
+      flex: none;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .contact-separator {
       display: inline-block;
-      margin: 0 0.16em;
+      width: 0.32em;
+      height: 0.32em;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.55;
+      vertical-align: middle;
     }
 
     
@@ -124,7 +164,7 @@
 
     .job-target {
       display: inline-block;
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-content-font-size);
       line-height: 1.35;
       font-weight: 700;
@@ -144,9 +184,10 @@
     .section-title {
       margin: 0 0 calc(var(--layout-section-divider-gap) * 0.5);
       padding-bottom: var(--layout-section-divider-gap);
-      border-bottom: 1.5pt solid var(--layout-font-color);
+      border-bottom: 1.5pt solid var(--layout-section-title-color);
+      color: var(--layout-section-title-color);
       font-size: var(--layout-section-title-size);
-      font-family: "FangSong", "STFangsong", serif;
+      font-family: var(--layout-section-title-font-family);
       font-weight: 700;
       line-height: 1.15;
     }
@@ -159,7 +200,7 @@
       height: 16px;
       margin-right: 8px;
       transform: translateY(1px);
-      color: var(--layout-font-color);
+      color: var(--layout-section-title-color);
     }
 
     .section-icon svg {
@@ -197,7 +238,7 @@
 
     .entry-title {
       font-size: var(--layout-entry-title-size);
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       line-height: var(--layout-content-line-height);
     }
 
@@ -254,7 +295,7 @@
     .role-line {
       margin-top: -1px;
       margin-bottom: 2px;
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-content-font-size);
       line-height: var(--layout-content-line-height);
       font-weight: 700;
@@ -302,7 +343,7 @@
     }
 
     .rich {
-      font-family: "KaiTi", "STKaiti", "Kaiti SC", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-content-font-size);
       line-height: var(--layout-content-line-height);
       word-break: break-word;
@@ -332,7 +373,7 @@
 
     .education-lines .line {
       margin: 0.08em 0;
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-emphasis-font-size);
       line-height: var(--layout-content-line-height);
     }
@@ -344,7 +385,7 @@
     }
 
     .skills-text {
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-content-font-size);
       line-height: var(--layout-content-line-height);
     }
@@ -355,7 +396,7 @@
 
     .project-prefix {
       margin-bottom: 0.1em;
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: var(--layout-emphasis-font-size);
       line-height: var(--layout-content-line-height);
       font-weight: 700;
@@ -374,7 +415,7 @@
 
     .portfolio-link {
       margin-top: 1px;
-      font-family: "KaiTi", "STKaiti", serif;
+      font-family: var(--layout-content-font-family);
       font-size: 13.5px;
       word-break: break-all;
     }
@@ -397,15 +438,25 @@
       <h1 class="name">{{ basics.name or title }}</h1>
 
       <div class="contact">
-        <div>
-          {% if basics.phone %}<strong>(+86){{ basics.phone }}</strong>{% endif %}
-          {% if basics.phone and basics.email %}<span class="divider-dot">|</span>{% endif %}
-          {% if basics.email %}<strong><em>{{ basics.email }}</em></strong>{% endif %}
+        <div class="contact-line">
+          {% if basics.phone %}
+            <span class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v2a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3.08 4.18 2 2 0 0 1 5.06 2h2a2 2 0 0 1 2 1.72c.12.89.32 1.76.59 2.6a2 2 0 0 1-.45 2.11L8.1 9.53a16 16 0 0 0 6.37 6.37l1.1-1.1a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.6.59A2 2 0 0 1 22 16.92Z"></path></svg>
+              <strong>(+86){{ basics.phone }}</strong>
+            </span>
+          {% endif %}
+          {% if basics.phone and basics.email %}<span class="contact-separator" aria-hidden="true"></span>{% endif %}
+          {% if basics.email %}
+            <span class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path><path d="m22 8-10 6L2 8"></path></svg>
+              <strong><em>{{ basics.email }}</em></strong>
+            </span>
+          {% endif %}
         </div>
         {% if basics.job_target or basics.location or basics.city %}
           <div class="job-target-row">
             {% if basics.job_target %}<span class="job-target">求职意向：{{ basics.job_target }}</span>{% endif %}
-            {% if basics.job_target and (basics.location or basics.city) %}<span class="divider-dot">|</span>{% endif %}
+            {% if basics.job_target and (basics.location or basics.city) %}<span class="contact-separator" aria-hidden="true"></span>{% endif %}
             {% if basics.location or basics.city %}<span class="job-target">意向城市：{{ basics.location or basics.city }}</span>{% endif %}
           </div>
         {% endif %}
@@ -430,7 +481,7 @@
               <div class="entry-title education-cell education-degree">
                 {% if item.degree %}<strong>{{ item.degree }}</strong>{% endif %}
               </div>
-              <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+              <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
             </div>
             {% if item.highlights %}
               <div class="education-lines rich">{{ item.highlights | safe }}</div>
@@ -470,7 +521,7 @@
                     </span>
                   {% endif %}
                 </div>
-                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
               </div>
               {% if item.department or item.role %}
                 <div class="role-line">{{ item.department }}{% if item.department and item.role %} <em>{{ item.role }}</em>{% else %}{% if item.role %}<em>{{ item.role }}</em>{% endif %}{% endif %}</div>
@@ -492,10 +543,11 @@
             <div class="entry">
               <div class="entry-head">
                 <div class="entry-left entry-title"><strong>{{ item.name }}</strong></div>
-                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
               </div>
               {% if item.description %}
-                <div class="role-line">项目描述：<em>{{ item.description }}</em></div>
+                <div class="project-prefix">项目描述</div>
+                <div class="rich project-description">{{ item.description | safe }}</div>
               {% endif %}
               {% if item.highlights %}
                 <div class="project-prefix">主要工作</div>
@@ -556,7 +608,7 @@
             <div class="entry">
               <div class="entry-head">
                 <div class="entry-left entry-title"><strong>{{ item.title }}</strong></div>
-                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} ~ {% endif %}{{ item.end_date }}</div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
               </div>
               {% if item.subtitle %}
                 <div class="role-line"><em>{{ item.subtitle }}</em></div>
@@ -604,8 +656,144 @@
       </section>
     {% endif %}
   </div>
-</body>
+  <script>
+    (function paginateResumePages() {
+      const runPagination = function () {
+        if (document.body.dataset.resumePaginated === '1') {
+          return;
+        }
+
+        const sourcePage = document.querySelector('.page');
+        if (!sourcePage) {
+          return;
+        }
+
+        const topbarNode = sourcePage.querySelector(':scope > .topbar');
+        const sectionNodes = Array.from(sourcePage.querySelectorAll(':scope > .section'));
+        const pageStack = document.createElement('div');
+        pageStack.className = 'page-stack';
+        sourcePage.after(pageStack);
+
+        const createPage = function (withTopbar) {
+          const page = sourcePage.cloneNode(false);
+          if (withTopbar && topbarNode) {
+            page.appendChild(topbarNode.cloneNode(true));
+          }
+          pageStack.appendChild(page);
+          return page;
+        };
+
+        const pageHasBodyContent = function (page) {
+          return Array.from(page.children).some(function (child) {
+            return !child.classList.contains('topbar');
+          });
+        };
+
+        const pageOverflows = function (page) {
+          return page.scrollHeight > page.clientHeight + 1;
+        };
+
+        const buildSectionShell = function (sectionNode) {
+          const sectionShell = sectionNode.cloneNode(false);
+          const titleNode = sectionNode.querySelector(':scope > .section-title');
+          if (titleNode) {
+            sectionShell.appendChild(titleNode.cloneNode(true));
+          }
+          return sectionShell;
+        };
+
+        let currentPage = createPage(true);
+
+        const ensureSectionShell = function (sectionNode) {
+          let sectionShell = buildSectionShell(sectionNode);
+          currentPage.appendChild(sectionShell);
+
+          if (pageOverflows(currentPage) && pageHasBodyContent(currentPage)) {
+            sectionShell.remove();
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+          }
+
+          return sectionShell;
+        };
+
+        const appendWholeSection = function (sectionNode) {
+          const sectionClone = sectionNode.cloneNode(true);
+          currentPage.appendChild(sectionClone);
+
+          if (!pageOverflows(currentPage)) {
+            return true;
+          }
+
+          sectionClone.remove();
+          if (pageHasBodyContent(currentPage)) {
+            currentPage = createPage(false);
+            currentPage.appendChild(sectionNode.cloneNode(true));
+            if (!pageOverflows(currentPage)) {
+              return true;
+            }
+            currentPage.lastElementChild.remove();
+          }
+
+          return false;
+        };
+
+        const appendSectionByBlocks = function (sectionNode) {
+          const blockNodes = Array.from(sectionNode.children).filter(function (child) {
+            return !child.classList.contains('section-title');
+          });
+          let sectionShell = ensureSectionShell(sectionNode);
+
+          blockNodes.forEach(function (blockNode) {
+            const blockClone = blockNode.cloneNode(true);
+            sectionShell.appendChild(blockClone);
+
+            if (!pageOverflows(currentPage)) {
+              return;
+            }
+
+            blockClone.remove();
+            if (sectionShell.children.length <= 1 && !pageHasBodyContent(currentPage)) {
+              sectionShell.appendChild(blockNode.cloneNode(true));
+              return;
+            }
+
+            if (sectionShell.children.length <= 1) {
+              sectionShell.remove();
+            }
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+            sectionShell.appendChild(blockNode.cloneNode(true));
+          });
+
+          if (sectionShell.children.length <= 1) {
+            sectionShell.remove();
+          }
+        };
+
+        sectionNodes.forEach(function (sectionNode) {
+          if (!appendWholeSection(sectionNode)) {
+            appendSectionByBlocks(sectionNode);
+          }
+        });
+
+        sourcePage.remove();
+        document.body.dataset.resumePaginated = '1';
+      };
+
+      if (document.readyState === 'complete') {
+        requestAnimationFrame(runPagination);
+      } else {
+        window.addEventListener('load', function () {
+          requestAnimationFrame(runPagination);
+        }, { once: true });
+      }
+    })();
+  </script></body>
 </html>
+
 
 
 

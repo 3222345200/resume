@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -19,6 +19,8 @@ from app.services.minio_storage import ensure_bucket_exists
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / 'frontend'
+FRONTEND_VUE_DIST_DIR = BASE_DIR / 'frontend-vue' / 'dist'
+FRONTEND_VUE_ASSETS_DIR = FRONTEND_VUE_DIST_DIR / 'assets'
 UPLOADS_DIR = BASE_DIR / 'uploads'
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -31,7 +33,8 @@ app = FastAPI(
 )
 app.middleware('http')(log_requests)
 
-app.mount('/assets', StaticFiles(directory=str(FRONTEND_DIR)), name='assets')
+assets_dir = FRONTEND_VUE_ASSETS_DIR if FRONTEND_VUE_ASSETS_DIR.exists() else FRONTEND_DIR
+app.mount('/assets', StaticFiles(directory=str(assets_dir)), name='assets')
 app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
@@ -54,19 +57,23 @@ def index() -> RedirectResponse:
     return RedirectResponse(url='/login', status_code=302)
 
 
+def _read_frontend_html(legacy_filename: str) -> str:
+    vue_index_path = FRONTEND_VUE_DIST_DIR / 'index.html'
+    if vue_index_path.exists():
+        return vue_index_path.read_text(encoding='utf-8')
+    return (FRONTEND_DIR / legacy_filename).read_text(encoding='utf-8')
+
+
 @app.get('/login', include_in_schema=False)
 def login_page() -> HTMLResponse:
-    html = (FRONTEND_DIR / 'login.html').read_text(encoding='utf-8')
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=_read_frontend_html('login.html'))
 
 
 @app.get('/register', include_in_schema=False)
 def register_page() -> HTMLResponse:
-    html = (FRONTEND_DIR / 'login.html').read_text(encoding='utf-8')
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=_read_frontend_html('login.html'))
 
 
 @app.get('/editor', include_in_schema=False)
 def editor_page() -> HTMLResponse:
-    html = (FRONTEND_DIR / 'editor.html').read_text(encoding='utf-8')
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=_read_frontend_html('editor.html'))

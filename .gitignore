@@ -12,3 +12,4 @@ uploads/
 texput.log
 *.tmp
 _old_workspace_backup_20260328/
+node_modules/

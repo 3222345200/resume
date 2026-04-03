@@ -1,4 +1,4 @@
-import hashlib
+﻿import hashlib
 import json
 from datetime import datetime, timezone
 from urllib.parse import quote, unquote, urlparse
@@ -20,7 +20,7 @@ from app.schemas.resume import (
     ResumeReadSchema,
     ResumeUpdateSchema,
 )
-from app.services.html_pdf import render_resume_html, render_resume_pdf
+from app.services.html_pdf import get_resume_template_signature, render_resume_html, render_resume_pdf
 from app.services.minio_storage import delete_object, get_presigned_pdf_url, load_object_bytes, upload_user_pdf
 from app.services.templates import normalize_template_id
 
@@ -30,6 +30,7 @@ logger = get_logger('resumes')
 
 def _resume_render_hash(resume: Resume) -> str:
     payload = {
+        'template_signature': get_resume_template_signature(),
         'title': resume.title,
         'template_id': normalize_template_id(resume.template_id),
         'content': resume.content or {},
@@ -87,6 +88,23 @@ def _to_read_schema(resume: Resume) -> ResumeReadSchema:
         updated_at=resume.updated_at.isoformat(),
     )
 
+
+def _ensure_resume_title_available(
+    db: Session,
+    current_user: User,
+    title: str,
+    exclude_resume_id: str | None = None,
+) -> None:
+    normalized_title = title.strip()
+    query = select(Resume.id).where(
+        Resume.user_id == current_user.id,
+        Resume.title == normalized_title,
+    )
+    if exclude_resume_id:
+        query = query.where(Resume.id != exclude_resume_id)
+    existing_resume_id = db.scalar(query)
+    if existing_resume_id is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='同一用户下简历标题不能重复')
 
 def _get_resume_or_404(resume_id: str, db: Session, current_user: User) -> Resume:
     resume = db.scalar(

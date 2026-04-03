@@ -1,20 +1,34 @@
 ﻿# Resume Backend
 
-这是一个基于 `FastAPI + PostgreSQL + HTML` 的在线简历系统 MVP。
+这是一个基于 `FastAPI + PostgreSQL + Vue` 的在线简历系统 MVP。
 
 当前已经具备：
 
 - 简历的创建、查询、更新、删除
-- 前端表单编辑页面
+- Vue 前端表单编辑页面
 - 基于 HTML 模板和浏览器打印能力生成 PDF
 - PostgreSQL 持久化存储
 
 ## 本地启动
 
+Windows 下可以直接双击/执行根目录脚本，一键构建 Vue 前端并启动 FastAPI：
+
 ```powershell
+.\start.bat
+```
+
+如果你想手动分步启动，也可以执行：
+
+```powershell
+cd frontend-vue
+npm install
+npm run build
+cd ..
 .venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
+
+如果还没构建 `frontend-vue/dist`，后端会自动回退到旧版 `frontend/*.html` 页面。
 
 访问：
 

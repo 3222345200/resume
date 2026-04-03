@@ -1,14 +1,15 @@
-﻿import re
+import re
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 DATE_VALUE_PATTERN = re.compile(r"^\d{4}\.\d{2}$")
 
-LAYOUT_SECTION_TITLE_SIZES = {"16", "18", "20"}
-LAYOUT_CONTENT_FONT_SIZES = {"12.5", "13.5", "14.5"}
-LAYOUT_CONTENT_LINE_HEIGHTS = {"1.28", "1.36", "1.5"}
-LAYOUT_SECTION_DIVIDER_GAPS = {"2", "4", "6"}
+LAYOUT_SECTION_TITLE_SIZES = {"14", "15", "16", "17", "18", "19", "20", "21", "22", "24", "26", "28"}
+LAYOUT_CONTENT_FONT_SIZES = {"10", "10.5", "11", "11.5", "12", "12.5", "13", "13.5", "14", "14.5", "15", "16", "17", "18"}
+LAYOUT_CONTENT_LINE_HEIGHTS = {"1.0", "1.1", "1.15", "1.2", "1.25", "1.3", "1.36", "1.4", "1.45", "1.5", "1.6", "1.75", "2.0"}
+LAYOUT_SECTION_DIVIDER_GAPS = {"0", "1", "2", "3", "4", "5", "6", "8", "10", "12", "14", "16"}
+LAYOUT_FONT_FAMILIES = {"songti", "fangsong", "kaiti", "heiti"}
 HEX_COLOR_PATTERN = re.compile(r"^#[0-9a-fA-F]{6}$")
 MOVABLE_SECTION_ORDER = ("skills", "experience", "projects", "portfolio", "research", "honors")
 CUSTOM_SECTION_PREFIX = "custom:"
@@ -84,6 +85,11 @@ class LayoutSchema(BaseModel):
     content_font_size: str = "13.5"
     content_line_height: str = "1.36"
     section_divider_gap: str = "4"
+    section_title_font_family: str = "fangsong"
+    content_font_family: str = "kaiti"
+    font_family: str = "kaiti"
+    section_title_color: str = "#111111"
+    content_font_color: str = "#111111"
     font_color: str = "#111111"
 
     @field_validator("section_title_size", mode="before")
@@ -110,11 +116,31 @@ class LayoutSchema(BaseModel):
         text = str(value or "").strip()
         return text if text in LAYOUT_SECTION_DIVIDER_GAPS else "4"
 
-    @field_validator("font_color", mode="before")
+    @field_validator("section_title_font_family", "content_font_family", "font_family", mode="before")
+    @classmethod
+    def normalize_font_family(cls, value: object) -> str:
+        text = str(value or "").strip()
+        return text if text in LAYOUT_FONT_FAMILIES else "kaiti"
+
+    @field_validator("section_title_color", "content_font_color", "font_color", mode="before")
     @classmethod
     def normalize_font_color(cls, value: object) -> str:
         text = str(value or "").strip()
         return text if HEX_COLOR_PATTERN.fullmatch(text) else "#111111"
+
+    @model_validator(mode="after")
+    def sync_legacy_layout_fields(self) -> "LayoutSchema":
+        if self.section_title_color == "#111111" and self.font_color != "#111111":
+            self.section_title_color = self.font_color
+        if self.content_font_color == "#111111" and self.font_color != "#111111":
+            self.content_font_color = self.font_color
+        if self.section_title_font_family == "fangsong" and self.font_family != "kaiti":
+            self.section_title_font_family = self.font_family
+        if self.content_font_family == "kaiti" and self.font_family != "kaiti":
+            self.content_font_family = self.font_family
+        self.font_color = self.content_font_color
+        self.font_family = self.content_font_family
+        return self
 
 
 class EducationItemSchema(BaseModel):

@@ -1,5 +1,6 @@
 const TOKEN_KEY = 'resume_auth_token';
 const SIDEBAR_COLLAPSED_KEY = 'resume_sidebar_collapsed';
+const DESKTOP_SIDEBAR_MEDIA = '(min-width: 1201px)';
 
 const state = {
   authToken: localStorage.getItem(TOKEN_KEY),
@@ -99,6 +100,7 @@ const REPEAT_ITEM_TITLE_FIELDS = {
 };
 
 let confirmDialogResolver = null;
+let lastDesktopSidebarState = window.matchMedia(DESKTOP_SIDEBAR_MEDIA).matches;
 
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {};
@@ -1074,6 +1076,22 @@ function applySidebarCollapsed(collapsed) {
     elements.sidebarLogoToggle.setAttribute('aria-label', isCollapsed ? 'Expand sidebar' : 'OfferPilot');
     elements.sidebarLogoToggle.setAttribute('aria-expanded', String(!isCollapsed));
   }
+}
+
+function syncSidebarForViewport() {
+  const isDesktop = window.matchMedia(DESKTOP_SIDEBAR_MEDIA).matches;
+  const storedPreference = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+
+  if (!isDesktop) {
+    applySidebarCollapsed(true);
+    lastDesktopSidebarState = false;
+    return;
+  }
+
+  if (!lastDesktopSidebarState) {
+    applySidebarCollapsed(storedPreference === '1');
+  }
+  lastDesktopSidebarState = true;
 }
 
 function toggleSidebarCollapsed() {
@@ -2065,6 +2083,8 @@ function bindEvents() {
     applySidebarCollapsed(false);
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, '0');
   });
+  window.addEventListener('resize', syncSidebarForViewport);
+
   elements.avatarFile.addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -2167,7 +2187,7 @@ function bindEvents() {
 }
 
 async function bootstrap() {
-  applySidebarCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+  syncSidebarForViewport();
   bindEvents();
   applyAvatarFrameRatio();
   applySectionOrder(MOVABLE_SECTION_ORDER);
