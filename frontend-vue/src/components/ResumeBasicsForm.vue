@@ -85,7 +85,7 @@
         <aside class="section-nav-panel vue-section-nav-panel">
           <div class="section-nav-copy">
             <h3>编辑模块</h3>
-            <p class="meta-text">左侧选模块，右侧编辑当前内容。</p>
+            <p class="meta-text">左侧选模块，右侧编辑内容。</p>
           </div>
 
           <div class="section-nav-scrollbox">
