@@ -72,6 +72,10 @@ function resetZoom() {
   zoomScale.value = 1
 }
 
+function getPreviewIdentity(previewUrl) {
+  return String(previewUrl || '').split('?')[0]
+}
+
 function syncPreviewCollapseByViewport() {
   isCompactViewport.value = window.matchMedia('(max-width: 1200px)').matches
   if (isCompactViewport.value) {
@@ -83,8 +87,10 @@ function syncPreviewCollapseByViewport() {
 
 watch(
   () => props.previewUrl,
-  () => {
-    zoomScale.value = 1
+  (nextUrl, prevUrl) => {
+    if (getPreviewIdentity(nextUrl) !== getPreviewIdentity(prevUrl)) {
+      zoomScale.value = 1
+    }
   },
 )
 

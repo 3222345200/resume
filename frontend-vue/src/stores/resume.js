@@ -349,7 +349,6 @@ export const useResumeStore = defineStore('resume', {
         await this.saveCurrentResume()
       }
 
-      const autoCrop = await getAutoAvatarCrop(file)
       const formData = new FormData()
       formData.append('resume_id', this.currentResumeId)
       formData.append('file', file)
@@ -360,7 +359,7 @@ export const useResumeStore = defineStore('resume', {
       })
 
       this.currentResume.content.basics.avatar_url = result.url
-      this.currentResume.content.basics.avatar_crop = autoCrop
+      this.currentResume.content.basics.avatar_crop = { ...DEFAULT_AVATAR_CROP }
       await this.saveCurrentResume()
       return result.url
     },

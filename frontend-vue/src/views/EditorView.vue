@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import brandMark from '../assets/brand-mark.svg'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
@@ -116,6 +116,8 @@ const sidebarOpen = ref(window.matchMedia('(min-width: 1201px)').matches)
 const desktopSidebarCollapsed = ref(false)
 
 let toastTimer = null
+let autoPreviewTimer = null
+let autoPreviewSnapshot = ''
 
 function openNoticeDialog(message, title = '提示') {
   noticeDialogTitle.value = title
@@ -144,10 +146,51 @@ function showToast(message) {
 
 function syncSidebarByViewport() {
   const isDesktop = window.matchMedia('(min-width: 1201px)').matches
+  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1440px)').matches
   sidebarOpen.value = isDesktop
   if (!isDesktop) {
     desktopSidebarCollapsed.value = false
+    return
   }
+  desktopSidebarCollapsed.value = shouldCollapseDesktopSidebar
+}
+
+function getAutoPreviewSnapshot() {
+  return JSON.stringify({
+    id: resumeStore.currentResumeId || '',
+    title: resumeStore.currentResume?.title || '',
+    template_id: resumeStore.currentResume?.template_id || '',
+    content: resumeStore.currentResume?.content || {},
+  })
+}
+
+async function syncPreviewAutomatically() {
+  const nextSnapshot = getAutoPreviewSnapshot()
+  if (
+    resumeStore.loading ||
+    saving.value ||
+    rendering.value ||
+    avatarUploading.value ||
+    !String(resumeStore.currentResume?.title || '').trim() ||
+    nextSnapshot === autoPreviewSnapshot
+  ) {
+    return
+  }
+
+  try {
+    await resumeStore.saveCurrentResume()
+    autoPreviewSnapshot = getAutoPreviewSnapshot()
+  } catch (error) {
+    reportError(error)
+    autoPreviewSnapshot = getAutoPreviewSnapshot()
+  }
+}
+
+function scheduleAutoPreviewSync() {
+  if (autoPreviewTimer) {
+    clearTimeout(autoPreviewTimer)
+  }
+  autoPreviewTimer = window.setTimeout(syncPreviewAutomatically, 700)
 }
 
 function closeSidebarOnMobile() {
@@ -158,11 +201,13 @@ function closeSidebarOnMobile() {
 
 function handleSelectResume(resumeId) {
   resumeStore.selectResume(resumeId)
+  autoPreviewSnapshot = getAutoPreviewSnapshot()
   closeSidebarOnMobile()
 }
 
 function handleCreateResume() {
   resumeStore.createLocalResume()
+  autoPreviewSnapshot = getAutoPreviewSnapshot()
   closeSidebarOnMobile()
 }
 
@@ -170,6 +215,7 @@ async function handleSave() {
   try {
     saving.value = true
     await resumeStore.saveCurrentResume()
+    autoPreviewSnapshot = getAutoPreviewSnapshot()
     showToast('简历已保存')
   } catch (error) {
     reportError(error)
@@ -230,6 +276,7 @@ onMounted(async () => {
   window.addEventListener('resize', syncSidebarByViewport)
   try {
     await resumeStore.bootstrapEditor()
+    autoPreviewSnapshot = getAutoPreviewSnapshot()
   } catch (error) {
     reportError(error)
   }
@@ -240,6 +287,17 @@ onUnmounted(() => {
   if (toastTimer) {
     clearTimeout(toastTimer)
   }
+  if (autoPreviewTimer) {
+    clearTimeout(autoPreviewTimer)
+  }
 })
+
+watch(
+  () => resumeStore.currentResume,
+  () => {
+    scheduleAutoPreviewSync()
+  },
+  { deep: true },
+)
 </script>
 

@@ -1,7 +1,7 @@
 ﻿<template>
   <div ref="selectRoot" class="custom-select" :class="{ open: panelOpen }">
     <button type="button" class="custom-select-trigger" @click="togglePanel">
-      <span class="custom-select-value">{{ selectedLabel }}</span>
+      <span class="custom-select-value" :style="selectedOptionStyle">{{ selectedLabel }}</span>
       <span class="custom-select-arrow" aria-hidden="true"></span>
     </button>
 
@@ -12,6 +12,7 @@
         type="button"
         class="custom-select-option"
         :class="{ active: option.value === modelValue }"
+        :style="getOptionStyle(option)"
         @click="chooseOption(option.value)"
       >
         {{ option.label }}
@@ -47,6 +48,20 @@ const selectedLabel = computed(() => {
   const selectedOption = props.options.find((option) => option.value === props.modelValue)
   return selectedOption?.label || props.placeholder
 })
+
+const selectedOptionStyle = computed(() => {
+  const selectedOption = props.options.find((option) => option.value === props.modelValue)
+  return getOptionStyle(selectedOption)
+})
+
+function getOptionStyle(option) {
+  if (!option?.fontFamily) {
+    return {}
+  }
+  return {
+    fontFamily: option.fontFamily,
+  }
+}
 
 function togglePanel() {
   panelOpen.value = !panelOpen.value

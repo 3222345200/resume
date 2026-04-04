@@ -55,7 +55,7 @@
               </label>
               <label class="plain-field color-field">
                 <span>颜色</span>
-                <input v-model="draft.content.layout.section_title_color" type="color" />
+                <ColorPicker v-model="draft.content.layout.section_title_color" />
               </label>
               <label class="plain-field">
                 <span>大小</span>
@@ -77,7 +77,7 @@
               </label>
               <label class="plain-field color-field">
                 <span>颜色</span>
-                <input v-model="draft.content.layout.content_font_color" type="color" />
+                <ColorPicker v-model="draft.content.layout.content_font_color" />
               </label>
               <label class="plain-field">
                 <span>大小</span>
@@ -93,13 +93,18 @@
       </section>
 
       <div class="template-editor-layout">
-        <aside class="section-nav-panel vue-section-nav-panel">
+        <aside class="section-nav-panel vue-section-nav-panel" :class="{ 'is-collapsed': moduleNavCollapsed }">
+          <button type="button" class="module-nav-collapse-toggle" @click="moduleNavCollapsed = !moduleNavCollapsed">
           <div class="section-nav-copy">
             <h3>编辑模块</h3>
             <p class="meta-text">左侧选模块，右侧编辑内容。</p>
           </div>
 
-          <div class="section-nav-scrollbox">
+            <span v-if="moduleNavCollapsed" class="module-nav-collapsed-label">模块</span>
+            <span class="section-toggle-chevron" :class="{ 'is-collapsed': moduleNavCollapsed }" aria-hidden="true"></span>
+          </button>
+
+          <div v-show="!moduleNavCollapsed" class="section-nav-scrollbox">
             <div class="editor-section-nav vue-editor-section-nav">
               <div
                 v-for="sectionBlock in sectionNavBlocks"
@@ -140,6 +145,28 @@
 
             <button class="ghost-button section-nav-add-button" type="button" @click="addCustomSection">新增自定义模块</button>
           </div>
+
+          <div v-show="moduleNavCollapsed" class="section-nav-mini-stack">
+            <button
+              v-for="sectionBlock in sectionNavBlocks"
+              :key="`mini-${sectionBlock.key}`"
+              type="button"
+              class="section-nav-mini-button"
+              :class="{ 'is-active': activeSectionKey === sectionBlock.key }"
+              :title="sectionBlock.title"
+              @click="selectSection(sectionBlock.key)"
+            >
+              {{ sectionBlock.title.slice(0, 2) }}
+            </button>
+            <button
+              type="button"
+              class="section-nav-mini-button section-nav-mini-add-button"
+              title="新增自定义模块"
+              @click="addCustomSection"
+            >
+              新增
+            </button>
+          </div>
         </aside>
 
         <div class="section-workspace vue-section-workspace">
@@ -150,15 +177,24 @@
 
             <div class="basics-editor-layout">
               <div class="avatar-column-card">
-                <div class="avatar-preview-box avatar-preview-large">
+                    <strong>头像设置</strong>
+
+                <div
+                  class="avatar-preview-box avatar-preview-large avatar-edit-trigger"
+                  role="button"
+                  tabindex="0"
+                  @click="editCurrentAvatar"
+                  @keydown.enter.prevent="editCurrentAvatar"
+                  @keydown.space.prevent="editCurrentAvatar"
+                >
                   <img :src="avatarPreview" :style="avatarImageStyle" alt="头像预览" />
                 </div>
                 <p class="avatar-frame-note">这里按一寸照比例预览，下载 PDF 时会使用同样的裁剪结果和固定尺寸。</p>
 
-                <label class="ghost-button avatar-upload-btn">
-                  {{ avatarUploading ? '上传中...' : '上传照片' }}
-                  <input type="file" accept="image/*" hidden :disabled="avatarUploading" @change="handleAvatarChange" />
-                </label>
+                <button class="ghost-button avatar-change-btn" type="button" :disabled="avatarUploading" @click="openAvatarFilePicker">
+                  {{ avatarUploading ? '上传中...' : '修改照片' }}
+                </button>
+                <input ref="avatarFileInputRef" type="file" accept="image/*" hidden :disabled="avatarUploading" @change="handleAvatarChange" />
                 <button class="ghost-button" type="button" @click="requestClearAvatar">移除照片</button>
 
                 <div class="avatar-crop-controls avatar-crop-panel">
@@ -180,6 +216,25 @@
               </div>
 
               <form class="basics-field-grid" @submit.prevent>
+                <div class="avatar-column-card basics-avatar-row">
+                  <strong>头像设置</strong>
+                  <div
+                    class="avatar-preview-box avatar-preview-large avatar-edit-trigger"
+                    role="button"
+                    tabindex="0"
+                    @click="editCurrentAvatar"
+                    @keydown.enter.prevent="editCurrentAvatar"
+                    @keydown.space.prevent="editCurrentAvatar"
+                  >
+                    <img :src="avatarPreview" :style="avatarImageStyle" alt="头像预览" />
+                  </div>
+                  <p class="avatar-frame-note">点击照片可重新裁切上传，下载 PDF 时会使用同样的裁切结果和固定尺寸。</p>
+                  <button class="ghost-button avatar-change-btn" type="button" :disabled="avatarUploading" @click="openAvatarFilePicker">
+                    {{ avatarUploading ? '上传中...' : '修改照片' }}
+                  </button>
+                  <button class="ghost-button" type="button" @click="requestClearAvatar">移除照片</button>
+                  <p class="avatar-frame-note">未上传照片时，将使用默认占位图。支持图片格式，大小不能超过 5MB。</p>
+                </div>
                 <label class="plain-field"><span>姓名</span><input v-model.trim="draft.content.basics.name" /></label>
                 <label class="plain-field"><span>电话</span><input v-model.trim="draft.content.basics.phone" /></label>
                 <label class="plain-field basics-email-field"><span>邮箱</span><input v-model.trim="draft.content.basics.email" /></label>
@@ -293,7 +348,12 @@
               </ResumeRepeatSection>
             </div>
 
-            <section v-else-if="sectionBlock.kind === 'custom'" v-show="activeSectionKey === sectionBlock.key" class="editor-card section-editor-card active-module-card">
+            <section
+              v-else-if="sectionBlock.kind === 'custom'"
+              v-show="activeSectionKey === sectionBlock.key"
+              class="editor-card section-editor-card active-module-card"
+              :data-custom-section-id="sectionBlock.section.id"
+            >
               <div class="editor-card-header custom-section-header">
                 <div>
                   <p class="eyebrow">Custom</p>
@@ -356,13 +416,25 @@
       @confirm="handleConfirmAction"
       @cancel="closeConfirmDialog"
     />
+
+    <AvatarCropDialog
+      :open="Boolean(pendingAvatarFile)"
+      :file="pendingAvatarFile"
+      :can-remove="Boolean(draft.content.basics.avatar_url)"
+      @confirm="confirmAvatarCrop"
+      @cancel="closeAvatarCropDialog"
+      @change-file="openAvatarFilePicker"
+      @remove-file="handleDialogRemoveAvatar"
+    />
   </section>
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import defaultAvatar from '../assets/default-avatar.jpg'
 import { createCustomSection } from '../stores/resume'
+import AvatarCropDialog from './AvatarCropDialog.vue'
+import ColorPicker from './ColorPicker.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import CustomSelect from './CustomSelect.vue'
 import MonthPicker from './MonthPicker.vue'
@@ -381,8 +453,12 @@ const props = defineProps({
 defineEmits(['save', 'render', 'delete'])
 
 const avatarVersion = ref(Date.now())
+const avatarFileInputRef = ref(null)
+const pendingAvatarFile = ref(null)
+const avatarSourceFile = ref(null)
 const activeSectionKey = ref('basics')
 const layoutCollapsed = ref(false)
+const moduleNavCollapsed = ref(false)
 const draggedSectionKey = ref('')
 const dropTargetSectionKey = ref('')
 const confirmState = ref({
@@ -418,6 +494,16 @@ const fontFamilyOptions = [
   { label: '仿宋', value: 'fangsong' },
   { label: '黑体', value: 'heiti' },
 ]
+const fontFamilyOptionStyles = {
+  kaiti: "'KaiTi', 'STKaiti', serif",
+  songti: "'SimSun', 'Songti SC', serif",
+  fangsong: "'FangSong', 'STFangsong', serif",
+  heiti: "'SimHei', 'Heiti SC', sans-serif",
+}
+fontFamilyOptions.forEach((option) => {
+  option.fontFamily = fontFamilyOptionStyles[option.value]
+})
+
 const degreeOptions = [
   { label: '请选择学历', value: '' },
   { label: '专科', value: '专科' },
@@ -509,6 +595,21 @@ watch(
   { immediate: true },
 )
 
+function syncFoldablePanelsByViewport() {
+  const shouldCollapsePanels = window.matchMedia('(max-width: 1440px)').matches
+  layoutCollapsed.value = shouldCollapsePanels
+  moduleNavCollapsed.value = shouldCollapsePanels
+}
+
+onMounted(() => {
+  window.addEventListener('resize', syncFoldablePanelsByViewport)
+  syncFoldablePanelsByViewport()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', syncFoldablePanelsByViewport)
+})
+
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {}
   const clamp = (input, minimum, maximum, fallback) => {
@@ -543,8 +644,54 @@ async function handleAvatarChange(event) {
     window.alert('照片大小不能超过 5MB')
     return
   }
+  avatarSourceFile.value = file
+  pendingAvatarFile.value = file
+}
+
+function openAvatarFilePicker() {
+  if (props.avatarUploading) {
+    return
+  }
+  avatarFileInputRef.value?.click()
+}
+
+async function editCurrentAvatar() {
+  if (props.avatarUploading) {
+    return
+  }
+
+  if (!props.draft.content.basics.avatar_url) {
+    openAvatarFilePicker()
+    return
+  }
+
+  if (avatarSourceFile.value) {
+    pendingAvatarFile.value = avatarSourceFile.value
+    return
+  }
+
+  try {
+    const response = await fetch(avatarPreview.value)
+    if (!response.ok) {
+      throw new Error('avatar-load-failed')
+    }
+    const blob = await response.blob()
+    pendingAvatarFile.value = new File([blob], 'avatar.jpg', {
+      type: blob.type || 'image/jpeg',
+    })
+  } catch {
+    openAvatarFilePicker()
+  }
+}
+
+function closeAvatarCropDialog() {
+  pendingAvatarFile.value = null
+}
+
+async function confirmAvatarCrop(file) {
   await props.uploadAvatar(file)
   avatarVersion.value = Date.now()
+  pendingAvatarFile.value = null
 }
 
 function openConfirmDialog(title, message, action) {
@@ -577,9 +724,15 @@ function requestClearAvatar() {
   openConfirmDialog('移除照片', '确认移除当前头像照片吗？移除后保存简历才会生效。', clearAvatar)
 }
 
+function handleDialogRemoveAvatar() {
+  closeAvatarCropDialog()
+  requestClearAvatar()
+}
+
 function clearAvatar() {
   props.draft.content.basics.avatar_url = null
   props.draft.content.basics.avatar_crop = { scale: 1, offset_x: 50, offset_y: 50 }
+  avatarSourceFile.value = null
   avatarVersion.value = Date.now()
 }
 
@@ -716,8 +869,15 @@ function selectSection(sectionKey) {
   activeSectionKey.value = sectionKey
 }
 
-function addCustomItem(section) {
+async function addCustomItem(section) {
   section.items.push({ title: '', subtitle: '', start_date: '', end_date: '', description: '', highlights: '' })
+  await nextTick()
+  document
+    .querySelector(`[data-custom-section-id="${section.id}"] .custom-sub-item:last-of-type`)
+    ?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
 }
 
 function requestRemoveCustomItem(section, index) {

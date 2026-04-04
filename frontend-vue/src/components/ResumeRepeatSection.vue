@@ -9,7 +9,12 @@
     </div>
 
     <div class="repeat-editor-list">
-      <article v-for="(item, index) in items" :key="index" class="repeat-editor-item">
+      <article
+        v-for="(item, index) in items"
+        :key="index"
+        :ref="(element) => setItemRef(element, index)"
+        class="repeat-editor-item"
+      >
         <div class="repeat-item-head">
           <div class="repeat-item-title-wrap">
             <strong>{{ shortName }} {{ index + 1 }}</strong>
@@ -41,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 
 const props = defineProps({
@@ -69,9 +74,21 @@ const props = defineProps({
 
 const confirmOpen = ref(false)
 const pendingDeleteIndex = ref(-1)
+const itemRefs = ref([])
 
-function addItem() {
+function setItemRef(element, index) {
+  if (element) {
+    itemRefs.value[index] = element
+  }
+}
+
+async function addItem() {
   props.items.push(props.createItem())
+  await nextTick()
+  itemRefs.value[props.items.length - 1]?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
 }
 
 function moveItem(index, step) {

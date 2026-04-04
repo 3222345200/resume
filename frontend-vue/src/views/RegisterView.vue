@@ -15,9 +15,9 @@
 
       <div class="premium-copy">
         <p class="premium-kicker">EMAIL VERIFIED REGISTRATION</p>
-        <h1>先注册，再开始整理你的简历资产。</h1>
+        <h1>创建账号，开始搭建你的简历素材库。</h1>
         <p class="auth-copy">
-          注册页会校验图形验证码和邮箱验证码，验证通过后自动进入编辑工作台。
+          通过邮箱验证码完成注册，登录后即可创建、编辑和导出多份简历。
         </p>
       </div>
 
@@ -32,7 +32,7 @@
       <div class="auth-card">
         <p class="eyebrow">Register</p>
         <h2>创建一个新账号</h2>
-        <p class="muted-copy">填写用户名、密码和邮箱，然后完成验证码验证。</p>
+        <p class="muted-copy">填写基础信息并完成验证，即可进入编辑器。</p>
 
         <form class="auth-form" @submit.prevent="handleRegister">
           <label>

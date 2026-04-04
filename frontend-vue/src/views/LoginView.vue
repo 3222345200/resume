@@ -15,9 +15,9 @@
 
       <div class="premium-copy">
         <p class="premium-kicker">CAREER TOOLS FOR AMBITIOUS CANDIDATES</p>
-        <h1>把经历组织好，剩下的交给职业表达。</h1>
+        <h1>更快写出一份清爽、有重点的简历。</h1>
         <p class="auth-copy">
-          登录页保留账号密码入口；如果还没有账号，可以切换到注册页完成邮箱验证码校验。
+          管理多份简历版本，实时预览 PDF 效果，把排版和内容一起打磨到位。
         </p>
       </div>
 
@@ -32,7 +32,7 @@
       <div class="auth-card">
         <p class="eyebrow">Sign In</p>
         <h2>进入你的求职工作台</h2>
-        <p class="muted-copy">输入账号和密码即可登录。</p>
+        <p class="muted-copy">欢迎回来，继续完善你的简历内容。</p>
 
         <form class="auth-form" @submit.prevent="handleLogin">
           <label>
