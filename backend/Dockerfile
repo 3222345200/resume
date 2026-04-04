@@ -16,15 +16,17 @@ RUN apt-get update \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml README.md ./
-COPY app ./app
-COPY frontend ./frontend
-COPY frontend-vue/dist ./frontend-vue/dist
-COPY uploads ./uploads
-COPY server-fonts /usr/local/share/fonts/resume
+WORKDIR /workspace/backend
+
+COPY backend/pyproject.toml README.md ./
+COPY backend/app ./app
+COPY frontend/src/assets /workspace/frontend/src/assets
+COPY frontend/dist /workspace/frontend/dist
+COPY backend/server-fonts /usr/local/share/fonts/resume
 
 RUN pip install --upgrade pip \
     && pip install . \
+    && mkdir -p ./uploads \
     && fc-cache -f -v
 
 EXPOSE 8000

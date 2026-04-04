@@ -8,12 +8,12 @@
 
 为了让项目在 `Alibaba Linux + Docker` 中稳定生成中文 PDF，当前仓库已经把下面这些字体文件一起收进来了：
 
-- [simsun.ttc](d:/Users/32223/Desktop/resume/server-fonts/simsun.ttc)
-- [simfang.ttf](d:/Users/32223/Desktop/resume/server-fonts/simfang.ttf)
-- [simkai.ttf](d:/Users/32223/Desktop/resume/server-fonts/simkai.ttf)
-- [NotoSansSC-VF.ttf](d:/Users/32223/Desktop/resume/server-fonts/NotoSansSC-VF.ttf)
+- [simsun.ttc](d:/Users/32223/Desktop/resume/backend/server-fonts/simsun.ttc)
+- [simfang.ttf](d:/Users/32223/Desktop/resume/backend/server-fonts/simfang.ttf)
+- [simkai.ttf](d:/Users/32223/Desktop/resume/backend/server-fonts/simkai.ttf)
+- [NotoSansSC-VF.ttf](d:/Users/32223/Desktop/resume/backend/server-fonts/NotoSansSC-VF.ttf)
 
-`Dockerfile` 构建时会自动把它们复制到：
+`backend/Dockerfile` 构建时会自动把它们复制到：
 
 - `/usr/local/share/fonts/resume`
 

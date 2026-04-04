@@ -18,8 +18,9 @@ from app.db.bootstrap import ensure_runtime_schema
 from app.services.minio_storage import ensure_bucket_exists
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / 'frontend'
-FRONTEND_VUE_DIST_DIR = BASE_DIR / 'frontend-vue' / 'dist'
+PROJECT_ROOT = BASE_DIR.parent
+FRONTEND_VUE_DIST_DIR = PROJECT_ROOT / 'frontend' / 'dist'
+FRONTEND_VUE_INDEX_FILE = FRONTEND_VUE_DIST_DIR / 'index.html'
 FRONTEND_VUE_ASSETS_DIR = FRONTEND_VUE_DIST_DIR / 'assets'
 UPLOADS_DIR = BASE_DIR / 'uploads'
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
@@ -33,8 +34,7 @@ app = FastAPI(
 )
 app.middleware('http')(log_requests)
 
-assets_dir = FRONTEND_VUE_ASSETS_DIR if FRONTEND_VUE_ASSETS_DIR.exists() else FRONTEND_DIR
-app.mount('/assets', StaticFiles(directory=str(assets_dir)), name='assets')
+app.mount('/assets', StaticFiles(directory=str(FRONTEND_VUE_ASSETS_DIR), check_dir=False), name='assets')
 app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
@@ -57,23 +57,22 @@ def index() -> RedirectResponse:
     return RedirectResponse(url='/login', status_code=302)
 
 
-def _read_frontend_html(legacy_filename: str) -> str:
-    vue_index_path = FRONTEND_VUE_DIST_DIR / 'index.html'
-    if vue_index_path.exists():
-        return vue_index_path.read_text(encoding='utf-8')
-    return (FRONTEND_DIR / legacy_filename).read_text(encoding='utf-8')
+def _read_frontend_html() -> str:
+    if not FRONTEND_VUE_INDEX_FILE.exists():
+        raise RuntimeError('frontend/dist/index.html not found, please build frontend first')
+    return FRONTEND_VUE_INDEX_FILE.read_text(encoding='utf-8')
 
 
 @app.get('/login', include_in_schema=False)
 def login_page() -> HTMLResponse:
-    return HTMLResponse(content=_read_frontend_html('login.html'))
+    return HTMLResponse(content=_read_frontend_html())
 
 
 @app.get('/register', include_in_schema=False)
 def register_page() -> HTMLResponse:
-    return HTMLResponse(content=_read_frontend_html('login.html'))
+    return HTMLResponse(content=_read_frontend_html())
 
 
 @app.get('/editor', include_in_schema=False)
 def editor_page() -> HTMLResponse:
-    return HTMLResponse(content=_read_frontend_html('editor.html'))
+    return HTMLResponse(content=_read_frontend_html())

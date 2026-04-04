@@ -25,6 +25,13 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Docker Compose plugin is required on this server."
+  exit 1
+fi
+
+mkdir -p "$ROOT_DIR/backend/uploads"
+
 echo "[1/5] Fetch latest code..."
 git fetch origin
 
@@ -37,7 +44,7 @@ git pull --ff-only origin "$BRANCH"
 echo "[4/5] Build Vue frontend in a temporary Node container..."
 docker volume create "$NPM_CACHE_VOLUME" >/dev/null
 docker run --rm \
-  -v "$ROOT_DIR/frontend-vue:/app" \
+  -v "$ROOT_DIR/frontend:/app" \
   -v "$NPM_CACHE_VOLUME:/root/.npm" \
   -w /app \
   "$NODE_IMAGE" \

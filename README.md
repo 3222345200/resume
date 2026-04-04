@@ -20,15 +20,15 @@ Windows 下可以直接双击/执行根目录脚本，一键构建 Vue 前端并
 如果你想手动分步启动，也可以执行：
 
 ```powershell
-cd frontend-vue
+cd frontend
 npm install
 npm run build
-cd ..
-.venv\Scripts\Activate.ps1
+cd ..\backend
+..\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload
 ```
 
-如果还没构建 `frontend-vue/dist`，后端会自动回退到旧版 `frontend/*.html` 页面。
+启动前需要先构建 `frontend/dist`，`start.bat` 会自动执行 Vue 构建。
 
 访问：
 
@@ -39,12 +39,12 @@ uvicorn app.main:app --reload
 
 模板文件已经复制到：
 
-- `app/html_templates/pro_resume/`
+- `backend/app/html_templates/pro_resume/`
 
 其中包括：
 
 - HTML 模板 `resume.html.j2`
-- 前端默认头像 `frontend/default-avatar.jpg`
+- 前端默认头像 `frontend/src/assets/default-avatar.jpg`
 - 浏览器无头打印 PDF 流程
 
 ## 主要接口

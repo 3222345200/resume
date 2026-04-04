@@ -4,7 +4,7 @@
 
 现在仓库里已经有这些文件：
 
-- `Dockerfile`
+- `backend/Dockerfile`
 - `docker-compose.yml`
 - `deploy/nginx/default.conf`
 - `deploy.sh`
@@ -281,7 +281,7 @@ MinIO 检查：
 
 ### 1. 页面能打开，但 PDF 生成失败
 
-这个功能依赖 Chromium。当前 `Dockerfile` 里已经装了 `chromium`，正常不需要你再处理。
+这个功能依赖 Chromium。当前 `backend/Dockerfile` 里已经装了 `chromium`，正常不需要你再处理。
 
 ### 2. PDF 下载链接打不开
 

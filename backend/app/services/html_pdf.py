@@ -16,10 +16,11 @@ from app.models.resume import Resume
 from app.services.minio_storage import load_object_bytes
 
 APP_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = APP_ROOT.parent.parent
 TEMPLATE_ROOT = APP_ROOT / "html_templates" / "pro_resume"
 TEMPLATE_FILE = "resume.html.j2"
 DEFAULT_AVATAR_CANDIDATES = [
-    APP_ROOT.parent / "frontend" / "default-avatar.jpg",
+    PROJECT_ROOT / "frontend" / "src" / "assets" / "default-avatar.jpg",
 ]
 BROWSER_CANDIDATES = [
     Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),

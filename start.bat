@@ -4,10 +4,11 @@ setlocal
 cd /d "%~dp0"
 
 set "PROJECT_ROOT=%CD%"
+set "BACKEND_DIR=%PROJECT_ROOT%\backend"
 set "ENV_FILE=%PROJECT_ROOT%\.env"
 set "VENV_PYTHON=%PROJECT_ROOT%\.venv\Scripts\python.exe"
-set "UPLOADS_DIR=%PROJECT_ROOT%\uploads"
-set "FRONTEND_VUE_DIR=%PROJECT_ROOT%\frontend-vue"
+set "UPLOADS_DIR=%BACKEND_DIR%\uploads"
+set "FRONTEND_VUE_DIR=%PROJECT_ROOT%\frontend"
 set "FRONTEND_VUE_DIST=%FRONTEND_VUE_DIR%\dist\index.html"
 
 if not exist "%ENV_FILE%" (
@@ -58,10 +59,12 @@ if exist "%FRONTEND_VUE_DIR%\package.json" (
 
   popd
 ) else (
-  echo [1/3] frontend-vue/package.json not found, skip Vue build and use legacy frontend fallback.
+  echo [1/3] frontend/package.json not found. Cannot build frontend assets.
+  pause
+  exit /b 1
 )
 
-set "PYTHONPATH=%PROJECT_ROOT%"
+set "PYTHONPATH=%BACKEND_DIR%"
 
 echo [2/3] Checking MinIO service...
 tasklist /FI "IMAGENAME eq minio.exe" | find /I "minio.exe" >nul
@@ -71,6 +74,6 @@ if errorlevel 1 (
 )
 
 echo [3/3] Starting FastAPI server at http://127.0.0.1:8000 ...
-"%VENV_PYTHON%" -m uvicorn app.main:app --app-dir "%PROJECT_ROOT%" --host 127.0.0.1 --port 8000
+"%VENV_PYTHON%" -m uvicorn app.main:app --app-dir "%BACKEND_DIR%" --host 127.0.0.1 --port 8000
 
 pause

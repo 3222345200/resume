@@ -6,8 +6,8 @@ __pycache__/
 .mypy_cache/
 dist/
 build/
-app/generated/
-uploads/
+backend/app/generated/
+backend/uploads/
 *.log
 texput.log
 *.tmp

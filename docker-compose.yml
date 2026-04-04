@@ -13,7 +13,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: backend/Dockerfile
     container_name: resume-app
     restart: unless-stopped
     env_file:
@@ -24,7 +24,7 @@ services:
       minio:
         condition: service_started
     volumes:
-      - ./uploads:/app/uploads
+      - ./backend/uploads:/workspace/backend/uploads
     expose:
       - "8000"
 
