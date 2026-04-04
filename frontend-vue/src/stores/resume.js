@@ -151,6 +151,49 @@ function createCustomSectionId() {
   return `section-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 }
 
+function parseMonthValue(value) {
+  const monthText = String(value || '').trim()
+  if (!/^\d{4}\.\d{2}$/.test(monthText)) {
+    return null
+  }
+  const [yearText, monthPartText] = monthText.split('.')
+  const year = Number(yearText)
+  const month = Number(monthPartText)
+  if (!Number.isInteger(year) || !Number.isInteger(month)) {
+    return null
+  }
+  return year * 100 + month
+}
+
+function validateResumeDateRanges(content) {
+  const sections = [
+    { items: content?.education, name: '教育经历' },
+    { items: content?.experience, name: '工作/实习经历' },
+    { items: content?.projects, name: '项目经历' },
+  ]
+
+  sections.forEach((section) => {
+    ;(Array.isArray(section.items) ? section.items : []).forEach((item, index) => {
+      const startValue = parseMonthValue(item?.start_date)
+      const endValue = parseMonthValue(item?.end_date)
+      if (startValue !== null && endValue !== null && startValue > endValue) {
+        throw new Error(`${section.name}第${index + 1}条：开始时间不能晚于结束时间`)
+      }
+    })
+  })
+
+  ;(Array.isArray(content?.custom_sections) ? content.custom_sections : []).forEach((section) => {
+    const sectionName = String(section?.title || '').trim() || '自定义模块'
+    ;(Array.isArray(section?.items) ? section.items : []).forEach((item, index) => {
+      const startValue = parseMonthValue(item?.start_date)
+      const endValue = parseMonthValue(item?.end_date)
+      if (startValue !== null && endValue !== null && startValue > endValue) {
+        throw new Error(`${sectionName}第${index + 1}条：开始时间不能晚于结束时间`)
+      }
+    })
+  })
+}
+
 function getImageSize(file) {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file)
@@ -292,6 +335,7 @@ export const useResumeStore = defineStore('resume', {
       this.currentResume = normalizeCurrentResume(this.currentResume, this.templates[0]?.id || 'pro_resume')
       this.currentResume.content.section_order = normalizeSectionOrder(this.currentResume.content)
       this.currentResume.content.layout.font_family = this.currentResume.content.layout.content_font_family
+      validateResumeDateRanges(this.currentResume.content)
       const payload = {
         title: this.currentResume.title.trim(),
         template_id: this.currentResume.template_id,

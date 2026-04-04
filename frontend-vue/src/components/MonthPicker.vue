@@ -2,22 +2,12 @@
   <div
     ref="pickerRoot"
     class="month-picker-wrap"
-    :class="{ 'has-present-btn': allowPresent }"
   >
     <button type="button" class="month-picker-trigger" @click="togglePanel">
       <span>{{ displayText }}</span>
       <span class="month-picker-arrow" :class="{ open: panelOpen }" aria-hidden="true"></span>
     </button>
 
-    <button
-      v-if="allowPresent"
-      type="button"
-      class="month-present-btn"
-      :class="{ active: isPresent }"
-      @click="togglePresent"
-    >
-      至今
-    </button>
     <div v-if="panelOpen" class="month-picker-panel">
       <div class="month-picker-head">
         <strong>{{ panelYear }}年</strong>
@@ -40,7 +30,18 @@
         </button>
       </div>
 
-      <button type="button" class="month-picker-clear" @click="clearValue">清空</button>
+      <div class="month-picker-actions">
+        <button
+          v-if="allowPresent"
+          type="button"
+          class="month-present-btn"
+          :class="{ active: isPresent }"
+          @click="togglePresent"
+        >
+          至今
+        </button>
+        <button type="button" class="month-picker-clear" @click="clearValue">清空</button>
+      </div>
     </div>
   </div>
 </template>
@@ -110,9 +111,6 @@ watch(
 )
 
 function togglePanel() {
-  if (isPresent.value) {
-    emit('update:modelValue', '')
-  }
   if (selectedYear.value) {
     panelYear.value = Number(selectedYear.value)
   }

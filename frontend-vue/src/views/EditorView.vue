@@ -127,6 +127,10 @@ function openNoticeDialog(message, title = '提示') {
 
 function reportError(error) {
   const message = String(error?.message || error || '操作失败')
+  if (message.includes('开始时间不能晚于结束时间')) {
+    openNoticeDialog(message, '时间范围有误')
+    return
+  }
   if (message.includes('简历标题不能重复')) {
     openNoticeDialog(message, '标题重复')
     return
@@ -146,7 +150,7 @@ function showToast(message) {
 
 function syncSidebarByViewport() {
   const isDesktop = window.matchMedia('(min-width: 1201px)').matches
-  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1440px)').matches
+  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1600px)').matches
   sidebarOpen.value = isDesktop
   if (!isDesktop) {
     desktopSidebarCollapsed.value = false

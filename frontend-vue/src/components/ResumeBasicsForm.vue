@@ -417,6 +417,17 @@
       @cancel="closeConfirmDialog"
     />
 
+    <ConfirmDialog
+      :open="noticeState.open"
+      eyebrow="Notice"
+      :title="noticeState.title"
+      :message="noticeState.message"
+      confirm-text="我知道了"
+      :show-cancel="false"
+      @confirm="closeNoticeDialog"
+      @cancel="closeNoticeDialog"
+    />
+
     <AvatarCropDialog
       :open="Boolean(pendingAvatarFile)"
       :file="pendingAvatarFile"
@@ -461,11 +472,18 @@ const layoutCollapsed = ref(false)
 const moduleNavCollapsed = ref(false)
 const draggedSectionKey = ref('')
 const dropTargetSectionKey = ref('')
+const latestValidDateState = ref('')
+let restoringInvalidDateState = false
 const confirmState = ref({
   open: false,
   title: '',
   message: '',
   action: null,
+})
+const noticeState = ref({
+  open: false,
+  title: '',
+  message: '',
 })
 const builtInSectionTitles = {
   skills: '专业技能',
@@ -595,8 +613,31 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => getDateStateSnapshot(),
+  (nextSnapshot) => {
+    if (restoringInvalidDateState) {
+      return
+    }
+
+    const dateRangeError = getFirstDateRangeError()
+    if (!dateRangeError) {
+      latestValidDateState.value = nextSnapshot
+      return
+    }
+
+    restoringInvalidDateState = true
+    restoreDateStateSnapshot(latestValidDateState.value)
+    openNoticeDialog('时间范围有误', dateRangeError)
+    nextTick(() => {
+      restoringInvalidDateState = false
+    })
+  },
+  { immediate: true },
+)
+
 function syncFoldablePanelsByViewport() {
-  const shouldCollapsePanels = window.matchMedia('(max-width: 1440px)').matches
+  const shouldCollapsePanels = window.matchMedia('(max-width: 1600px)').matches
   layoutCollapsed.value = shouldCollapsePanels
   moduleNavCollapsed.value = shouldCollapsePanels
 }
@@ -641,6 +682,8 @@ async function handleAvatarChange(event) {
     return
   }
   if (file.size > 5 * 1024 * 1024) {
+    openNoticeDialog('照片上传失败', '照片大小不能超过 5MB')
+    return
     window.alert('照片大小不能超过 5MB')
     return
   }
@@ -709,6 +752,22 @@ function closeConfirmDialog() {
     title: '',
     message: '',
     action: null,
+  }
+}
+
+function openNoticeDialog(title, message) {
+  noticeState.value = {
+    open: true,
+    title,
+    message,
+  }
+}
+
+function closeNoticeDialog() {
+  noticeState.value = {
+    open: false,
+    title: '',
+    message: '',
   }
 }
 
@@ -930,6 +989,90 @@ function getDateRangeError(startDate, endDate) {
     return '结束时间不能早于开始时间'
   }
   return ''
+}
+
+function getDateStateSnapshot() {
+  return JSON.stringify({
+    education: props.draft.content.education.map((item) => ({
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+    })),
+    experience: props.draft.content.experience.map((item) => ({
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+    })),
+    projects: props.draft.content.projects.map((item) => ({
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+    })),
+    custom_sections: props.draft.content.custom_sections.map((section) => ({
+      items: section.items.map((item) => ({
+        start_date: item.start_date || '',
+        end_date: item.end_date || '',
+      })),
+    })),
+  })
+}
+
+function getFirstDateRangeError() {
+  const builtinDateSections = [
+    { items: props.draft.content.education, title: '教育经历' },
+    { items: props.draft.content.experience, title: '工作/实习经历' },
+    { items: props.draft.content.projects, title: '项目经历' },
+  ]
+
+  for (const sectionInfo of builtinDateSections) {
+    for (const [itemIndex, item] of sectionInfo.items.entries()) {
+      if (getDateRangeError(item.start_date, item.end_date)) {
+        return `${sectionInfo.title}第${itemIndex + 1}条：开始时间不能晚于结束时间`
+      }
+    }
+  }
+
+  for (const section of props.draft.content.custom_sections) {
+    const sectionTitle = String(section.title || '').trim() || '自定义模块'
+    for (const [itemIndex, item] of section.items.entries()) {
+      if (getDateRangeError(item.start_date, item.end_date)) {
+        return `${sectionTitle}第${itemIndex + 1}条：开始时间不能晚于结束时间`
+      }
+    }
+  }
+
+  return ''
+}
+
+function restoreDateStateSnapshot(snapshotText) {
+  if (!snapshotText) {
+    return
+  }
+
+  const snapshot = JSON.parse(snapshotText)
+  ;['education', 'experience', 'projects'].forEach((sectionKey) => {
+    const currentItems = props.draft.content[sectionKey] || []
+    const cachedItems = snapshot[sectionKey] || []
+    currentItems.forEach((item, itemIndex) => {
+      if (!cachedItems[itemIndex]) {
+        return
+      }
+      item.start_date = cachedItems[itemIndex].start_date || ''
+      item.end_date = cachedItems[itemIndex].end_date || ''
+    })
+  })
+
+  props.draft.content.custom_sections.forEach((section, sectionIndex) => {
+    const cachedSection = snapshot.custom_sections?.[sectionIndex]
+    if (!cachedSection) {
+      return
+    }
+    section.items.forEach((item, itemIndex) => {
+      const cachedItem = cachedSection.items?.[itemIndex]
+      if (!cachedItem) {
+        return
+      }
+      item.start_date = cachedItem.start_date || ''
+      item.end_date = cachedItem.end_date || ''
+    })
+  })
 }
 
 function createProjectItem() {
