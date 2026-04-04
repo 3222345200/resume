@@ -637,9 +637,8 @@ watch(
 )
 
 function syncFoldablePanelsByViewport() {
-  const shouldCollapsePanels = window.matchMedia('(max-width: 1600px)').matches
-  layoutCollapsed.value = shouldCollapsePanels
-  moduleNavCollapsed.value = shouldCollapsePanels
+  layoutCollapsed.value = window.matchMedia('(max-width: 1900px)').matches
+  moduleNavCollapsed.value = window.matchMedia('(max-width: 1800px)').matches
 }
 
 onMounted(() => {

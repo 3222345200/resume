@@ -51,7 +51,7 @@ const props = defineProps({
 })
 
 const zoomScale = ref(1)
-const isCompactViewport = ref(window.matchMedia('(max-width: 1200px)').matches)
+const isCompactViewport = ref(window.matchMedia('(max-width: 1400px)').matches)
 const isPreviewCollapsed = ref(isCompactViewport.value)
 
 const previewFrameStyle = computed(() => ({
@@ -77,7 +77,7 @@ function getPreviewIdentity(previewUrl) {
 }
 
 function syncPreviewCollapseByViewport() {
-  isCompactViewport.value = window.matchMedia('(max-width: 1200px)').matches
+  isCompactViewport.value = window.matchMedia('(max-width: 1400px)').matches
   if (isCompactViewport.value) {
     isPreviewCollapsed.value = true
     return

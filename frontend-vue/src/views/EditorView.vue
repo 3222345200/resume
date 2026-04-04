@@ -112,7 +112,7 @@ const deleteConfirmOpen = ref(false)
 const noticeDialogOpen = ref(false)
 const noticeDialogTitle = ref('提示')
 const noticeDialogMessage = ref('')
-const sidebarOpen = ref(window.matchMedia('(min-width: 1201px)').matches)
+const sidebarOpen = ref(window.matchMedia('(min-width: 1401px)').matches)
 const desktopSidebarCollapsed = ref(false)
 
 let toastTimer = null
@@ -149,8 +149,8 @@ function showToast(message) {
 }
 
 function syncSidebarByViewport() {
-  const isDesktop = window.matchMedia('(min-width: 1201px)').matches
-  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1600px)').matches
+  const isDesktop = window.matchMedia('(min-width: 1401px)').matches
+  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1800px)').matches
   sidebarOpen.value = isDesktop
   if (!isDesktop) {
     desktopSidebarCollapsed.value = false
@@ -198,7 +198,7 @@ function scheduleAutoPreviewSync() {
 }
 
 function closeSidebarOnMobile() {
-  if (!window.matchMedia('(min-width: 1201px)').matches) {
+  if (!window.matchMedia('(min-width: 1401px)').matches) {
     sidebarOpen.value = false
   }
 }
