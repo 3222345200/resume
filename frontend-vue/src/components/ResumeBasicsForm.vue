@@ -115,7 +115,7 @@
                 @dragleave="handleSectionDragLeave(sectionBlock)"
                 @drop.prevent="handleSectionDrop(sectionBlock)"
               >
-                <button type="button" class="editor-section-nav-button" @click="activeSectionKey = sectionBlock.key">
+                <button type="button" class="editor-section-nav-button" @click="selectSection(sectionBlock.key)">
                   <strong>{{ sectionBlock.title }}</strong>
                   <span>点击切换编辑</span>
                 </button>
@@ -666,7 +666,7 @@ function handleSectionDrop(sectionBlock) {
     return
   }
   moveSectionToTarget(draggedSectionKey.value, sectionBlock.key)
-  activeSectionKey.value = draggedSectionKey.value
+  selectSection(draggedSectionKey.value)
   handleSectionDragEnd()
 }
 
@@ -694,7 +694,7 @@ function addCustomSection() {
   const section = createCustomSection()
   props.draft.content.custom_sections.push(section)
   syncSectionOrder()
-  activeSectionKey.value = `custom:${section.id}`
+  selectSection(`custom:${section.id}`)
 }
 
 function requestRemoveCustomSection(section) {
@@ -709,7 +709,11 @@ function removeCustomSectionById(sectionId) {
   }
   props.draft.content.custom_sections.splice(index, 1)
   syncSectionOrder()
-  activeSectionKey.value = 'basics'
+  selectSection('basics')
+}
+
+function selectSection(sectionKey) {
+  activeSectionKey.value = sectionKey
 }
 
 function addCustomItem(section) {

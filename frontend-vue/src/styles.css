@@ -1784,6 +1784,39 @@ p {
   flex-shrink: 0;
 }
 
+.mobile-preview-toggle,
+.mobile-preview-collapse-btn {
+  border: 1px solid rgba(184, 176, 167, 0.42);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.mobile-preview-toggle {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.mobile-preview-arrow {
+  font-size: 16px;
+  line-height: 1;
+  color: #454d5d;
+}
+
+.mobile-preview-collapse-btn {
+  min-height: 34px;
+  margin-right: auto;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
 .preview-zoom-btn,
 .preview-zoom-reset {
   min-height: 34px;
@@ -1860,6 +1893,11 @@ p {
   .live-preview-card {
     height: 82svh;
     min-height: 640px;
+  }
+
+  .live-preview-card.is-collapsed {
+    height: auto;
+    min-height: 0;
   }
 }
 
@@ -2589,25 +2627,48 @@ body,
   body,
   #app,
   .vue-editor-page {
-    height: auto;
-    overflow: visible;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .template-editor-main {
+    height: calc(100dvh - 32px);
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+
+  .template-editor-card {
+    height: 100%;
+    min-height: 0;
   }
 
   .template-editor-scroll,
-  .template-editor-layout,
+  .template-editor-layout {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .vue-section-nav-panel,
   .vue-section-workspace,
   .active-module-wrap,
   .active-module-wrap > .section-editor-card,
   .active-module-card {
-    height: auto;
-    overflow: visible;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .vue-section-workspace,
+  .active-module-wrap,
+  .active-module-wrap > .section-editor-card,
+  .active-module-card {
+    height: 100%;
   }
 
   .active-module-card .basics-editor-layout,
   .active-module-card .repeat-editor-list,
   .active-module-wrap .repeat-editor-list {
-    overflow: visible;
+    overflow: auto;
   }
 }
 
@@ -2660,9 +2721,9 @@ body,
 
 @media (max-width: 1200px) {
   .section-nav-scrollbox {
-    height: auto;
-    max-height: none;
-    overflow: visible;
+    height: 220px;
+    max-height: 220px;
+    overflow: auto;
   }
 }
 
@@ -2705,7 +2766,7 @@ body,
 
 @media (max-width: 1200px) {
   .section-nav-scrollbox {
-    height: auto;
+    height: 220px;
   }
 
   .basics-field-grid .single-rich-field.full-row,
