@@ -33,10 +33,13 @@
     <ResumeSidebar
       :resumes="resumeStore.resumes"
       :active-id="resumeStore.currentResumeId"
+      :current-resume="resumeStore.currentResume"
+      :templates="resumeStore.templates"
       :username="authStore.user?.username || ''"
       :collapsed-on-mobile="!sidebarOpen"
       @select-resume="handleSelectResume"
       @create-resume="handleCreateResume"
+      @back-dashboard="router.push('/dashboard')"
       @logout="handleLogout"
       @toggle-sidebar="desktopSidebarCollapsed = true"
     />
@@ -46,6 +49,7 @@
 
       <template v-else>
         <ResumeBasicsForm
+          ref="basicsFormRef"
           :draft="resumeStore.currentResume"
           :templates="resumeStore.templates"
           :saving="saving"
@@ -59,6 +63,7 @@
 
         <ResumePreviewPane
           :preview-url="resumeStore.previewUrl"
+          @navigate-section="handlePreviewNavigate"
         />
       </template>
     </section>
@@ -107,6 +112,7 @@ const router = useRouter()
 const saving = ref(false)
 const rendering = ref(false)
 const avatarUploading = ref(false)
+const basicsFormRef = ref(null)
 const toastText = ref('')
 const deleteConfirmOpen = ref(false)
 const noticeDialogOpen = ref(false)
@@ -258,6 +264,10 @@ async function handleUploadAvatar(file) {
 
 function handleDelete() {
   deleteConfirmOpen.value = true
+}
+
+function handlePreviewNavigate(sectionKey) {
+  basicsFormRef.value?.navigateToSection?.(sectionKey)
 }
 
 async function confirmDeleteResume() {

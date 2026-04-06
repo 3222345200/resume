@@ -10,20 +10,15 @@ class EmailDeliveryError(RuntimeError):
     pass
 
 
-def send_register_verification_email(email: str, code: str) -> None:
+def _send_email(subject: str, email: str, content: str) -> None:
     if not settings.smtp_host or not settings.smtp_from_email:
-        raise EmailDeliveryError("邮箱服务未配置，暂时无法发送验证码")
+        raise EmailDeliveryError("Email service is not configured.")
 
     message = EmailMessage()
-    message["Subject"] = "OfferPilot 注册验证码"
-    message["From"] = f'{settings.smtp_from_name} <{settings.smtp_from_email}>'
+    message["Subject"] = subject
+    message["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
     message["To"] = email
-    message.set_content(
-        "你正在注册 OfferPilot。\n\n"
-        f"本次邮箱验证码为：{code}\n"
-        f"验证码 {settings.auth_email_code_expire_minutes} 分钟内有效。\n"
-        "如果不是你本人操作，请忽略此邮件。"
-    )
+    message.set_content(content)
 
     try:
         if settings.smtp_use_ssl:
@@ -40,7 +35,33 @@ def send_register_verification_email(email: str, code: str) -> None:
                 server.login(settings.smtp_username, settings.smtp_password)
             server.send_message(message)
     except Exception as exc:
-        raise EmailDeliveryError("验证码邮件发送失败，请稍后重试") from exc
+        raise EmailDeliveryError("Failed to send verification email. Please try again later.") from exc
+
+
+def send_register_verification_email(email: str, code: str) -> None:
+    _send_email(
+        "OfferPilot registration code",
+        email,
+        (
+            "You are registering an OfferPilot account.\n\n"
+            f"Your verification code is: {code}\n"
+            f"This code expires in {settings.auth_email_code_expire_minutes} minutes.\n\n"
+            "If you did not request this, please ignore this email."
+        ),
+    )
+
+
+def send_password_reset_email(email: str, code: str) -> None:
+    _send_email(
+        "OfferPilot password reset code",
+        email,
+        (
+            "You requested to reset your OfferPilot password.\n\n"
+            f"Your verification code is: {code}\n"
+            f"This code expires in {settings.auth_email_code_expire_minutes} minutes.\n\n"
+            "If you did not request this, please ignore this email."
+        ),
+    )
 
 
 def raise_email_delivery_http_error(exc: EmailDeliveryError) -> None:

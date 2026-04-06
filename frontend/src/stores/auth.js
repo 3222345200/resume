@@ -56,6 +56,13 @@ export const useAuthStore = defineStore('auth', {
       this.verificationId = ''
     },
 
+    async loadCaptchaForPurpose(purpose = 'register') {
+      const result = await requestJson(`/api/auth/captcha?purpose=${encodeURIComponent(purpose)}`)
+      this.captchaId = result.captcha_id
+      this.captchaSvg = result.captcha_svg
+      this.verificationId = ''
+    },
+
     async sendRegisterCode({ email, captchaAnswer }) {
       const result = await requestJson('/api/auth/send-register-code', {
         method: 'POST',
@@ -69,6 +76,19 @@ export const useAuthStore = defineStore('auth', {
       return result.message || '邮箱验证码已发送，请查收'
     },
 
+    async sendPasswordResetCode({ email, captchaAnswer }) {
+      const result = await requestJson('/api/auth/send-password-reset-code', {
+        method: 'POST',
+        body: JSON.stringify({
+          email,
+          captcha_id: this.captchaId,
+          captcha_answer: captchaAnswer,
+        }),
+      })
+      this.verificationId = result.verification_id
+      return result.message || 'Password reset code sent.'
+    },
+
     async register(payload) {
       const result = await requestJson('/api/auth/register', {
         method: 'POST',
@@ -79,6 +99,16 @@ export const useAuthStore = defineStore('auth', {
       })
       this.setToken(result.access_token)
       await this.fetchCurrentUser()
+    },
+
+    async resetPassword(payload) {
+      return requestJson('/api/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...payload,
+          verification_id: this.verificationId,
+        }),
+      })
     },
 
     logout() {

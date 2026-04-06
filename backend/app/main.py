@@ -54,7 +54,7 @@ def on_startup() -> None:
 
 @app.get('/', include_in_schema=False)
 def index() -> RedirectResponse:
-    return RedirectResponse(url='/login', status_code=302)
+    return RedirectResponse(url='/dashboard', status_code=302)
 
 
 def _read_frontend_html() -> str:
@@ -70,6 +70,21 @@ def login_page() -> HTMLResponse:
 
 @app.get('/register', include_in_schema=False)
 def register_page() -> HTMLResponse:
+    return HTMLResponse(content=_read_frontend_html())
+
+
+@app.get('/dashboard', include_in_schema=False)
+def dashboard_page() -> HTMLResponse:
+    return HTMLResponse(content=_read_frontend_html())
+
+
+@app.get('/applications', include_in_schema=False)
+def applications_page() -> HTMLResponse:
+    return HTMLResponse(content=_read_frontend_html())
+
+
+@app.get('/interviews', include_in_schema=False)
+def interviews_page() -> HTMLResponse:
     return HTMLResponse(content=_read_frontend_html())
 
 

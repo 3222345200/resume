@@ -17,17 +17,6 @@
     </header>
 
     <div class="template-editor-scroll">
-      <form class="template-meta-grid" @submit.prevent>
-        <label class="plain-field">
-          <span>标题</span>
-          <input v-model.trim="draft.title" placeholder="例如：Java后端" />
-        </label>
-        <label class="plain-field">
-          <span>模板</span>
-          <CustomSelect v-model="draft.template_id" :options="templateOptions" />
-        </label>
-      </form>
-
       <section class="layout-setting-panel" :class="{ 'is-expanded': !layoutCollapsed }">
         <button v-if="layoutCollapsed" class="layout-setting-toggle" type="button" @click="layoutCollapsed = false">
           <span class="layout-setting-title">版式设置</span>
@@ -92,7 +81,7 @@
         </div>
       </section>
 
-      <div class="template-editor-layout">
+      <div class="template-editor-layout" :class="{ 'module-nav-collapsed': moduleNavCollapsed }">
         <aside class="section-nav-panel vue-section-nav-panel" :class="{ 'is-collapsed': moduleNavCollapsed }">
           <button type="button" class="module-nav-collapse-toggle" @click="moduleNavCollapsed = !moduleNavCollapsed">
           <div class="section-nav-copy">
@@ -170,7 +159,13 @@
         </aside>
 
         <div class="section-workspace vue-section-workspace">
-          <section v-show="activeSectionKey === 'basics'" class="editor-card section-editor-card active-module-card">
+          <section
+            v-show="activeSectionKey === 'basics'"
+            :ref="(el) => setSectionRef('basics', el)"
+            class="editor-card section-editor-card active-module-card"
+            :class="{ 'section-jump-flash': jumpHighlightSectionKey === 'basics' }"
+            data-section-key="basics"
+          >
             <div class="editor-card-header">
               <h3>基础信息</h3>
             </div>
@@ -245,7 +240,13 @@
             </div>
           </section>
 
-          <div v-show="activeSectionKey === 'education'" class="active-module-wrap">
+          <div
+            v-show="activeSectionKey === 'education'"
+            :ref="(el) => setSectionRef('education', el)"
+            class="active-module-wrap"
+            :class="{ 'section-jump-flash': jumpHighlightSectionKey === 'education' }"
+            data-section-key="education"
+          >
             <ResumeRepeatSection
               :items="draft.content.education"
               title="教育经历"
@@ -270,12 +271,26 @@
           </div>
 
           <template v-for="sectionBlock in orderedSectionBlocks" :key="sectionBlock.key">
-            <section v-if="sectionBlock.kind === 'skills'" v-show="activeSectionKey === sectionBlock.key" class="editor-card section-editor-card active-module-card">
+            <section
+              v-if="sectionBlock.kind === 'skills'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="editor-card section-editor-card active-module-card"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <div class="editor-card-header"><h3>专业技能</h3></div>
               <div class="single-rich-field"><span>专业技能</span><RichTextEditor v-model="draft.content.skills" mode="list" placeholder="每行一条技能，支持加粗/斜体/列表/链接" /></div>
             </section>
 
-            <div v-else-if="sectionBlock.kind === 'experience'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
+            <div
+              v-else-if="sectionBlock.kind === 'experience'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="active-module-wrap"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <ResumeRepeatSection :items="draft.content.experience" title="工作/实习经历" short-name="经历" eyebrow="Experience" :create-item="createExperienceItem">
                 <template #item-head-extra="{ item }">
                   <CustomSelect v-model="item.entry_type" :options="experienceTypeOptions" />
@@ -294,7 +309,14 @@
               </ResumeRepeatSection>
             </div>
 
-            <div v-else-if="sectionBlock.kind === 'projects'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
+            <div
+              v-else-if="sectionBlock.kind === 'projects'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="active-module-wrap"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <ResumeRepeatSection :items="draft.content.projects" title="项目经历" short-name="项目" eyebrow="Projects" :create-item="createProjectItem">
                 <template #default="{ item }">
                   <div class="repeat-item-grid project-repeat-grid">
@@ -312,7 +334,14 @@
               </ResumeRepeatSection>
             </div>
 
-            <div v-else-if="sectionBlock.kind === 'portfolio'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
+            <div
+              v-else-if="sectionBlock.kind === 'portfolio'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="active-module-wrap"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <ResumeRepeatSection :items="draft.content.portfolio" title="作品集" short-name="作品" eyebrow="Portfolio" :create-item="createPortfolioItem">
                 <template #default="{ item }">
                   <div class="repeat-item-grid">
@@ -324,7 +353,14 @@
               </ResumeRepeatSection>
             </div>
 
-            <div v-else-if="sectionBlock.kind === 'research'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
+            <div
+              v-else-if="sectionBlock.kind === 'research'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="active-module-wrap"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <ResumeRepeatSection :items="draft.content.research" title="科研经历" short-name="科研" eyebrow="Research" :create-item="createResearchItem">
                 <template #default="{ item }">
                   <div class="repeat-item-grid">
@@ -336,7 +372,14 @@
               </ResumeRepeatSection>
             </div>
 
-            <div v-else-if="sectionBlock.kind === 'honors'" v-show="activeSectionKey === sectionBlock.key" class="active-module-wrap">
+            <div
+              v-else-if="sectionBlock.kind === 'honors'"
+              v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
+              class="active-module-wrap"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
+            >
               <ResumeRepeatSection :items="draft.content.honors" title="荣誉奖项" short-name="奖项" eyebrow="Honors" :create-item="createHonorItem">
                 <template #default="{ item }">
                   <div class="repeat-item-grid">
@@ -351,7 +394,10 @@
             <section
               v-else-if="sectionBlock.kind === 'custom'"
               v-show="activeSectionKey === sectionBlock.key"
+              :ref="(el) => setSectionRef(sectionBlock.key, el)"
               class="editor-card section-editor-card active-module-card"
+              :class="{ 'section-jump-flash': jumpHighlightSectionKey === sectionBlock.key }"
+              :data-section-key="sectionBlock.key"
               :data-custom-section-id="sectionBlock.section.id"
             >
               <div class="editor-card-header custom-section-header">
@@ -470,10 +516,13 @@ const avatarSourceFile = ref(null)
 const activeSectionKey = ref('basics')
 const layoutCollapsed = ref(false)
 const moduleNavCollapsed = ref(false)
+const jumpHighlightSectionKey = ref('')
 const draggedSectionKey = ref('')
 const dropTargetSectionKey = ref('')
 const latestValidDateState = ref('')
+const sectionElementMap = new Map()
 let restoringInvalidDateState = false
+let jumpHighlightTimer = null
 const confirmState = ref({
   open: false,
   title: '',
@@ -560,13 +609,6 @@ const orderedSectionBlocks = computed(() => {
     .filter(Boolean)
 })
 
-const templateOptions = computed(() =>
-  props.templates.map((template) => ({
-    label: template.name,
-    value: template.id,
-  })),
-)
-
 const sectionNavBlocks = computed(() => [
   { key: 'basics', title: '基础信息', reorderable: false },
   { key: 'education', title: '教育经历', reorderable: false },
@@ -648,6 +690,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', syncFoldablePanelsByViewport)
+  if (jumpHighlightTimer) {
+    clearTimeout(jumpHighlightTimer)
+  }
 })
 
 function normalizeAvatarCrop(value) {
@@ -926,6 +971,52 @@ function removeCustomSectionById(sectionId) {
 function selectSection(sectionKey) {
   activeSectionKey.value = sectionKey
 }
+
+function setSectionRef(sectionKey, element) {
+  if (!sectionKey) {
+    return
+  }
+  if (element) {
+    sectionElementMap.set(sectionKey, element)
+    return
+  }
+  sectionElementMap.delete(sectionKey)
+}
+
+async function navigateToSection(sectionKey) {
+  const targetKey = String(sectionKey || '').trim()
+  if (!targetKey) {
+    return
+  }
+
+  const availableKeys = new Set(['basics', 'education', ...sectionNavBlocks.value.map((section) => section.key)])
+  if (!availableKeys.has(targetKey)) {
+    return
+  }
+
+  selectSection(targetKey)
+  await nextTick()
+
+  const element = sectionElementMap.get(targetKey)
+  element?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start',
+  })
+
+  jumpHighlightSectionKey.value = targetKey
+  if (jumpHighlightTimer) {
+    clearTimeout(jumpHighlightTimer)
+  }
+  jumpHighlightTimer = window.setTimeout(() => {
+    if (jumpHighlightSectionKey.value === targetKey) {
+      jumpHighlightSectionKey.value = ''
+    }
+  }, 1400)
+}
+
+defineExpose({
+  navigateToSection,
+})
 
 async function addCustomItem(section) {
   section.items.push({ title: '', subtitle: '', start_date: '', end_date: '', description: '', highlights: '' })

@@ -25,6 +25,19 @@ class SendRegisterCodeSchema(BaseModel):
     captcha_answer: str = Field(min_length=4, max_length=12, pattern=r"^[A-Za-z]+$")
 
 
+class SendPasswordResetCodeSchema(BaseModel):
+    email: str = Field(max_length=255, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    captcha_id: str = Field(min_length=1, max_length=120)
+    captcha_answer: str = Field(min_length=4, max_length=12, pattern=r"^[A-Za-z]+$")
+
+
+class ResetPasswordSchema(BaseModel):
+    email: str = Field(max_length=255, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    verification_id: str = Field(min_length=1, max_length=120)
+    email_code: str = Field(min_length=4, max_length=12, pattern=r"^[0-9]+$")
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 class CaptchaResponseSchema(BaseModel):
     captcha_id: str
     captcha_svg: str

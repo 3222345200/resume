@@ -13,25 +13,20 @@
         </div>
 
         <div class="compass-form-copy">
-          <p class="eyebrow">Create account</p>
-          <h2>创建一个新账号</h2>
-          <p class="muted-copy">填写基础信息并完成邮箱验证，即可进入求职工作台。</p>
+          <p class="eyebrow">Forgot password</p>
+          <h2>重置密码</h2>
+          <p class="muted-copy">输入注册邮箱，完成验证码校验后即可设置一个新密码。</p>
         </div>
 
-        <form class="auth-form compass-auth-form" @submit.prevent="handleRegister">
+        <form class="auth-form compass-auth-form" @submit.prevent="handleResetPassword">
           <label>
-            <span>用户名</span>
-            <input v-model.trim="form.username" autocomplete="username" placeholder="例如：zhangsan01" />
-          </label>
-
-          <label>
-            <span>密码</span>
-            <input v-model="form.password" type="password" autocomplete="new-password" placeholder="至少 8 位" />
-          </label>
-
-          <label>
-            <span>个人邮箱</span>
+            <span>注册邮箱</span>
             <input v-model.trim="form.email" type="email" autocomplete="email" placeholder="name@example.com" />
+          </label>
+
+          <label>
+            <span>新密码</span>
+            <input v-model="form.newPassword" type="password" autocomplete="new-password" placeholder="至少 8 位" />
           </label>
 
           <div class="captcha-grid">
@@ -60,9 +55,9 @@
           <p class="auth-message" :class="{ danger: isError }">{{ message }}</p>
 
           <button class="primary-button compass-submit-button" type="submit" :disabled="submitting">
-            {{ submitting ? '注册中...' : '注册并登录' }}
+            {{ submitting ? '重置中...' : '确认重置密码' }}
           </button>
-          <RouterLink class="ghost-button compass-secondary-button" to="/login">已有账号？返回登录</RouterLink>
+          <RouterLink class="ghost-button compass-secondary-button" to="/login">返回登录</RouterLink>
         </form>
       </div>
     </section>
@@ -84,9 +79,8 @@ const captchaLoading = ref(false)
 const message = ref('')
 const isError = ref(false)
 const form = reactive({
-  username: '',
-  password: '',
   email: '',
+  newPassword: '',
   captchaAnswer: '',
   emailCode: '',
 })
@@ -103,17 +97,13 @@ function setMessage(text, danger = false) {
   isError.value = danger
 }
 
-function validateAccount() {
-  if (!/^[A-Za-z0-9]{4,20}$/.test(form.username)) {
-    setMessage('用户名只能是 4 到 20 位英文或数字', true)
-    return false
-  }
-  if (form.password.length < 8) {
-    setMessage('密码至少需要 8 位', true)
-    return false
-  }
+function validateForm() {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
     setMessage('邮箱格式不正确', true)
+    return false
+  }
+  if (form.newPassword.length < 8) {
+    setMessage('新密码至少需要 8 位', true)
     return false
   }
   return true
@@ -124,7 +114,7 @@ async function refreshCaptcha() {
     captchaLoading.value = true
     form.captchaAnswer = ''
     form.emailCode = ''
-    await authStore.loadCaptcha()
+    await authStore.loadCaptchaForPurpose('password_reset')
   } catch (error) {
     setMessage(String(error.message || error), true)
   } finally {
@@ -133,7 +123,7 @@ async function refreshCaptcha() {
 }
 
 async function sendCode() {
-  if (!validateAccount()) {
+  if (!validateForm()) {
     return
   }
   if (!form.captchaAnswer) {
@@ -143,7 +133,7 @@ async function sendCode() {
 
   try {
     sendingCode.value = true
-    const resultMessage = await authStore.sendRegisterCode({
+    const resultMessage = await authStore.sendPasswordResetCode({
       email: form.email.trim().toLowerCase(),
       captchaAnswer: form.captchaAnswer,
     })
@@ -156,8 +146,8 @@ async function sendCode() {
   }
 }
 
-async function handleRegister() {
-  if (!validateAccount()) {
+async function handleResetPassword() {
+  if (!validateForm()) {
     return
   }
   if (!/^\d{6}$/.test(form.emailCode)) {
@@ -171,13 +161,15 @@ async function handleRegister() {
 
   try {
     submitting.value = true
-    await authStore.register({
-      username: form.username,
-      password: form.password,
+    const result = await authStore.resetPassword({
       email: form.email.trim().toLowerCase(),
       email_code: form.emailCode,
+      new_password: form.newPassword,
     })
-    await router.push('/dashboard')
+    setMessage(result.message || '密码重置成功', false)
+    setTimeout(() => {
+      router.push('/login')
+    }, 800)
   } catch (error) {
     setMessage(String(error.message || error), true)
   } finally {

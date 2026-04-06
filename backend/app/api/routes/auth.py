@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -8,8 +8,10 @@ from app.core.security import create_access_token, get_current_user, hash_passwo
 from app.models.user import User
 from app.schemas.auth import (
     CaptchaResponseSchema,
+    ResetPasswordSchema,
     SendRegisterCodeResponseSchema,
     SendRegisterCodeSchema,
+    SendPasswordResetCodeSchema,
     TokenResponseSchema,
     UserLoginSchema,
     UserReadSchema,
@@ -25,7 +27,12 @@ from app.services.auth_verification import (
     mark_challenge_used,
     verify_email_code,
 )
-from app.services.email_service import EmailDeliveryError, raise_email_delivery_http_error, send_register_verification_email
+from app.services.email_service import (
+    EmailDeliveryError,
+    raise_email_delivery_http_error,
+    send_password_reset_email,
+    send_register_verification_email,
+)
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 logger = get_logger('auth')
@@ -46,8 +53,11 @@ def _has_login_access(user: User) -> bool:
 
 
 @router.get('/captcha', response_model=CaptchaResponseSchema)
-def get_captcha(db: Session = Depends(get_db)) -> CaptchaResponseSchema:
-    challenge = create_captcha_challenge(db)
+def get_captcha(
+    purpose: str = Query(default='register', pattern='^(register|password_reset)$'),
+    db: Session = Depends(get_db),
+) -> CaptchaResponseSchema:
+    challenge = create_captcha_challenge(db, purpose=purpose)
     logger.info('captcha_created challenge_id=%s', challenge.id)
     return CaptchaResponseSchema(
         captcha_id=challenge.id,
@@ -66,7 +76,7 @@ def send_register_code(payload: SendRegisterCodeSchema, db: Session = Depends(ge
         logger.warning('send_register_code_rejected_email_exists email=%s', email)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='该邮箱已注册，请直接登录')
 
-    challenge = get_challenge_or_404(db, payload.captcha_id)
+    challenge = get_challenge_or_404(db, payload.captcha_id, purpose='register')
     ensure_captcha_valid(challenge, payload.captcha_answer)
     ensure_email_code_send_allowed(challenge)
 
@@ -105,7 +115,7 @@ def register(payload: UserRegisterSchema, db: Session = Depends(get_db)) -> Toke
         logger.warning('register_rejected_email_exists email=%s', email)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='该邮箱已注册，请直接登录')
 
-    challenge = get_challenge_or_404(db, payload.verification_id)
+    challenge = get_challenge_or_404(db, payload.verification_id, purpose='register')
     verify_email_code(challenge, email, payload.email_code)
 
     user = User(
@@ -120,6 +130,61 @@ def register(payload: UserRegisterSchema, db: Session = Depends(get_db)) -> Toke
     mark_challenge_used(db, challenge)
     logger.info('register_succeeded user_id=%s username=%s email=%s', user.id, user.username, user.email)
     return TokenResponseSchema(access_token=create_access_token(user.username), user=_to_user_schema(user))
+
+
+@router.post('/send-password-reset-code', response_model=SendRegisterCodeResponseSchema)
+def send_password_reset_code(payload: SendPasswordResetCodeSchema, db: Session = Depends(get_db)) -> SendRegisterCodeResponseSchema:
+    email = payload.email.strip().lower()
+    logger.info('send_password_reset_code_requested email=%s verification_id=%s', email, payload.captcha_id)
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        logger.warning('send_password_reset_code_rejected_email_missing email=%s', email)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='This email is not registered.')
+
+    challenge = get_challenge_or_404(db, payload.captcha_id, purpose='password_reset')
+    ensure_captcha_valid(challenge, payload.captcha_answer)
+    ensure_email_code_send_allowed(challenge)
+
+    code = issue_email_code(challenge, email)
+    try:
+        send_password_reset_email(email, code)
+    except EmailDeliveryError as exc:
+        logger.exception('send_password_reset_code_email_delivery_failed email=%s verification_id=%s', email, challenge.id)
+        db.rollback()
+        raise_email_delivery_http_error(exc)
+
+    db.add(challenge)
+    db.commit()
+    db.refresh(challenge)
+    logger.info('send_password_reset_code_succeeded email=%s verification_id=%s', email, challenge.id)
+
+    return SendRegisterCodeResponseSchema(
+        message='Password reset code sent. Please check your email.',
+        verification_id=challenge.id,
+        cooldown_seconds=settings.auth_email_code_cooldown_seconds,
+    )
+
+
+@router.post('/reset-password')
+def reset_password(payload: ResetPasswordSchema, db: Session = Depends(get_db)) -> dict[str, str]:
+    email = payload.email.strip().lower()
+    logger.info('reset_password_requested email=%s verification_id=%s', email, payload.verification_id)
+
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        logger.warning('reset_password_rejected_email_missing email=%s', email)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='This email is not registered.')
+
+    challenge = get_challenge_or_404(db, payload.verification_id, purpose='password_reset')
+    verify_email_code(challenge, email, payload.email_code)
+
+    user.password_hash = hash_password(payload.new_password)
+    db.add(user)
+    db.commit()
+    mark_challenge_used(db, challenge)
+    logger.info('reset_password_succeeded user_id=%s email=%s', user.id, email)
+    return {'message': 'Password reset successful. Please log in with your new password.'}
 
 
 @router.post('/login', response_model=TokenResponseSchema)

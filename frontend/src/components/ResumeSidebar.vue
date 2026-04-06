@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <aside class="resume-sidebar" :class="{ collapsed: collapsedOnMobile }">
     <div class="sidebar-brand">
       <div class="brand-row sidebar-brand-row">
@@ -14,6 +14,9 @@
     </div>
 
     <button class="primary-button" type="button" @click="$emit('create-resume')">新建简历</button>
+    <button class="ghost-button sidebar-workspace-button" type="button" @click="$emit('back-dashboard')">
+      返回工作台
+    </button>
     <button class="ghost-button" type="button" @click="$emit('logout')">退出登录</button>
 
     <div class="sidebar-list-head">
@@ -22,28 +25,62 @@
     </div>
 
     <div class="resume-list-scroll">
-      <button
+      <div v-if="showDraftCard" class="resume-item-card active">
+        <div class="sidebar-edit-row">
+          <span class="sidebar-edit-label">标题</span>
+          <input v-model.trim="currentResume.title" class="sidebar-edit-control" placeholder="例如：Java后端" />
+        </div>
+        <div class="sidebar-edit-row">
+          <span class="sidebar-edit-label">模板</span>
+          <div class="sidebar-edit-control">
+            <CustomSelect v-model="currentResume.template_id" :options="templateOptions" />
+          </div>
+        </div>
+        <p v-if="isCurrentTitleDuplicated" class="sidebar-inline-error">该简历名称已存在，请换一个标题。</p>
+        <small>{{ formatTime(currentResume.updated_at) }}</small>
+      </div>
+
+      <component
         v-for="resume in resumes"
         :key="resume.id"
-        type="button"
+        :is="resume.id === activeId ? 'div' : 'button'"
+        :type="resume.id === activeId ? undefined : 'button'"
         class="resume-item-card"
         :class="{ active: resume.id === activeId }"
-        @click="$emit('select-resume', resume.id)"
+        @click="resume.id === activeId ? undefined : $emit('select-resume', resume.id)"
       >
-        <strong>{{ resume.title }}</strong>
-        <div>模板：{{ resume.template_id }}</div>
-        <small>{{ formatTime(resume.updated_at) }}</small>
-      </button>
+        <template v-if="resume.id === activeId">
+          <div class="sidebar-edit-row">
+            <span class="sidebar-edit-label">标题</span>
+            <input v-model.trim="currentResume.title" class="sidebar-edit-control" placeholder="例如：Java后端" @click.stop />
+          </div>
+          <div class="sidebar-edit-row">
+            <span class="sidebar-edit-label">模板</span>
+            <div class="sidebar-edit-control" @click.stop>
+              <CustomSelect v-model="currentResume.template_id" :options="templateOptions" />
+            </div>
+          </div>
+          <p v-if="isCurrentTitleDuplicated" class="sidebar-inline-error">该简历名称已存在，请换一个标题。</p>
+          <small>{{ formatTime(resume.updated_at || currentResume.updated_at) }}</small>
+        </template>
+        <template v-else>
+          <strong>{{ resume.title }}</strong>
+          <div>模板：{{ getTemplateName(resume.template_id) }}</div>
+          <small>{{ formatTime(resume.updated_at) }}</small>
+        </template>
+      </component>
 
-      <div v-if="!resumes.length" class="empty-list-tip">暂无已保存简历，先新建一份。</div>
+      <div v-if="!resumes.length && !showDraftCard" class="empty-list-tip">暂无已保存简历，先新建一份。</div>
     </div>
   </aside>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import brandMark from '../assets/brand-mark.svg'
+import CustomSelect from './CustomSelect.vue'
 
-defineProps({
+const props = defineProps({
   resumes: {
     type: Array,
     default: () => [],
@@ -56,18 +93,55 @@ defineProps({
     type: String,
     default: '',
   },
+  currentResume: {
+    type: Object,
+    default: () => ({
+      id: '',
+      title: '',
+      template_id: '',
+      updated_at: '',
+    }),
+  },
+  templates: {
+    type: Array,
+    default: () => [],
+  },
   collapsedOnMobile: {
     type: Boolean,
     default: false,
   },
 })
 
-defineEmits(['select-resume', 'create-resume', 'logout', 'toggle-sidebar'])
+defineEmits(['select-resume', 'create-resume', 'back-dashboard', 'logout', 'toggle-sidebar'])
+
+const templateOptions = computed(() =>
+  props.templates.map((template) => ({
+    label: template.name,
+    value: template.id,
+  })),
+)
+
+const showDraftCard = computed(() => !props.activeId && !!props.currentResume)
+
+const isCurrentTitleDuplicated = computed(() => {
+  const currentTitle = String(props.currentResume?.title || '').trim()
+  if (!currentTitle) {
+    return false
+  }
+  return props.resumes.some((resume) => {
+    return resume.id !== props.activeId && String(resume?.title || '').trim() === currentTitle
+  })
+})
 
 function formatTime(value) {
   if (!value) {
     return '未保存'
   }
   return new Date(value).toLocaleString('zh-CN')
+}
+
+function getTemplateName(templateId) {
+  const template = props.templates.find((item) => item.id === templateId)
+  return template?.name || templateId || '默认模板'
 }
 </script>

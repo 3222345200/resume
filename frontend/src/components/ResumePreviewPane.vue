@@ -50,6 +50,8 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['navigate-section'])
+
 const zoomScale = ref(1)
 const isCompactViewport = ref(window.matchMedia('(max-width: 1400px)').matches)
 const isPreviewCollapsed = ref(isCompactViewport.value)
@@ -85,6 +87,18 @@ function syncPreviewCollapseByViewport() {
   isPreviewCollapsed.value = false
 }
 
+function handlePreviewMessage(event) {
+  const message = event?.data
+  if (!message || message.type !== 'resume-preview-section-dblclick') {
+    return
+  }
+  const sectionKey = String(message.sectionKey || '').trim()
+  if (!sectionKey) {
+    return
+  }
+  emit('navigate-section', sectionKey)
+}
+
 watch(
   () => props.previewUrl,
   (nextUrl, prevUrl) => {
@@ -96,10 +110,12 @@ watch(
 
 onMounted(() => {
   window.addEventListener('resize', syncPreviewCollapseByViewport)
+  window.addEventListener('message', handlePreviewMessage)
   syncPreviewCollapseByViewport()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', syncPreviewCollapseByViewport)
+  window.removeEventListener('message', handlePreviewMessage)
 })
 </script>
