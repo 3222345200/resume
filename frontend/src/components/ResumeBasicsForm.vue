@@ -141,9 +141,20 @@
               :key="`mini-${sectionBlock.key}`"
               type="button"
               class="section-nav-mini-button"
-              :class="{ 'is-active': activeSectionKey === sectionBlock.key }"
+              :class="{
+                'is-active': activeSectionKey === sectionBlock.key,
+                'is-reorderable': sectionBlock.reorderable,
+                'is-dragging': draggedSectionKey === sectionBlock.key,
+                'is-drop-target': dropTargetSectionKey === sectionBlock.key,
+              }"
               :title="sectionBlock.title"
+              :draggable="sectionBlock.reorderable"
               @click="selectSection(sectionBlock.key)"
+              @dragstart="sectionBlock.reorderable ? handleSectionDragStart(sectionBlock.key, $event) : null"
+              @dragend="handleSectionDragEnd"
+              @dragover.prevent="handleSectionDragOver(sectionBlock)"
+              @dragleave="handleSectionDragLeave(sectionBlock)"
+              @drop.prevent="handleSectionDrop(sectionBlock)"
             >
               {{ sectionBlock.title.slice(0, 2) }}
             </button>

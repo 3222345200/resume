@@ -35,7 +35,7 @@ def _normalize_resume_content(resume: Resume) -> dict:
 
 def _resume_render_hash(resume: Resume) -> str:
     payload = {
-        'template_signature': get_resume_template_signature(),
+        'template_signature': get_resume_template_signature(resume.template_id),
         'title': resume.title,
         'template_id': normalize_template_id(resume.template_id),
         'content': _normalize_resume_content(resume),

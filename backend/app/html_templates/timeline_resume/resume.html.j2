@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    :root {
+      --layout-section-title-size: {{ layout.section_title_size }};
+      --layout-content-font-size: {{ layout.content_font_size }};
+      --layout-content-line-height: {{ layout.content_line_height }};
+      --layout-section-title-font-family: {{ layout.section_title_font_family }};
+      --layout-content-font-family: {{ layout.content_font_family }};
+      --layout-section-title-color: {{ layout.section_title_color }};
+      --layout-content-font-color: {{ layout.content_font_color }};
+      --timeline-accent: #7c3aed;
+      --timeline-soft: rgba(124, 58, 237, 0.1);
+    }
+
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f5f3ff;
+      font-family: var(--layout-content-font-family);
+      color: var(--layout-content-font-color);
+      font-size: 12.4px;
+      line-height: 1.45;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 10mm 12mm;
+      background: #ffffff;
+      overflow: hidden;
+      break-after: page;
+      page-break-after: always;
+    }
+
+    .page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+
+    @media screen {
+      body { padding: 8px; }
+      .page {
+        margin: 0 auto 12px;
+        box-shadow: 0 18px 42px rgba(76, 29, 149, 0.12);
+      }
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 0 0 8mm;
+      border-bottom: 2px solid var(--timeline-accent);
+    }
+
+    .name {
+      margin: 0;
+      font-family: var(--layout-section-title-font-family);
+      font-size: 28px;
+      line-height: 1.05;
+      letter-spacing: 0.02em;
+    }
+
+    .meta {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(15, 23, 42, 0.76);
+    }
+
+    .avatar-wrap {
+      width: 1.88cm;
+      height: 2.63cm;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid rgba(124, 58, 237, 0.16);
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+    }
+
+    .section { margin-top: 6mm; }
+
+    .section-title {
+      margin: 0 0 8px;
+      color: var(--layout-section-title-color);
+      font-family: var(--layout-section-title-font-family);
+      font-size: var(--layout-section-title-size);
+      font-weight: 700;
+    }
+
+    .rich {
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
+      word-break: break-word;
+    }
+
+    .rich p,
+    .rich ul,
+    .rich ol {
+      margin-top: 0;
+      margin-bottom: 0.22em;
+    }
+
+    .rich ul,
+    .rich ol {
+      padding-left: 1.4em;
+    }
+
+    .timeline-list {
+      position: relative;
+      padding-left: 17mm;
+    }
+
+    .timeline-list::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 6mm;
+      width: 2px;
+      background: linear-gradient(180deg, var(--timeline-accent), rgba(124, 58, 237, 0.1));
+    }
+
+    .entry {
+      position: relative;
+      margin-top: 12px;
+      padding: 10px 12px 10px 14px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(250, 245, 255, 0.9), rgba(255, 255, 255, 0.98));
+      border: 1px solid rgba(124, 58, 237, 0.12);
+    }
+
+    .entry:first-child { margin-top: 0; }
+
+    .entry::before {
+      content: "";
+      position: absolute;
+      left: -13.2mm;
+      top: 16px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--timeline-accent);
+      box-shadow: 0 0 0 4px var(--timeline-soft);
+    }
+
+    .entry-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: baseline;
+      margin-bottom: 3px;
+    }
+
+    .entry-title {
+      min-width: 0;
+      font-size: calc(var(--layout-content-font-size) + 1.4px);
+      font-weight: 700;
+    }
+
+    .entry-right {
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(76, 29, 149, 0.78);
+    }
+
+    .entry-subtitle {
+      margin-bottom: 3px;
+      font-size: var(--layout-content-font-size);
+      font-weight: 700;
+      color: rgba(15, 23, 42, 0.76);
+    }
+
+    .entry-tag {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: var(--timeline-soft);
+      color: var(--timeline-accent);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero" data-section-key="basics">
+      <div>
+        <h1 class="name">{{ basics.name or title }}</h1>
+        <div class="meta">
+          {% if basics.phone %}{{ basics.phone }}{% endif %}{% if basics.phone and basics.email %} | {% endif %}{% if basics.email %}{{ basics.email }}{% endif %}
+          {% if basics.location %}<br>意向城市：{{ basics.location }}{% endif %}
+          {% if basics.job_target %}<br>求职方向：{{ basics.job_target }}{% endif %}
+        </div>
+      </div>
+      {% if basics.avatar_data_uri %}
+        <div class="avatar-wrap">
+          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: 50% 50%; transform: translate({{ (50 - basics.avatar_crop.offset_x) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%, {{ (50 - basics.avatar_crop.offset_y) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%) scale({{ basics.avatar_crop.scale }});">
+        </div>
+      {% endif %}
+    </header>
+
+    {% if basics.summary %}
+      <section class="section" data-section-key="basics">
+        <h2 class="section-title">个人简介</h2>
+        <div class="rich">{{ basics.summary | safe }}</div>
+      </section>
+    {% endif %}
+
+    {% if education %}
+      <section class="section" data-section-key="education">
+        <h2 class="section-title">教育经历</h2>
+        <div class="timeline-list">
+          {% for item in education %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-title">{{ item.school }}{% if item.major %} / {{ item.major }}{% endif %}{% if item.degree %} / {{ item.degree }}{% endif %}</div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% for section in ordered_sections %}
+      {% if section["key"] == "skills" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          <div class="rich">{{ section["content"] | safe }}</div>
+        </section>
+      {% elif section["key"] == "experience" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          <div class="timeline-list">
+            {% for item in section["items"] %}
+              <div class="entry">
+                <div class="entry-head">
+                  <div class="entry-title"><span class="entry-tag">{{ item.entry_type or "实习经历" }}</span>{{ item.company }}</div>
+                  <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                </div>
+                {% if item.department or item.role or item.location %}<div class="entry-subtitle">{{ item.department }}{% if item.department and item.role %} / {% endif %}{{ item.role }}{% if item.location %} · {{ item.location }}{% endif %}</div>{% endif %}
+                {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% elif section["key"] == "projects" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          <div class="timeline-list">
+            {% for item in section["items"] %}
+              <div class="entry">
+                <div class="entry-head">
+                  <div class="entry-title">{{ item.name }}</div>
+                  <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                </div>
+                {% if item.description %}<div class="rich">{{ item.description | safe }}</div>{% endif %}
+                {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% elif section["key"] == "portfolio" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          {% for item in section["items"] %}
+            <div class="entry" style="margin-left:17mm;">
+              <div class="entry-head"><div class="entry-title">{{ item.title }}</div></div>
+              {% if item.link %}<div class="rich"><a href="{{ item.link }}">{{ item.link }}</a></div>{% endif %}
+              {% if item.summary %}<div class="rich">{{ item.summary | safe }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "research" or section["key"] == "honors" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          <div class="timeline-list">
+            {% for item in section["items"] %}
+              <div class="entry">
+                <div class="entry-head">
+                  <div class="entry-title">{{ item.title }}</div>
+                  <div class="entry-right">{{ item.label }}</div>
+                </div>
+                {% if item.summary %}<div class="rich">{{ item.summary | safe }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% elif section.get("kind") == "custom" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">{{ section["title"] }}</h2>
+          <div class="timeline-list">
+            {% for item in section["items"] %}
+              <div class="entry">
+                <div class="entry-head">
+                  <div class="entry-title">{{ item.title }}</div>
+                  <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                </div>
+                {% if item.subtitle %}<div class="entry-subtitle">{{ item.subtitle }}</div>{% endif %}
+                {% if item.description %}<div class="rich">{{ item.description | safe }}</div>{% endif %}
+                {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <script>
+    (function enableSectionJumping() {
+      const notifyParent = function (sectionKey) {
+        if (!sectionKey || window.parent === window) return;
+        window.parent.postMessage({ type: 'resume-preview-section-dblclick', sectionKey: sectionKey }, window.location.origin);
+      };
+      document.addEventListener('dblclick', function (event) {
+        const sectionNode = event.target.closest('[data-section-key]');
+        if (!sectionNode) return;
+        notifyParent(sectionNode.getAttribute('data-section-key'));
+      });
+    })();
+
+    (function paginateResumePages() {
+      const runPagination = function () {
+        if (document.body.dataset.resumePaginated === '1') return;
+        const sourcePage = document.querySelector('.page');
+        if (!sourcePage) return;
+        const heroNode = sourcePage.querySelector(':scope > .hero');
+        const sectionNodes = Array.from(sourcePage.querySelectorAll(':scope > .section'));
+        const pageStack = document.createElement('div');
+        pageStack.className = 'page-stack';
+        sourcePage.after(pageStack);
+
+        const createPage = function (withHero) {
+          const page = sourcePage.cloneNode(false);
+          if (withHero && heroNode) page.appendChild(heroNode.cloneNode(true));
+          pageStack.appendChild(page);
+          return page;
+        };
+
+        const pageHasBodyContent = function (page) {
+          return Array.from(page.children).some(function (child) { return !child.classList.contains('hero'); });
+        };
+        const pageOverflows = function (page) { return page.scrollHeight > page.clientHeight + 1; };
+        const buildSectionShell = function (sectionNode) {
+          const sectionShell = sectionNode.cloneNode(false);
+          const titleNode = sectionNode.querySelector(':scope > .section-title');
+          if (titleNode) sectionShell.appendChild(titleNode.cloneNode(true));
+          return sectionShell;
+        };
+
+        let currentPage = createPage(true);
+
+        const ensureSectionShell = function (sectionNode) {
+          let sectionShell = buildSectionShell(sectionNode);
+          currentPage.appendChild(sectionShell);
+          if (pageOverflows(currentPage) && pageHasBodyContent(currentPage)) {
+            sectionShell.remove();
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+          }
+          return sectionShell;
+        };
+
+        const appendWholeSection = function (sectionNode) {
+          const sectionClone = sectionNode.cloneNode(true);
+          currentPage.appendChild(sectionClone);
+          if (!pageOverflows(currentPage)) return true;
+          sectionClone.remove();
+          if (pageHasBodyContent(currentPage)) {
+            currentPage = createPage(false);
+            currentPage.appendChild(sectionNode.cloneNode(true));
+            if (!pageOverflows(currentPage)) return true;
+            currentPage.lastElementChild.remove();
+          }
+          return false;
+        };
+
+        const appendSectionByBlocks = function (sectionNode) {
+          const blockNodes = Array.from(sectionNode.children).filter(function (child) { return !child.classList.contains('section-title'); });
+          let sectionShell = ensureSectionShell(sectionNode);
+          blockNodes.forEach(function (blockNode) {
+            const blockClone = blockNode.cloneNode(true);
+            sectionShell.appendChild(blockClone);
+            if (!pageOverflows(currentPage)) return;
+            blockClone.remove();
+            if (sectionShell.children.length <= 1 && !pageHasBodyContent(currentPage)) {
+              sectionShell.appendChild(blockNode.cloneNode(true));
+              return;
+            }
+            if (sectionShell.children.length <= 1) sectionShell.remove();
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+            sectionShell.appendChild(blockNode.cloneNode(true));
+          });
+          if (sectionShell.children.length <= 1) sectionShell.remove();
+        };
+
+        sectionNodes.forEach(function (sectionNode) {
+          if (!appendWholeSection(sectionNode)) appendSectionByBlocks(sectionNode);
+        });
+
+        sourcePage.remove();
+        document.body.dataset.resumePaginated = '1';
+      };
+
+      if (document.readyState === 'complete') {
+        requestAnimationFrame(runPagination);
+      } else {
+        window.addEventListener('load', function () { requestAnimationFrame(runPagination); }, { once: true });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -14,10 +14,11 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.models.resume import Resume
 from app.services.minio_storage import load_object_bytes
+from app.services.templates import get_template_definition, normalize_template_id
 
 APP_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = APP_ROOT.parent.parent
-TEMPLATE_ROOT = APP_ROOT / "html_templates" / "pro_resume"
+HTML_TEMPLATE_ROOT = APP_ROOT / "html_templates"
 TEMPLATE_FILE = "resume.html.j2"
 DEFAULT_AVATAR_CANDIDATES = [
     PROJECT_ROOT / "frontend" / "src" / "assets" / "default-avatar.jpg",
@@ -210,7 +211,7 @@ def _layout_context(raw_layout: object) -> dict[str, str]:
 
 def _build_environment() -> Environment:
     env = Environment(
-        loader=FileSystemLoader(str(TEMPLATE_ROOT)),
+        loader=FileSystemLoader(str(HTML_TEMPLATE_ROOT)),
         autoescape=select_autoescape(enabled_extensions=("html", "xml")),
         trim_blocks=True,
         lstrip_blocks=True,
@@ -307,6 +308,13 @@ def _normalize_avatar_crop(value: object) -> dict[str, float]:
         "offset_x": clamp(crop.get("offset_x"), 0.0, 100.0, 50.0),
         "offset_y": clamp(crop.get("offset_y"), 0.0, 100.0, 50.0),
     }
+
+
+def _template_file_path(template_id: str | None) -> tuple[str, Path]:
+    definition = get_template_definition(template_id)
+    template_dir = str(definition.get("template_dir") or normalize_template_id(template_id))
+    template_path = HTML_TEMPLATE_ROOT / template_dir / TEMPLATE_FILE
+    return f"{template_dir}/{TEMPLATE_FILE}", template_path
 
 
 def _find_browser() -> Path:
@@ -505,21 +513,23 @@ def _context_from_resume(resume: Resume) -> dict[str, object]:
         "ordered_sections": ordered_sections,
     }
 
-def get_resume_template_signature() -> str:
-    template_path = TEMPLATE_ROOT / TEMPLATE_FILE
+def get_resume_template_signature(template_id: str | None) -> str:
+    _, template_path = _template_file_path(template_id)
     template_stat = template_path.stat()
     return f"{template_stat.st_mtime_ns}:{template_stat.st_size}"
 
 
 def render_resume_html(resume: Resume) -> str:
     env = _build_environment()
-    template = env.get_template(TEMPLATE_FILE)
+    template_name, _ = _template_file_path(resume.template_id)
+    template = env.get_template(template_name)
     return template.render(**_context_from_resume(resume))
 
 def render_resume_pdf(resume: Resume) -> bytes:
     browser_path = _find_browser()
     env = _build_environment()
-    template = env.get_template(TEMPLATE_FILE)
+    template_name, _ = _template_file_path(resume.template_id)
+    template = env.get_template(template_name)
     RUNTIME_ROOT.mkdir(parents=True, exist_ok=True)
 
     with tempfile.TemporaryDirectory(prefix=f"resume-{resume.id}-", dir=RUNTIME_ROOT) as temp_dir:

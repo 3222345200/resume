@@ -6,6 +6,7 @@ ENV_FILE="${1:-.env.docker}"
 BRANCH="${2:-main}"
 NODE_IMAGE="${NODE_IMAGE:-node:20-alpine}"
 NPM_CACHE_VOLUME="${NPM_CACHE_VOLUME:-resume-frontend-npm-cache}"
+NODE_BUILD_MEMORY_MB="${NODE_BUILD_MEMORY_MB:-384}"
 
 cd "$ROOT_DIR"
 
@@ -48,7 +49,7 @@ docker run --rm \
   -v "$NPM_CACHE_VOLUME:/root/.npm" \
   -w /app \
   "$NODE_IMAGE" \
-  sh -lc "npm ci --prefer-offline --no-audit && npm run build"
+  sh -lc "npm ci --prefer-offline --no-audit && NODE_OPTIONS=--max-old-space-size=$NODE_BUILD_MEMORY_MB npm run build"
 
 echo "[5/5] Build and start containers..."
 docker compose --env-file "$ENV_FILE" up -d --build
