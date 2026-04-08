@@ -1,53 +1,52 @@
-﻿<template>
-  <div
-    ref="pickerRoot"
-    class="month-picker-wrap"
-  >
+<template>
+  <div ref="pickerRoot" class="month-picker-wrap">
     <button type="button" class="month-picker-trigger" @click="togglePanel">
       <span>{{ displayText }}</span>
       <span class="month-picker-arrow" :class="{ open: panelOpen }" aria-hidden="true"></span>
     </button>
 
-    <div v-if="panelOpen" class="month-picker-panel">
-      <div class="month-picker-head">
-        <strong>{{ panelYear }}年</strong>
-        <div class="month-picker-navs">
-          <button type="button" class="month-picker-nav-btn" :disabled="panelYear <= startYear" @click="panelYear -= 1">‹</button>
-          <button type="button" class="month-picker-nav-btn" :disabled="panelYear >= endYear" @click="panelYear += 1">›</button>
+    <Teleport to="body">
+      <div v-if="panelOpen" ref="panelRef" class="month-picker-panel month-picker-panel-teleport" :style="panelStyle">
+        <div class="month-picker-head">
+          <strong>{{ panelYear }}年</strong>
+          <div class="month-picker-navs">
+            <button type="button" class="month-picker-nav-btn" :disabled="panelYear <= startYear" @click="panelYear -= 1">‹</button>
+            <button type="button" class="month-picker-nav-btn" :disabled="panelYear >= endYear" @click="panelYear += 1">›</button>
+          </div>
+        </div>
+
+        <div class="month-picker-grid">
+          <button
+            v-for="month in 12"
+            :key="month"
+            type="button"
+            class="month-picker-option"
+            :class="{ active: isMonthActive(month) }"
+            @click="chooseMonth(month)"
+          >
+            {{ month }}月
+          </button>
+        </div>
+
+        <div class="month-picker-actions">
+          <button
+            v-if="allowPresent"
+            type="button"
+            class="month-present-btn"
+            :class="{ active: isPresent }"
+            @click="togglePresent"
+          >
+            至今
+          </button>
+          <button type="button" class="month-picker-clear" @click="clearValue">清空</button>
         </div>
       </div>
-
-      <div class="month-picker-grid">
-        <button
-          v-for="month in 12"
-          :key="month"
-          type="button"
-          class="month-picker-option"
-          :class="{ active: isMonthActive(month) }"
-          @click="chooseMonth(month)"
-        >
-          {{ month }}月
-        </button>
-      </div>
-
-      <div class="month-picker-actions">
-        <button
-          v-if="allowPresent"
-          type="button"
-          class="month-present-btn"
-          :class="{ active: isPresent }"
-          @click="togglePresent"
-        >
-          至今
-        </button>
-        <button type="button" class="month-picker-clear" @click="clearValue">清空</button>
-      </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -71,8 +70,10 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const pickerRoot = ref(null)
+const panelRef = ref(null)
 const panelOpen = ref(false)
 const panelYear = ref(new Date().getFullYear())
+const panelStyle = ref({})
 
 const isPresent = computed(() => props.modelValue === '至今')
 
@@ -110,11 +111,31 @@ watch(
   { immediate: true },
 )
 
-function togglePanel() {
+function updatePanelPosition() {
+  if (!pickerRoot.value) {
+    return
+  }
+  const rect = pickerRoot.value.getBoundingClientRect()
+  const panelWidth = Math.max(300, Math.min(320, window.innerWidth - 24))
+  const panelHeight = 320
+  const openAbove = window.innerHeight - rect.bottom < panelHeight + 16 && rect.top > panelHeight
+  panelStyle.value = {
+    position: 'fixed',
+    top: openAbove ? `${Math.max(12, rect.top - panelHeight - 8)}px` : `${rect.bottom + 8}px`,
+    left: `${Math.max(12, Math.min(rect.left, window.innerWidth - 344))}px`,
+    width: `${panelWidth}px`,
+  }
+}
+
+async function togglePanel() {
   if (selectedYear.value) {
     panelYear.value = Number(selectedYear.value)
   }
   panelOpen.value = !panelOpen.value
+  if (panelOpen.value) {
+    await nextTick()
+    updatePanelPosition()
+  }
 }
 
 function isMonthActive(month) {
@@ -137,16 +158,26 @@ function togglePresent() {
 }
 
 function handleDocumentClick(event) {
-  if (!pickerRoot.value?.contains(event.target)) {
+  if (!pickerRoot.value?.contains(event.target) && !panelRef.value?.contains(event.target)) {
     panelOpen.value = false
+  }
+}
+
+function handleViewportChange() {
+  if (panelOpen.value) {
+    updatePanelPosition()
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  window.addEventListener('resize', handleViewportChange)
+  window.addEventListener('scroll', handleViewportChange, true)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleDocumentClick)
+  window.removeEventListener('resize', handleViewportChange)
+  window.removeEventListener('scroll', handleViewportChange, true)
 })
 </script>

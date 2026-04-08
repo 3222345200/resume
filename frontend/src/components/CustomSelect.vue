@@ -1,28 +1,30 @@
-﻿<template>
+<template>
   <div ref="selectRoot" class="custom-select" :class="{ open: panelOpen }">
     <button type="button" class="custom-select-trigger" @click="togglePanel">
       <span class="custom-select-value" :style="selectedOptionStyle">{{ selectedLabel }}</span>
       <span class="custom-select-arrow" aria-hidden="true"></span>
     </button>
 
-    <div v-if="panelOpen" class="custom-select-panel">
-      <button
-        v-for="option in options"
-        :key="String(option.value)"
-        type="button"
-        class="custom-select-option"
-        :class="{ active: option.value === modelValue }"
-        :style="getOptionStyle(option)"
-        @click="chooseOption(option.value)"
-      >
-        {{ option.label }}
-      </button>
-    </div>
+    <Teleport to="body">
+      <div v-if="panelOpen" ref="panelRef" class="custom-select-panel custom-select-panel-teleport" :style="panelStyle">
+        <button
+          v-for="option in options"
+          :key="String(option.value)"
+          type="button"
+          class="custom-select-option"
+          :class="{ active: option.value === modelValue }"
+          :style="getOptionStyle(option)"
+          @click="chooseOption(option.value)"
+        >
+          {{ option.label }}
+        </button>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -43,6 +45,8 @@ const emit = defineEmits(['update:modelValue'])
 
 const panelOpen = ref(false)
 const selectRoot = ref(null)
+const panelRef = ref(null)
+const panelStyle = ref({})
 
 const selectedLabel = computed(() => {
   const selectedOption = props.options.find((option) => option.value === props.modelValue)
@@ -63,8 +67,25 @@ function getOptionStyle(option) {
   }
 }
 
-function togglePanel() {
+function updatePanelPosition() {
+  if (!selectRoot.value) {
+    return
+  }
+  const rect = selectRoot.value.getBoundingClientRect()
+  panelStyle.value = {
+    position: 'fixed',
+    top: `${rect.bottom + 8}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  }
+}
+
+async function togglePanel() {
   panelOpen.value = !panelOpen.value
+  if (panelOpen.value) {
+    await nextTick()
+    updatePanelPosition()
+  }
 }
 
 function chooseOption(value) {
@@ -73,16 +94,26 @@ function chooseOption(value) {
 }
 
 function handleDocumentClick(event) {
-  if (!selectRoot.value?.contains(event.target)) {
+  if (!selectRoot.value?.contains(event.target) && !panelRef.value?.contains(event.target)) {
     panelOpen.value = false
+  }
+}
+
+function handleViewportChange() {
+  if (panelOpen.value) {
+    updatePanelPosition()
   }
 }
 
 onMounted(() => {
   document.addEventListener('click', handleDocumentClick)
+  window.addEventListener('resize', handleViewportChange)
+  window.addEventListener('scroll', handleViewportChange, true)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleDocumentClick)
+  window.removeEventListener('resize', handleViewportChange)
+  window.removeEventListener('scroll', handleViewportChange, true)
 })
 </script>

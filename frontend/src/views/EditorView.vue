@@ -30,19 +30,19 @@
 
     <div v-if="sidebarOpen" class="sidebar-mask" @click="sidebarOpen = false"></div>
 
-    <ResumeSidebar
-      :resumes="resumeStore.resumes"
-      :active-id="resumeStore.currentResumeId"
-      :current-resume="resumeStore.currentResume"
-      :templates="resumeStore.templates"
-      :username="authStore.user?.username || ''"
-      :collapsed-on-mobile="!sidebarOpen"
-      @select-resume="handleSelectResume"
-      @create-resume="handleCreateResume"
-      @back-dashboard="router.push('/dashboard')"
-      @logout="handleLogout"
-      @toggle-sidebar="desktopSidebarCollapsed = true"
-    />
+        <ResumeSidebar
+          :resumes="resumeStore.resumes"
+          :active-id="resumeStore.currentResumeId"
+          :current-resume="resumeStore.currentResume"
+          :templates="resumeStore.templates"
+          :username="authStore.user?.username || ''"
+          :collapsed-on-mobile="!sidebarOpen"
+          @select-resume="handleSelectResume"
+          @create-resume="handleCreateResume"
+          @back-dashboard="router.push('/dashboard')"
+          @logout="handleLogout"
+          @toggle-sidebar="desktopSidebarCollapsed = true"
+        />
 
     <section class="vue-editor-main template-editor-main">
       <div v-if="resumeStore.loading" class="loading-card">正在加载简历数据...</div>
@@ -56,6 +56,7 @@
           :rendering="rendering"
           :avatar-uploading="avatarUploading"
           :upload-avatar="handleUploadAvatar"
+          @view-applications="handleViewApplications"
           @save="handleSave"
           @render="handleRender"
           @delete="handleDelete"
@@ -219,6 +220,26 @@ function handleCreateResume() {
   resumeStore.createLocalResume()
   autoPreviewSnapshot = getAutoPreviewSnapshot()
   closeSidebarOnMobile()
+}
+
+async function handleViewApplications() {
+  try {
+    let resumeId = resumeStore.currentResumeId
+    if (!resumeId) {
+      const saved = await resumeStore.saveCurrentResume()
+      resumeId = saved.id
+      autoPreviewSnapshot = getAutoPreviewSnapshot()
+      showToast('简历已保存')
+    }
+    if (!resumeId) {
+      openNoticeDialog('当前简历还没有可用的保存记录，请先保存后再查看关联投递。')
+      return
+    }
+    closeSidebarOnMobile()
+    await router.push({ path: '/applications', query: { resume_id: resumeId } })
+  } catch (error) {
+    reportError(error)
+  }
 }
 
 async function handleSave() {

@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 import app.models  # noqa: F401
 from app.api.routes.auth import router as auth_router
+from app.api.routes.applications import router as applications_router
 from app.api.routes.health import router as health_router
 from app.api.routes.resumes import router as resumes_router
 from app.api.routes.templates import router as templates_router
@@ -38,6 +39,7 @@ app.mount('/assets', StaticFiles(directory=str(FRONTEND_VUE_ASSETS_DIR), check_d
 app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
+app.include_router(applications_router, prefix='/api')
 app.include_router(templates_router, prefix='/api')
 app.include_router(resumes_router, prefix='/api')
 app.include_router(uploads_router, prefix='/api')

@@ -38,6 +38,11 @@ def ensure_runtime_schema(engine: Engine) -> None:
         if "status" in existing_resume_columns:
             statements.append('ALTER TABLE resumes DROP COLUMN IF EXISTS status CASCADE')
 
+    if "applications" in table_names:
+        existing_application_columns = {column["name"] for column in inspector.get_columns("applications")}
+        if "interview_count" not in existing_application_columns:
+            statements.append('ALTER TABLE applications ADD COLUMN interview_count INTEGER NOT NULL DEFAULT 0')
+
     if statements:
         with engine.begin() as connection:
             for statement in statements:

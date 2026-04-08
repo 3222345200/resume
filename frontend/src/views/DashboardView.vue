@@ -15,7 +15,7 @@
       <p class="eyebrow">Career Dashboard</p>
       <h1>欢迎回来，{{ authStore.user?.username || '求职者' }}</h1>
       <p class="dashboard-subtitle">
-        这里会作为你的求职工作台首页。1.0 阶段先从简历管理进入，后续再把投递管理、面试记录、数据统计逐步挂到这里。
+        这里是你的求职工作台首页。现在已经支持简历管理与投递管理，后续会继续补全面试记录和更多数据看板。
       </p>
 
       <div class="dashboard-stat-grid">
@@ -23,9 +23,9 @@
           <span>我的简历</span>
           <strong>{{ resumeStore.resumes.length }}</strong>
         </article>
-        <article class="dashboard-stat-card is-muted">
+        <article class="dashboard-stat-card">
           <span>投递记录</span>
-          <strong>待上线</strong>
+          <strong>{{ applicationStats.total_count }}</strong>
         </article>
         <article class="dashboard-stat-card is-muted">
           <span>面试记录</span>
@@ -62,10 +62,17 @@
         <p v-else class="dashboard-empty-copy">当前还没有简历，先去创建第一份简历。</p>
       </article>
 
-      <article class="dashboard-module-card is-coming-soon">
+      <article class="dashboard-module-card">
         <p class="eyebrow">Applications</p>
         <h2>投递管理</h2>
-        <p class="muted-copy">1.0 下一步接入投递记录、状态流转、渠道筛选和基础统计。</p>
+        <p class="muted-copy">
+          已支持投递记录管理、状态流转、关联简历筛选和基础统计，可直接进入工作台继续跟进。
+        </p>
+        <div class="dashboard-application-stats">
+          <span>本周新增 {{ applicationStats.new_this_week }}</span>
+          <span>面试中 {{ applicationStats.interviewing_count }}</span>
+          <span>Offer {{ applicationStats.offer_count }}</span>
+        </div>
         <RouterLink class="ghost-button" to="/applications">进入投递管理</RouterLink>
       </article>
 
@@ -80,15 +87,22 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import brandMark from '../assets/brand-mark.svg'
+import { requestJson } from '../api/request'
 import { useAuthStore } from '../stores/auth'
 import { useResumeStore } from '../stores/resume'
 
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
+const applicationStats = reactive({
+  total_count: 0,
+  new_this_week: 0,
+  interviewing_count: 0,
+  offer_count: 0,
+})
 
 const recentResumes = computed(() => resumeStore.resumes.slice(0, 4))
 
@@ -113,9 +127,24 @@ async function handleLogout() {
   await router.push('/login')
 }
 
+async function loadApplicationStats() {
+  try {
+    const stats = await requestJson('/api/applications/stats/overview')
+    Object.assign(applicationStats, stats || {})
+  } catch {
+    Object.assign(applicationStats, {
+      total_count: 0,
+      new_this_week: 0,
+      interviewing_count: 0,
+      offer_count: 0,
+    })
+  }
+}
+
 onMounted(async () => {
   if (!resumeStore.resumes.length) {
     await resumeStore.bootstrapEditor()
   }
+  await loadApplicationStats()
 })
 </script>

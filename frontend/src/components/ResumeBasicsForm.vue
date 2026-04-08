@@ -5,12 +5,13 @@
         <p class="eyebrow">Editor</p>
         <h2>模板字段编辑</h2>
       </div>
-      <div class="form-actions">
-        <button class="primary-button" type="button" :disabled="saving" @click="$emit('save')">
-          {{ saving ? '保存中...' : '保存简历' }}
-        </button>
-        <button class="ghost-button" type="button" :disabled="rendering" @click="$emit('render')">
-          {{ rendering ? '生成中...' : '下载 PDF' }}
+        <div class="form-actions">
+          <button class="ghost-button" type="button" @click="$emit('view-applications')">查看关联投递</button>
+          <button class="primary-button" type="button" :disabled="saving" @click="$emit('save')">
+            {{ saving ? '保存中...' : '保存简历' }}
+          </button>
+          <button class="ghost-button" type="button" :disabled="rendering" @click="$emit('render')">
+            {{ rendering ? '生成中...' : '下载 PDF' }}
         </button>
         <button class="ghost-button danger-lite" type="button" @click="$emit('delete')">删除</button>
       </div>
@@ -518,7 +519,7 @@ const props = defineProps({
   uploadAvatar: { type: Function, required: true },
 })
 
-defineEmits(['save', 'render', 'delete'])
+defineEmits(['save', 'render', 'delete', 'view-applications'])
 
 const avatarVersion = ref(Date.now())
 const avatarFileInputRef = ref(null)
