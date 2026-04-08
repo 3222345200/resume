@@ -7036,8 +7036,8 @@ body,
   grid-auto-rows: max-content;
   gap: 12px;
   margin-top: 14px;
-  height: calc(100dvh - 420px);
-  min-height: 440px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 4px 4px 0 18px;
   position: relative;
@@ -7059,6 +7059,7 @@ body,
   padding: 18px;
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
 }
 
@@ -7591,22 +7592,132 @@ body,
 }
 
 .applications-dialog {
-  width: min(980px, 100%);
+  width: min(1120px, 100%);
   max-height: calc(100dvh - 40px);
   margin: auto 0;
   overflow: hidden;
-  padding: 24px;
+  padding: 22px 22px 18px;
   display: flex;
   flex-direction: column;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: linear-gradient(180deg, rgba(248, 247, 244, 0.98), rgba(239, 238, 235, 0.96));
+  box-shadow: 0 28px 80px rgba(29, 35, 42, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.applications-dialog-header {
+  align-items: flex-start;
+  padding: 18px 20px 16px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 243, 239, 0.9));
+}
+
+.applications-dialog-title-group {
+  display: grid;
+  gap: 8px;
+}
+
+.applications-dialog-title-group .eyebrow {
+  margin: 0;
+  letter-spacing: 0.18em;
+}
+
+.applications-dialog-title-group h2 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 40px);
+  letter-spacing: -0.03em;
 }
 
 .applications-dialog-close {
   border: 0;
   background: transparent;
-  color: var(--muted);
-  font-size: 32px;
+  color: rgba(68, 68, 68, 0.72);
+  font-size: 40px;
   line-height: 1;
   cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 999px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.applications-dialog-close:hover {
+  background: rgba(17, 24, 39, 0.06);
+  color: rgba(17, 24, 39, 0.88);
+}
+
+.applications-dialog-body {
+  margin-top: 18px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.applications-dialog-main {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 18px;
+}
+
+.applications-dialog-panel {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(151, 142, 133, 0.12);
+  background: rgba(242, 242, 240, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.56);
+}
+
+.applications-dialog-panel-secondary {
+  background: rgba(237, 237, 235, 0.94);
+}
+
+.applications-form-grid-primary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 16px;
+}
+
+.applications-form-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.applications-label-with-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.applications-inline-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  border: 1px solid rgba(151, 142, 133, 0.16);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text);
+}
+
+.applications-inline-status.is-已投递 {
+  background: rgba(207, 229, 255, 0.9);
+  border-color: rgba(117, 161, 218, 0.34);
+  color: #2c5f9d;
+}
+
+.applications-dialog-extension {
+  margin-top: 18px;
+}
+
+.applications-form-grid-footer {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.applications-form-grid-footer textarea {
+  min-height: 140px;
 }
 
 .applications-dialog-actions {
@@ -7614,15 +7725,27 @@ body,
   justify-content: flex-end;
   position: sticky;
   bottom: 0;
-  padding-top: 16px;
-  background: linear-gradient(180deg, rgba(250, 248, 245, 0), rgba(250, 248, 245, 0.96) 28%);
+  padding: 16px 0 4px;
+  background: linear-gradient(180deg, rgba(248, 247, 244, 0), rgba(248, 247, 244, 0.96) 28%);
   z-index: 2;
 }
 
-.applications-dialog .applications-form-grid {
-  overflow: auto;
-  padding-right: 6px;
-  margin-top: 8px;
+.applications-dialog-actions .ghost-button,
+.applications-dialog-actions .primary-button {
+  min-width: 112px;
+  min-height: 46px;
+  border-radius: 999px;
+}
+
+.applications-dialog-actions .ghost-button {
+  background: linear-gradient(180deg, rgba(248, 244, 239, 0.98), rgba(239, 233, 227, 0.92));
+  color: #52483f;
+}
+
+.applications-dialog-actions .primary-button {
+  background: linear-gradient(180deg, #667066, #4f594f);
+  color: #fff;
+  box-shadow: 0 14px 28px rgba(79, 89, 79, 0.24);
 }
 
 .applications-field-preferences {
@@ -7725,6 +7848,11 @@ body,
     grid-template-columns: 1fr;
   }
 
+  .applications-dialog-main,
+  .applications-form-grid-footer {
+    grid-template-columns: 1fr;
+  }
+
   .applications-card {
     grid-template-columns: 1fr;
   }
@@ -7786,6 +7914,15 @@ body,
   .applications-detail,
   .applications-dialog {
     padding: 16px;
+  }
+
+  .applications-dialog-header,
+  .applications-dialog-panel {
+    padding: 16px;
+  }
+
+  .applications-dialog-title-group h2 {
+    font-size: 30px;
   }
 
 }

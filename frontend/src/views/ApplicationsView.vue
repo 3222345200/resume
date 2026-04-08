@@ -325,32 +325,59 @@
     <div v-if="dialogOpen" class="applications-dialog-mask" @click.self="closeDialog">
       <div class="applications-dialog">
         <div class="applications-dialog-header">
-          <div><p class="eyebrow">{{ editingId ? "Edit Application" : "Create Application" }}</p><h2>{{ editingId ? "编辑投递" : "新建投递" }}</h2></div>
+          <div class="applications-dialog-title-group">
+            <p class="eyebrow">{{ editingId ? "edit application" : "create application" }}</p>
+            <h2>{{ editingId ? "编辑投递" : "新建投递" }}</h2>
+          </div>
           <button class="applications-dialog-close" type="button" @click="closeDialog">×</button>
         </div>
 
-        <div class="applications-form-grid">
-          <label><span>公司名称</span><input v-model="form.company_name" type="text" /></label>
-          <label><span>岗位名称</span><input v-model="form.job_title" type="text" /></label>
-          <label v-if="shouldShowField('department')"><span>部门</span><input v-model="form.department" type="text" /></label>
-          <label v-if="shouldShowField('city')"><span>城市 / 地点</span><input v-model="form.city" type="text" /></label>
-          <label v-if="shouldShowField('job_type')"><span>岗位类型</span><input v-model="form.job_type" type="text" /></label>
-          <label v-if="shouldShowField('salary_range')"><span>薪资范围</span><input v-model="form.salary_range" type="text" /></label>
-          <label><span>投递日期</span><DateTimePicker v-model="form.applied_at" type="date" placeholder="选择日期" label-text="投递日期" /></label>
-          <label><span>当前状态</span><CustomSelect v-model="form.status" :options="statusFormOptions" placeholder="选择状态" /></label>
-          <label v-if="shouldShowField('channel')"><span>投递渠道</span><input v-model="form.channel" type="text" /></label>
-          <label v-if="shouldShowField('priority')"><span>优先级</span><CustomSelect v-model="form.priority" :options="prioritySelectOptions" placeholder="选择优先级" /></label>
-          <label v-if="shouldShowField('contact_name')"><span>联系人</span><input v-model="form.contact_name" type="text" /></label>
-          <label v-if="shouldShowField('contact_value')"><span>联系方式</span><input v-model="form.contact_value" type="text" /></label>
-          <label v-if="shouldShowField('referrer_name')"><span>内推人</span><input v-model="form.referrer_name" type="text" /></label>
-          <label v-if="shouldShowField('resume_id')"><span>关联简历</span><CustomSelect v-model="form.resume_id" :options="resumeFormOptions" placeholder="暂不关联" /></label>
-          <label v-if="shouldShowField('job_link')" class="full-row"><span>岗位链接</span><input v-model="form.job_link" type="text" /></label>
-          <label v-if="shouldShowField('jd_summary')" class="full-row"><span>JD 摘要</span><textarea v-model="form.jd_summary" rows="4"></textarea></label>
-          <label v-if="shouldShowField('note')" class="full-row"><span>备注</span><textarea v-model="form.note" rows="3"></textarea></label>
-          <label v-if="shouldShowField('risk_note')" class="full-row"><span>风险点</span><textarea v-model="form.risk_note" rows="3"></textarea></label>
-          <label v-if="shouldShowField('last_follow_up_at')"><span>最近跟进</span><DateTimePicker v-model="form.last_follow_up_at" type="datetime-local" placeholder="选择时间" label-text="最近跟进时间" /></label>
-          <label v-if="shouldShowField('next_follow_up_at')"><span>下次跟进</span><DateTimePicker v-model="form.next_follow_up_at" type="datetime-local" placeholder="选择时间" label-text="下次跟进时间" /></label>
-          <label v-if="shouldShowField('next_action')" class="full-row"><span>下一步动作</span><textarea v-model="form.next_action" rows="3"></textarea></label>
+        <div class="applications-dialog-body">
+          <div class="applications-dialog-main">
+            <section class="applications-dialog-panel applications-dialog-panel-primary">
+              <div class="applications-form-grid applications-form-grid-primary">
+                <label><span>公司名称</span><input v-model="form.company_name" type="text" /></label>
+                <label><span>岗位名称</span><input v-model="form.job_title" type="text" /></label>
+                <label><span>城市 / 地点</span><input v-model="form.city" type="text" /></label>
+                <label><span>投递日期</span><DateTimePicker v-model="form.applied_at" type="date" placeholder="选择日期" /></label>
+                <label><span>投递渠道</span><input v-model="form.channel" type="text" /></label>
+                <label><span>优先级</span><CustomSelect v-model="form.priority" :options="prioritySelectOptions" placeholder="选择优先级" /></label>
+              </div>
+            </section>
+
+            <section class="applications-dialog-panel applications-dialog-panel-secondary">
+              <div class="applications-form-stack">
+                <label>
+                  <span class="applications-label-with-badge">
+                    <span>当前状态</span>
+                    <strong class="applications-inline-status" :class="badgeClass(form.status)">{{ form.status || '已投递' }}</strong>
+                  </span>
+                  <CustomSelect v-model="form.status" :options="statusFormOptions" placeholder="选择状态" />
+                </label>
+                <label>
+                  <span>关联简历</span>
+                  <CustomSelect v-model="form.resume_id" :options="resumeFormOptions" placeholder="暂不关联" />
+                </label>
+                <label>
+                  <span>下次跟进</span>
+                  <DateTimePicker v-model="form.next_follow_up_at" type="datetime-local" placeholder="选择时间" />
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <section class="applications-dialog-panel applications-dialog-extension">
+            <div class="applications-form-grid applications-form-grid-footer">
+              <label>
+                <span>备注</span>
+                <textarea v-model="form.note" rows="5"></textarea>
+              </label>
+              <label>
+                <span>下一步动作</span>
+                <textarea v-model="form.next_action" rows="5"></textarea>
+              </label>
+            </div>
+          </section>
         </div>
 
         <p v-if="dialogMessage" class="applications-message is-error">{{ dialogMessage }}</p>
