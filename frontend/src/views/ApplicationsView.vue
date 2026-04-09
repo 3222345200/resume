@@ -314,7 +314,7 @@
             </button>
             <div v-if="detailSections.interview" class="applications-detail-row">
               <div><strong>{{ detail.interview_count }}</strong><p>当前已关联面试轮次</p></div>
-              <RouterLink class="ghost-button" to="/interviews">进入面试记录</RouterLink>
+              <RouterLink class="ghost-button" :to="`/interviews?application_id=${detail.id}`">进入面试记录</RouterLink>
             </div>
           </section>
         </template>

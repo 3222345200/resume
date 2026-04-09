@@ -8,6 +8,7 @@ import app.models  # noqa: F401
 from app.api.routes.auth import router as auth_router
 from app.api.routes.applications import router as applications_router
 from app.api.routes.health import router as health_router
+from app.api.routes.interviews import router as interviews_router
 from app.api.routes.resumes import router as resumes_router
 from app.api.routes.templates import router as templates_router
 from app.api.routes.uploads import router as uploads_router
@@ -40,6 +41,7 @@ app.mount('/uploads', StaticFiles(directory=str(UPLOADS_DIR)), name='uploads')
 app.include_router(health_router, prefix='/api')
 app.include_router(auth_router, prefix='/api')
 app.include_router(applications_router, prefix='/api')
+app.include_router(interviews_router, prefix='/api')
 app.include_router(templates_router, prefix='/api')
 app.include_router(resumes_router, prefix='/api')
 app.include_router(uploads_router, prefix='/api')
@@ -48,8 +50,8 @@ app.include_router(uploads_router, prefix='/api')
 @app.on_event('startup')
 def on_startup() -> None:
     logger.info('startup_begin app_env=%s debug=%s', settings.app_env, settings.app_debug)
-    Base.metadata.create_all(bind=engine)
     ensure_runtime_schema(engine)
+    Base.metadata.create_all(bind=engine)
     ensure_bucket_exists()
     logger.info('startup_complete')
 

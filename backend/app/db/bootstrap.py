@@ -2,10 +2,27 @@ from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
 
+def _should_recreate_interview_tables(inspector) -> bool:
+    table_names = set(inspector.get_table_names())
+    if "interviews" not in table_names:
+        return False
+    interview_columns = {column["name"] for column in inspector.get_columns("interviews")}
+    # Legacy versions used different required columns such as interview_at.
+    return "interview_at" in interview_columns
+
+
 def ensure_runtime_schema(engine: Engine) -> None:
     inspector = inspect(engine)
     table_names = set(inspector.get_table_names())
     statements: list[str] = []
+
+    if _should_recreate_interview_tables(inspector):
+        with engine.begin() as connection:
+            if "interview_question_notes" in table_names:
+                connection.execute(text("DROP TABLE IF EXISTS interview_question_notes CASCADE"))
+            connection.execute(text("DROP TABLE IF EXISTS interviews CASCADE"))
+        inspector = inspect(engine)
+        table_names = set(inspector.get_table_names())
 
     if "users" in table_names:
         existing_user_columns = {column["name"] for column in inspector.get_columns("users")}
@@ -42,6 +59,13 @@ def ensure_runtime_schema(engine: Engine) -> None:
         existing_application_columns = {column["name"] for column in inspector.get_columns("applications")}
         if "interview_count" not in existing_application_columns:
             statements.append('ALTER TABLE applications ADD COLUMN interview_count INTEGER NOT NULL DEFAULT 0')
+
+    if "interviews" in table_names:
+        existing_interview_columns = {column["name"] for column in inspector.get_columns("interviews")}
+        if "document_title" not in existing_interview_columns:
+            statements.append("ALTER TABLE interviews ADD COLUMN document_title VARCHAR(200) NOT NULL DEFAULT ''")
+        if "document_content" not in existing_interview_columns:
+            statements.append("ALTER TABLE interviews ADD COLUMN document_content TEXT NOT NULL DEFAULT ''")
 
     if statements:
         with engine.begin() as connection:
