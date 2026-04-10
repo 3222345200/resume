@@ -2,29 +2,44 @@
   <aside class="resume-sidebar" :class="{ collapsed: collapsedOnMobile }">
     <div class="resume-sidebar-shell interviews-sidebar-shell">
       <div class="sidebar-brand interviews-sidebar-brand">
-      <div class="brand-row sidebar-brand-row interviews-brand-row">
+      <div class="brand-row interviews-brand-row">
         <div class="brand-copy-block interviews-brand-copy">
           <p class="eyebrow">职跃 OfferPilot</p>
           <h1>求职工作台</h1>
         </div>
-        <button class="desktop-sidebar-toggle" type="button" @click="$emit('toggle-sidebar')">&lt;</button>
+        <button
+          class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
+          type="button"
+          aria-label="收起求职工作台侧栏"
+          @click="$emit('toggle-sidebar')"
+        >&lt;</button>
       </div>
-      <p class="sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
-      <p class="sidebar-user">已登录：{{ username || '用户' }}</p>
+      <p class="sidebar-desc interviews-sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
+      <p class="sidebar-user interviews-sidebar-user">已登录：{{ username || '用户' }}</p>
     </div>
 
-    <button class="primary-button" type="button" @click="$emit('create-resume')">新建简历</button>
-    <button class="ghost-button sidebar-workspace-button" type="button" @click="$emit('back-dashboard')">
-      返回工作台
-    </button>
-    <button class="ghost-button" type="button" @click="$emit('logout')">退出登录</button>
+    <section class="interviews-card interviews-card-soft resume-sidebar-panel">
+      <div class="interviews-card-head">
+        <div>
+          <p class="eyebrow">Workspace</p>
+          <h2>简历操作</h2>
+        </div>
+      </div>
 
-    <div class="sidebar-list-head">
-      <h2>我的简历</h2>
-      <span>{{ resumes.length }} 份</span>
-    </div>
+      <button class="primary-button" type="button" @click="$emit('create-resume')">新建简历</button>
+      <button class="ghost-button sidebar-workspace-button" type="button" @click="$emit('back-dashboard')">
+        返回工作台
+      </button>
+      <button class="ghost-button" type="button" @click="$emit('logout')">退出登录</button>
+    </section>
 
-    <div class="resume-list-scroll">
+    <section class="interviews-card interviews-card-soft resume-sidebar-panel resume-sidebar-list-panel">
+      <div class="sidebar-list-head">
+        <h2>我的简历</h2>
+        <span>{{ resumes.length }} 份</span>
+      </div>
+
+      <div class="resume-list-scroll">
       <div v-if="showDraftCard" class="resume-item-card active">
         <div class="sidebar-edit-row">
           <span class="sidebar-edit-label">标题</span>
@@ -72,6 +87,7 @@
 
       <div v-if="!resumes.length && !showDraftCard" class="empty-list-tip">暂无已保存简历，先新建一份。</div>
       </div>
+    </section>
     </div>
   </aside>
 </template>

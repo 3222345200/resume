@@ -4016,6 +4016,7 @@ p {
   min-width: 0;
   display: grid;
   gap: 4px;
+  padding-top: 2px;
 }
 
 .resume-sidebar .eyebrow {
@@ -4024,8 +4025,10 @@ p {
 }
 
 .resume-sidebar h1 {
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-weight: 700;
   font-size: 24px;
-  line-height: 1.12;
+  line-height: 1.2;
 }
 
 .resume-item-card {
@@ -6800,41 +6803,6 @@ body,
   margin-left: auto;
 }
 
-.applications-desktop-sidebar-reopen {
-  position: fixed;
-  top: 12px;
-  left: 20px;
-  z-index: 90;
-}
-
-.applications-sidebar-brand {
-  gap: 12px;
-}
-
-.applications-brand-row {
-  align-items: flex-start;
-}
-
-.applications-brand-copy {
-  display: grid;
-  gap: 2px;
-}
-
-.applications-brand-copy .eyebrow {
-  margin: 2px 0 0;
-}
-
-.applications-brand-copy h1 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 1.02;
-}
-
-.applications-sidebar-desc,
-.applications-sidebar-user {
-  max-width: 18rem;
-}
-
 .applications-user-card span,
 .applications-user-card small,
 .applications-sidebar-title,
@@ -6972,6 +6940,10 @@ body,
 .applications-card h2,
 .applications-dialog h2 {
   margin-bottom: 8px;
+}
+
+.applications-header h1 {
+  line-height: 1.14;
 }
 
 .applications-subtitle {
@@ -8370,11 +8342,15 @@ body,
 }
 
 .interviews-quick-card {
-  display: grid;
-  align-content: space-between;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   min-height: 86px;
   padding: 12px;
   border-radius: 16px;
+  text-align: center;
+  gap: 8px;
 }
 
 .interviews-quick-card.is-active,
@@ -8984,6 +8960,13 @@ body,
 .interviews-page-modern .interviews-main,
 .interviews-page-modern .interviews-rail {
   min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.interviews-page-modern .interviews-rail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .interviews-page-modern .interviews-sidebar,
@@ -9091,6 +9074,7 @@ body,
   display: grid;
   gap: 4px;
   min-width: 0;
+  padding-top: 2px;
 }
 
 .interviews-page-modern .interviews-brand-copy .eyebrow {
@@ -9099,9 +9083,11 @@ body,
 }
 
 .interviews-page-modern .interviews-brand-copy h1 {
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-weight: 700;
   margin: 0;
   font-size: 24px;
-  line-height: 1.08;
+  line-height: 1.2;
 }
 
 .interviews-page-modern .interviews-sidebar-desc,
@@ -9193,16 +9179,26 @@ body,
 }
 
 .interviews-page-modern .interviews-quick-card span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   color: var(--iv-muted);
   font-size: 11px;
   line-height: 1.2;
   white-space: nowrap;
+  text-align: center;
 }
 
 .interviews-page-modern .interviews-quick-card strong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   color: var(--iv-text);
   font-size: 18px;
-  margin-top: 8px;
+  margin-top: 0;
+  text-align: center;
 }
 
 .interviews-page-modern .interviews-quick-card.is-active {
@@ -9749,7 +9745,7 @@ body,
 }
 
 .dashboard-page-modern .dashboard-shell {
-  grid-template-columns: 60px 228px minmax(0, 1fr) 320px;
+  grid-template-columns: 60px 244px minmax(0, 1fr) 320px;
 }
 
 .dashboard-page-modern .dashboard-shell.sidebar-collapsed {
@@ -9760,18 +9756,6 @@ body,
   display: grid;
   gap: 16px;
   min-height: 0;
-}
-
-.dashboard-page-modern .dashboard-sidebar-brand {
-  padding-top: 4px;
-}
-
-.dashboard-page-modern .dashboard-sidebar-desktop-toggle {
-  min-width: 32px;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border-radius: 10px;
 }
 
 .dashboard-page-modern .dashboard-sidebar,
@@ -9822,8 +9806,7 @@ body,
   line-height: 1;
 }
 
-.dashboard-page-modern .dashboard-hero-copy,
-.dashboard-page-modern .dashboard-sidebar-copy {
+.dashboard-page-modern .dashboard-hero-copy {
   color: var(--iv-muted);
   line-height: 1.75;
 }
@@ -10084,7 +10067,7 @@ body,
 }
 
 .editor-workspace-page .editor-workspace-shell {
-  grid-template-columns: 60px 228px minmax(560px, 0.9fr) minmax(760px, 1.1fr);
+  grid-template-columns: 60px 244px minmax(560px, 0.9fr) minmax(760px, 1.1fr);
   gap: 12px;
 }
 
@@ -10152,6 +10135,7 @@ body,
   min-width: 0;
   min-height: calc(100dvh - 24px);
   padding: 4px 0;
+  border-radius: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -10163,8 +10147,72 @@ body,
   min-height: 0;
 }
 
+.resume-sidebar-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.resume-sidebar-list-panel {
+  min-height: 0;
+}
+
 .editor-workspace-page .resume-sidebar .sidebar-brand {
   padding-top: 4px;
+}
+
+.editor-workspace-page .resume-sidebar .interviews-card {
+  border-radius: var(--iv-radius);
+  border: 1px solid var(--iv-border);
+  background: linear-gradient(180deg, #fcfbf8 0%, #f8f7f2 100%);
+  box-shadow: var(--iv-shadow);
+  padding: 18px;
+}
+
+.editor-workspace-page .resume-sidebar .interviews-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+.editor-workspace-page .resume-sidebar .interviews-card-head h2 {
+  margin: 4px 0 0;
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--iv-text);
+}
+
+.editor-workspace-page .resume-sidebar .primary-button,
+.editor-workspace-page .resume-sidebar .ghost-button {
+  min-height: 40px;
+  border-radius: 12px;
+}
+
+.editor-workspace-page .resume-sidebar .primary-button {
+  background: linear-gradient(180deg, #257e76 0%, #1f7068 100%);
+  box-shadow: 0 12px 22px rgba(31, 122, 114, 0.22);
+}
+
+.editor-workspace-page .resume-sidebar .ghost-button {
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+}
+
+.editor-workspace-page .resume-sidebar .sidebar-list-head {
+  margin-bottom: 0;
+}
+
+.editor-workspace-page .resume-sidebar .resume-list-scroll {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.editor-workspace-page .resume-sidebar .brand-row img {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  object-fit: contain;
 }
 
 .editor-workspace-page .resume-sidebar.collapsed {
@@ -10346,7 +10394,7 @@ body,
 
 .applications-page-modernized .applications-shell-modernized {
   display: grid;
-  grid-template-columns: 60px 228px minmax(0, 1fr) 360px;
+  grid-template-columns: 60px 244px minmax(0, 1fr) 360px;
   gap: 16px;
   min-height: calc(100dvh - 24px);
 }
@@ -10375,10 +10423,15 @@ body,
 
 .applications-page-modernized .applications-sidebar {
   padding: 4px 0;
+  border-radius: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
   gap: 16px;
+}
+
+.interviews-page-modern .interviews-sidebar {
+  border-radius: 0;
 }
 
 .applications-page-modernized .applications-sidebar-shell {
@@ -10387,21 +10440,23 @@ body,
   min-height: 0;
 }
 
-.applications-page-modernized .applications-sidebar-brand {
-  padding-top: 4px;
-}
-
-.applications-page-modernized .applications-brand-row > img {
-  display: none;
-}
-
 .applications-page-modernized .applications-sidebar-section {
   display: grid;
-  gap: 12px;
+  gap: 4px;
+}
+
+.applications-page-modernized .applications-sidebar-panel {
+  padding: 18px;
 }
 
 .applications-page-modernized .applications-main {
   padding: 4px 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  scrollbar-gutter: auto;
 }
 
 .applications-page-modernized .applications-detail {
@@ -10410,10 +10465,16 @@ body,
 
 .applications-page-modernized .applications-header,
 .applications-page-modernized .applications-toolbar,
-.applications-page-modernized .applications-list-wrap,
 .applications-page-modernized .applications-detail-header,
 .applications-page-modernized .applications-detail-card,
 .applications-page-modernized .applications-dialog {
+  border-radius: var(--iv-radius);
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+  box-shadow: var(--iv-shadow);
+}
+
+.applications-page-modernized .applications-list-wrap {
   border-radius: var(--iv-radius);
   border: 1px solid var(--iv-border);
   background: #ffffff;
@@ -10431,6 +10492,8 @@ body,
   border-radius: 14px;
   border: 1px solid var(--iv-border);
   background: #ffffff;
+  margin-top: 0;
+  padding: 10px 14px;
 }
 
 .applications-page-modernized .applications-shortcut.is-active {
@@ -10440,11 +10503,31 @@ body,
 
 .applications-page-modernized .applications-nav-link {
   border-radius: 14px;
+  padding: 10px 14px;
 }
 
 .applications-page-modernized .applications-nav-link.is-active {
   background: rgba(31, 122, 114, 0.08);
   border-color: rgba(31, 122, 114, 0.2);
+}
+
+.applications-page-modernized .applications-nav {
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.applications-page-modernized .applications-sidebar-title {
+  font-size: 12px;
+}
+
+.applications-page-modernized .applications-side-actions {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.applications-page-modernized .applications-side-actions .ghost-button {
+  min-height: 44px;
+  padding: 10px 18px;
 }
 
 .applications-page-modernized .applications-desktop-sidebar-reopen {
@@ -10460,7 +10543,7 @@ body,
 @media (max-width: 1500px) {
   .applications-page-modernized .applications-shell-modernized,
   .dashboard-page-modern .dashboard-shell {
-    grid-template-columns: 60px 228px minmax(0, 1fr);
+    grid-template-columns: 60px 244px minmax(0, 1fr);
   }
 
   .applications-page-modernized .applications-shell-modernized.sidebar-collapsed {
@@ -10475,7 +10558,7 @@ body,
 
 @media (max-width: 1500px) {
   .editor-workspace-page .editor-workspace-shell {
-    grid-template-columns: 60px 228px minmax(480px, 0.86fr) minmax(620px, 1.14fr);
+    grid-template-columns: 60px 244px minmax(480px, 0.86fr) minmax(620px, 1.14fr);
   }
 
   .editor-workspace-page.desktop-sidebar-collapsed .editor-workspace-shell {

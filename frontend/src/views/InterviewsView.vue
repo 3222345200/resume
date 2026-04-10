@@ -158,7 +158,7 @@
 
             <div v-if="!loadingList && !filteredInterviews.length" class="interviews-empty">
               <h3>暂无面试记录</h3>
-              <p>可以直接新建，或者从投递页带着 `application_id` 进入。</p>
+              <p>可以直接新建，或者从投递页进入。</p>
             </div>
           </div>
         </section>
@@ -422,7 +422,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import brandMark from '../assets/brand-mark.svg'
+import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
 import CustomSelect from '../components/CustomSelect.vue'
 import DateTimePicker from '../components/DateTimePicker.vue'

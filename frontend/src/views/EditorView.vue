@@ -105,7 +105,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import brandMark from '../assets/brand-mark.svg'
+import brandMark from '../assets/logo.png'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import ResumeBasicsForm from '../components/ResumeBasicsForm.vue'
 import ResumePreviewPane from '../components/ResumePreviewPane.vue'

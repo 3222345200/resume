@@ -34,14 +34,14 @@
 
       <aside class="interviews-sidebar dashboard-sidebar">
         <div class="interviews-sidebar-shell dashboard-sidebar-shell">
-          <div class="sidebar-brand interviews-sidebar-brand dashboard-sidebar-brand">
-            <div class="brand-row interviews-brand-row dashboard-brand-row">
-              <div class="brand-copy-block interviews-brand-copy dashboard-brand-copy">
+          <div class="sidebar-brand interviews-sidebar-brand">
+            <div class="brand-row interviews-brand-row">
+              <div class="brand-copy-block interviews-brand-copy">
                 <p class="eyebrow">职跃 OfferPilot</p>
                 <h1>求职工作台</h1>
               </div>
               <button
-                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle dashboard-sidebar-desktop-toggle"
+                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
                 type="button"
                 aria-label="收起求职工作台侧栏"
                 @click="leftSidebarCollapsed = true"
@@ -49,7 +49,7 @@
                 &lt;
               </button>
             </div>
-            <p class="sidebar-desc interviews-sidebar-desc dashboard-sidebar-copy">从首页总览出发，逐步把简历、投递和面试串成一套连续流程。</p>
+            <p class="sidebar-desc interviews-sidebar-desc">从首页总览出发，逐步把简历、投递和面试串成一套连续流程。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
 
@@ -227,7 +227,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import brandMark from '../assets/brand-mark.svg'
+import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
 import { useAuthStore } from '../stores/auth'
 import { useResumeStore } from '../stores/resume'

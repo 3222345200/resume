@@ -194,7 +194,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import brandMark from '../assets/brand-mark.svg'
+import brandMark from '../assets/logo.png'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()

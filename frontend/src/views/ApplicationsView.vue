@@ -34,51 +34,72 @@
 
       <aside class="applications-sidebar">
         <div class="applications-sidebar-shell interviews-sidebar-shell">
-          <div class="sidebar-brand interviews-sidebar-brand applications-sidebar-brand">
-            <div class="brand-row interviews-brand-row applications-brand-row">
-            <img :src="brandMark" alt="OfferPilot 标志" />
-            <div class="brand-copy-block applications-brand-copy">
-              <p class="eyebrow">职跃 OfferPilot</p>
-              <h1>求职工作台</h1>
+          <div class="sidebar-brand interviews-sidebar-brand">
+            <div class="brand-row interviews-brand-row">
+              <div class="brand-copy-block interviews-brand-copy">
+                <p class="eyebrow">职跃 OfferPilot</p>
+                <h1>求职工作台</h1>
+              </div>
+              <button
+                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
+                type="button"
+                aria-label="收起求职工作台侧栏"
+                @click="leftSidebarCollapsed = true"
+              >&lt;</button>
             </div>
-            <button class="desktop-sidebar-toggle applications-sidebar-desktop-toggle" type="button" @click="leftSidebarCollapsed = true">&lt;</button>
+            <p class="sidebar-desc interviews-sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
+            <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
-          <p class="sidebar-desc applications-sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
-          <p class="sidebar-user applications-sidebar-user">已登录：{{ authStore.user?.username || 'wangmumu' }}</p>
 
-          <nav class="applications-nav">
-            <RouterLink
-              v-for="item in navItems"
-              :key="item.to"
-              class="applications-nav-link"
-              :class="{ 'is-active': item.to === '/applications' }"
-              :to="item.to"
-            >
-              <span>{{ item.label }}</span>
-              <small>{{ item.hint }}</small>
-            </RouterLink>
-          </nav>
-        </div>
+          <section class="interviews-card interviews-card-soft applications-sidebar-panel">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Workspace</p>
+                <h2>工作台切换</h2>
+              </div>
+            </div>
 
-          <div class="applications-sidebar-section">
-          <div class="applications-sidebar-title">快捷视图</div>
-          <button
-            v-for="view in quickViews"
-            :key="view.id"
-            class="applications-shortcut"
-            :class="{ 'is-active': activeQuickView === view.id }"
-            type="button"
-            @click="activeQuickView = view.id"
-          >
-            <span>{{ view.label }}</span>
-            <strong>{{ quickCount(view.id) }}</strong>
-          </button>
+            <nav class="applications-nav">
+              <RouterLink
+                v-for="item in navItems"
+                :key="item.to"
+                class="applications-nav-link"
+                :class="{ 'is-active': item.to === '/applications' }"
+                :to="item.to"
+              >
+                <span>{{ item.label }}</span>
+                <small>{{ item.hint }}</small>
+              </RouterLink>
+            </nav>
+          </section>
 
-          <div class="applications-side-actions">
-            <RouterLink class="ghost-button" to="/dashboard">返回工作台</RouterLink>
-            <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
-          </div>
-          </div>
+          <section class="interviews-card interviews-card-soft applications-sidebar-panel">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Quick Views</p>
+                <h2>快捷视图</h2>
+              </div>
+            </div>
+
+            <div class="applications-sidebar-section">
+              <button
+                v-for="view in quickViews"
+                :key="view.id"
+                class="applications-shortcut"
+                :class="{ 'is-active': activeQuickView === view.id }"
+                type="button"
+                @click="activeQuickView = view.id"
+              >
+                <span>{{ view.label }}</span>
+                <strong>{{ quickCount(view.id) }}</strong>
+              </button>
+            </div>
+
+            <div class="applications-side-actions">
+              <RouterLink class="ghost-button" to="/dashboard">返回工作台</RouterLink>
+              <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
+            </div>
+          </section>
         </div>
       </aside>
 
@@ -426,7 +447,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import brandMark from '../assets/brand-mark.svg'
+import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import CustomSelect from '../components/CustomSelect.vue'
