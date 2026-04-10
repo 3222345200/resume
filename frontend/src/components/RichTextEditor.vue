@@ -10,6 +10,11 @@
       <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('blockquote')">“</button>
       <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('removeFormat')">Tx</button>
       <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('p')">正文</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h1')">H1</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h2')">H2</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h3')">H3</button>
+      <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('undo')">撤销</button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('redo')">重做</button>
       <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
@@ -56,6 +61,10 @@ const props = defineProps({
     type: String,
     default: 'top',
   },
+  enableSectionFolding: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -65,6 +74,7 @@ const savedRange = ref(null)
 const isComposing = ref(false)
 const isApplyingCommand = ref(false)
 const lastHtml = ref('')
+const foldedHeadingState = ref({})
 
 const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A', 'H1', 'H2', 'H3', 'BLOCKQUOTE'])
 
@@ -111,6 +121,10 @@ function sanitizeNode(node) {
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) {
+    return document.createDocumentFragment()
+  }
+
+  if (node.getAttribute?.('data-editor-ui') === 'true') {
     return document.createDocumentFragment()
   }
 
@@ -203,6 +217,85 @@ function restoreSelection() {
   savedRange.value = fallbackRange.cloneRange()
 }
 
+function cleanupHeadingUi(editor) {
+  Array.from(editor.querySelectorAll('[data-editor-ui="true"]')).forEach((node) => node.remove())
+  Array.from(editor.querySelectorAll('.rich-fold-hidden')).forEach((node) => node.classList.remove('rich-fold-hidden'))
+  Array.from(editor.querySelectorAll('.rich-fold-heading')).forEach((node) => node.classList.remove('rich-fold-heading', 'is-folded'))
+  Array.from(editor.querySelectorAll('[data-heading-key]')).forEach((node) => {
+    node.removeAttribute('data-heading-key')
+    node.removeAttribute('data-foldable-heading')
+  })
+}
+
+function getFoldableSectionNodes(heading) {
+  const nodes = []
+  const currentLevel = Number(heading.tagName.slice(1))
+  let pointer = heading.nextElementSibling
+
+  while (pointer) {
+    if (/^H[1-3]$/.test(pointer.tagName) && Number(pointer.tagName.slice(1)) <= currentLevel) {
+      break
+    }
+    nodes.push(pointer)
+    pointer = pointer.nextElementSibling
+  }
+
+  return nodes
+}
+
+function decorateFoldableSections() {
+  const editor = editorRef.value
+  if (!editor) return
+
+  cleanupHeadingUi(editor)
+
+  if (!props.enableSectionFolding) {
+    return
+  }
+
+  const headings = Array.from(editor.querySelectorAll('h1, h2, h3'))
+  const nextFoldState = {}
+
+  headings.forEach((heading, index) => {
+    const text = heading.textContent?.replace(/\s+/g, ' ').trim() || `heading-${index + 1}`
+    const key = `${heading.tagName.toLowerCase()}-${index}-${text}`
+    const sectionNodes = getFoldableSectionNodes(heading)
+    const isCollapsed = Boolean(foldedHeadingState.value[key])
+    heading.classList.add('rich-fold-heading')
+
+    if (sectionNodes.length) {
+      heading.setAttribute('data-heading-key', key)
+      heading.setAttribute('data-foldable-heading', 'true')
+      if (isCollapsed) {
+        heading.classList.add('is-folded')
+        sectionNodes.forEach((node) => node.classList.add('rich-fold-hidden'))
+      }
+
+      const toggle = document.createElement('button')
+      toggle.type = 'button'
+      toggle.className = 'rich-heading-toggle'
+      toggle.setAttribute('data-editor-ui', 'true')
+      toggle.setAttribute('data-heading-key', key)
+      toggle.setAttribute('contenteditable', 'false')
+      toggle.setAttribute('tabindex', '-1')
+      toggle.setAttribute('aria-label', isCollapsed ? '展开此标题内容' : '收起此标题内容')
+      heading.prepend(toggle)
+    } else {
+      const placeholder = document.createElement('span')
+      placeholder.className = 'rich-heading-toggle is-placeholder'
+      placeholder.setAttribute('data-editor-ui', 'true')
+      placeholder.setAttribute('aria-hidden', 'true')
+      heading.prepend(placeholder)
+    }
+
+    if (isCollapsed) {
+      nextFoldState[key] = true
+    }
+  })
+
+  foldedHeadingState.value = nextFoldState
+}
+
 function renderValueToDom(value) {
   const editor = editorRef.value
   if (!editor) {
@@ -214,6 +307,7 @@ function renderValueToDom(value) {
   }
   lastHtml.value = nextHtml
   nextTick(() => {
+    decorateFoldableSections()
     captureSelection()
   })
 }
@@ -230,11 +324,17 @@ function handleEditorInput() {
   }
   captureSelection()
   emitCurrentValue()
+  nextTick(() => {
+    decorateFoldableSections()
+  })
 }
 
 function handleEditorBlur() {
   captureSelection()
   emitCurrentValue()
+  nextTick(() => {
+    decorateFoldableSections()
+  })
 }
 
 async function execCommand(command, value = null) {
@@ -281,6 +381,37 @@ function handleSelectionChange() {
   }
 }
 
+function handleEditorClick(event) {
+  const toggle = event.target.closest?.('.rich-heading-toggle')
+  const heading = event.target.closest?.('[data-foldable-heading="true"]')
+  const trigger = toggle || heading
+
+  if (!trigger || !editorRef.value?.contains(trigger)) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+
+  const key = trigger.getAttribute('data-heading-key')
+  if (!key) return
+
+  foldedHeadingState.value = {
+    ...foldedHeadingState.value,
+    [key]: !foldedHeadingState.value[key],
+  }
+
+  const selection = window.getSelection()
+  if (selection) {
+    selection.removeAllRanges()
+  }
+
+  nextTick(() => {
+    decorateFoldableSections()
+    captureSelection()
+  })
+}
+
 watch(
   () => props.modelValue,
   (value) => {
@@ -298,10 +429,18 @@ watch(
 onMounted(() => {
   renderValueToDom(props.modelValue)
   document.addEventListener('selectionchange', handleSelectionChange)
+  editorRef.value?.addEventListener('click', handleEditorClick)
 })
 
 onUnmounted(() => {
   document.removeEventListener('selectionchange', handleSelectionChange)
+  editorRef.value?.removeEventListener('click', handleEditorClick)
+})
+
+defineExpose({
+  getSurfaceElement() {
+    return editorRef.value
+  },
 })
 </script>
 

@@ -1,28 +1,36 @@
 <template>
-  <main class="interviews-page">
+  <main class="interviews-page interviews-page-modern">
     <section class="interviews-shell">
-      <aside class="interviews-sidebar">
-        <div class="interviews-card">
-          <div class="brand-badge interviews-brand">
-            <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
-            <div>
-              <strong>OfferPilot</strong>
-              <p>面试记录工作台</p>
-            </div>
-          </div>
-          <nav class="interviews-nav">
-            <RouterLink v-for="item in navItems" :key="item.to" class="interviews-nav-link" :to="item.to">{{ item.label }}</RouterLink>
-          </nav>
+      <aside class="interviews-primary-nav">
+        <div class="interviews-primary-brand" title="OfferPilot">
+          <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
         </div>
 
-        <div class="interviews-card">
-          <div class="interviews-head">
+        <nav class="interviews-primary-links" aria-label="主导航">
+          <RouterLink
+            v-for="item in primaryNavItems"
+            :key="item.to"
+            class="interviews-primary-link"
+            :class="{ 'is-active': item.to === '/interviews' }"
+            :to="item.to"
+            :title="item.label"
+          >
+            <span class="interviews-primary-icon" v-html="item.icon"></span>
+            <span class="sr-only">{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+      </aside>
+
+      <aside class="interviews-sidebar">
+        <section class="interviews-card interviews-card-soft">
+          <div class="interviews-card-head">
             <div>
               <p class="eyebrow">Quick Views</p>
               <h2>快捷视图</h2>
             </div>
             <button class="primary-button" type="button" @click="openCreateDialog">新建</button>
           </div>
+
           <div class="interviews-quick-grid">
             <button
               v-for="view in quickViews"
@@ -36,27 +44,74 @@
               <strong>{{ quickCount(view.id) }}</strong>
             </button>
           </div>
-        </div>
+        </section>
 
-        <div class="interviews-card interviews-list-panel">
-          <div class="interviews-head">
-            <h2>面试记录</h2>
-            <span>{{ filteredInterviews.length }} 条</span>
+        <section class="interviews-card interviews-card-soft interviews-trend-card">
+          <div class="interviews-card-head">
+            <div>
+              <p class="eyebrow">Snapshot</p>
+              <h2>近期面试卡片</h2>
+            </div>
+            <span class="interviews-mini-pill">{{ stats.total_count }} 场</span>
           </div>
+
+          <div class="interviews-trend-metrics">
+            <div>
+              <span>本周面试</span>
+              <strong>{{ stats.this_week_count }}</strong>
+            </div>
+            <div>
+              <span>待复盘</span>
+              <strong>{{ stats.pending_review_count }}</strong>
+            </div>
+            <div>
+              <span>即将开始</span>
+              <strong>{{ stats.upcoming_count }}</strong>
+            </div>
+          </div>
+
+          <div class="interviews-trend-chart">
+            <svg viewBox="0 0 220 84" aria-hidden="true">
+              <defs>
+                <linearGradient id="interviewTrendFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(31,122,114,0.22)" />
+                  <stop offset="100%" stop-color="rgba(31,122,114,0.02)" />
+                </linearGradient>
+              </defs>
+              <path class="interviews-trend-grid-line" d="M0 70 H220" />
+              <path class="interviews-trend-area" :d="trendAreaPath" />
+              <polyline class="interviews-trend-line" :points="trendPoints" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="interviews-card interviews-card-soft interviews-list-panel">
+          <div class="interviews-card-head">
+            <div>
+              <p class="eyebrow">Quick Views</p>
+              <h2>近期面试卡片</h2>
+            </div>
+            <span class="interviews-mini-pill">{{ filteredInterviews.length }} 条</span>
+          </div>
+
           <label class="interviews-search">
             <input v-model="filters.q" type="text" placeholder="公司 / 岗位 / 轮次" @keyup.enter="loadInterviews()" />
           </label>
+
           <div class="interviews-filter-grid">
             <CustomSelect v-model="filters.result" :options="resultFilterOptions" placeholder="全部结果" />
             <CustomSelect v-model="filters.interview_type" :options="typeFilterOptions" placeholder="全部形式" />
             <CustomSelect v-model="filters.reviewed" :options="reviewFilterOptions" placeholder="全部复盘" />
             <CustomSelect v-model="filters.application_id" :options="applicationFilterOptions" placeholder="全部投递" />
           </div>
+
           <div class="interviews-actions">
             <button class="ghost-button" type="button" @click="resetFilters">重置</button>
             <button class="ghost-button" type="button" @click="loadInterviews()">筛选</button>
           </div>
+
           <p v-if="message" class="interviews-message">{{ message }}</p>
+
           <div class="interviews-list">
             <button
               v-for="item in filteredInterviews"
@@ -71,97 +126,227 @@
                 <span class="interviews-result-badge" :class="`is-${item.result}`">{{ resultLabel(item.result) }}</span>
               </div>
               <p>{{ item.job_title }}</p>
-              <small>{{ item.round_name }} · {{ typeLabel(item.interview_type) }} · {{ formatDateTime(item.scheduled_at) }}</small>
+              <small>{{ item.round_name || `第 ${item.round_index || 1} 轮` }} · {{ typeLabel(item.interview_type) }} · {{ formatDateTime(item.scheduled_at) }}</small>
             </button>
+
             <div v-if="!loadingList && !filteredInterviews.length" class="interviews-empty">
               <h3>暂无面试记录</h3>
               <p>可以直接新建，或者从投递页带着 `application_id` 进入。</p>
             </div>
           </div>
-        </div>
+        </section>
       </aside>
 
       <section class="interviews-main">
-        <div class="interviews-editor-stage">
-          <header class="interviews-main-header interviews-main-header-compact">
-            <div class="interviews-workspace-title">
-              <h1>面试记录工作台</h1>
-              <p>把一次面试当成一篇持续编辑的文档来记录。</p>
-            </div>
-            <div class="interviews-header-mini-stats">
-              <span>全部 {{ stats.total_count }}</span>
-              <span>待复盘 {{ stats.pending_review_count }}</span>
-            </div>
-          </header>
+        <div v-if="detailDraft" class="interviews-workspace" :class="{ 'is-outline-collapsed': isOutlinePanelCollapsed }">
+          <aside class="interviews-outline-panel" :class="{ 'is-collapsed': isOutlinePanelCollapsed }">
+            <section class="interviews-outline-card">
+              <div class="interviews-outline-head">
+                <div v-if="!isOutlinePanelCollapsed">
+                  <p class="eyebrow">Outline</p>
+              <h2>文档目录</h2>
+              <p class="interviews-outline-copy">根据正文里的标题自动生成，点击即可快速定位。</p>
 
-          <section v-if="detailDraft" class="interviews-editor-canvas interviews-editor-canvas-doc">
-            <header class="interviews-doc-shell-head">
-              <div class="interviews-doc-shell-title">INTERVIEW DOC</div>
-              <div class="interviews-doc-toolbar">
-                <button class="ghost-button interviews-toolbar-btn" type="button" @click="openEditDialog">编辑基础信息</button>
-                <button class="primary-button" type="button" :disabled="savingDetail" @click="saveInterview">
-                  {{ savingDetail ? '保存中...' : '保存文档' }}
+                </div>
+                <button
+                  class="interviews-outline-panel-toggle"
+                  type="button"
+                  :aria-expanded="String(!isOutlinePanelCollapsed)"
+                  @click="toggleOutlinePanel"
+                >
+                  <span aria-hidden="true">{{ isOutlinePanelCollapsed ? '›' : '‹' }}</span>
+                  <span class="sr-only">{{ isOutlinePanelCollapsed ? '展开目录' : '收起目录' }}</span>
                 </button>
               </div>
-            </header>
 
-            <header class="interviews-doc-header interviews-doc-header-editor interviews-doc-header-freeform">
-              <div class="interviews-doc-heading">
-                <h2>{{ documentTitle }}</h2>
-                <p class="interviews-doc-subtitle">
-                  时间：{{ formatDateTime(detailDraft.scheduled_at) }} · 形式：{{ typeLabel(detailDraft.interview_type) }} · 状态：{{ resultLabel(detailDraft.result) }}
-                </p>
+              <div v-if="!isOutlinePanelCollapsed" class="interviews-outline-list">
+                <div
+                  v-for="item in visibleOutlineItems"
+                  :key="item.id"
+                  class="interviews-outline-item"
+                  :class="`is-level-${item.level}`"
+                  @click="handleOutlineItemClick(item)"
+                  @keydown.enter.prevent="handleOutlineItemClick(item)"
+                  @keydown.space.prevent="handleOutlineItemClick(item)"
+                  role="button"
+                  tabindex="0"
+                >
+                  <span
+                    class="interviews-outline-indent"
+                    :style="{ width: `${Math.max(item.depth - 1, 0) * 10}px` }"
+                    aria-hidden="true"
+                  ></span>
+                  <button
+                    v-if="item.hasChildren"
+                    type="button"
+                    class="interviews-outline-caret"
+                    :class="{ 'is-collapsed': item.isCollapsed }"
+                    :aria-expanded="String(!item.isCollapsed)"
+                    @click.stop="toggleOutlineBranch(item.id)"
+                  >
+                    <span aria-hidden="true">⌄</span>
+                    <span class="sr-only">{{ item.isCollapsed ? '展开子标题' : '收起子标题' }}</span>
+                  </button>
+                  <span v-else class="interviews-outline-caret interviews-outline-caret-placeholder" aria-hidden="true"></span>
+                  <span class="interviews-outline-branch" aria-hidden="true">
+                    <span class="interviews-outline-node"></span>
+                  </span>
+                  <span class="interviews-outline-label">{{ item.text }}</span>
+                </div>
+                <p v-if="!outlineItems.length" class="interviews-muted">先在正文里插入 H1/H2/H3 标题，目录会自动显示在这里。</p>
               </div>
-            </header>
+            </section>
+          </aside>
 
-            <section class="interviews-freeform-stage">
-              <RichTextEditor
-                v-model="detailDraft.document_content"
-                class="interviews-doc-editor"
-                placeholder="点击或按 '/' 开始输入面试记录..."
-              />
+          <section class="interviews-editor-panel">
+            <section class="interviews-editor-canvas interviews-editor-canvas-doc">
+              <header class="interviews-doc-shell-head">
+                <div class="interviews-doc-shell-title">INTERVIEW DOC</div>
+                <div class="interviews-doc-toolbar">
+                  <span class="interviews-doc-save-state" :class="`is-${autosaveState}`">{{ autosaveText }}</span>
+                  <button class="primary-button" type="button" :disabled="savingDetail" @click="saveInterview">
+                    {{ savingDetail ? '保存中...' : '保存文档' }}
+                  </button>
+                </div>
+              </header>
+
+              <header class="interviews-doc-header interviews-doc-header-editor interviews-doc-header-freeform">
+                <div class="interviews-doc-heading">
+                  <p class="interviews-doc-kicker">面试记录工作台</p>
+                  <h2>{{ documentTitle }}</h2>
+                  <p class="interviews-doc-subtitle">
+                    时间：{{ formatDateTime(detailDraft.scheduled_at) }} · 形式：{{ typeLabel(detailDraft.interview_type) }} · 状态：{{ resultLabel(detailDraft.result) }}
+                  </p>
+                </div>
+              </header>
+
+              <section class="interviews-freeform-stage">
+                <RichTextEditor
+                  ref="editorRef"
+                  v-model="detailDraft.document_content"
+                  class="interviews-doc-editor"
+                  :enable-section-folding="true"
+                  placeholder="点击开始记录面试过程、问题、复盘和后续行动..."
+                />
+              </section>
             </section>
           </section>
-
-          <section v-else class="interviews-editor-canvas interviews-empty-state interviews-editor-canvas-doc">
-            <h2>选择一场面试开始记录</h2>
-            <p>中间区域会以连续文档方式承载准备、过程、复盘和后续行动。</p>
-          </section>
         </div>
+
+        <section v-else class="interviews-editor-canvas interviews-empty-state interviews-editor-canvas-doc">
+          <h2>选择一场面试开始记录</h2>
+          <p>左侧是主导航和面试卡片，中间是目录与正文编辑区，右侧则是基础信息编辑面板。</p>
+        </section>
       </section>
 
       <aside class="interviews-rail">
-        <section class="interviews-card">
-          <p class="eyebrow">Context</p>
-          <h2>关联投递信息</h2>
-          <template v-if="detailDraft">
+        <template v-if="detailDraft">
+          <section class="interviews-card interviews-card-plain">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Context &amp; Info</p>
+                <h2>关联投递信息</h2>
+              </div>
+            </div>
+
             <dl class="interviews-summary">
               <div><dt>公司</dt><dd>{{ detailDraft.company_name }}</dd></div>
               <div><dt>岗位</dt><dd>{{ detailDraft.job_title }}</dd></div>
               <div><dt>状态</dt><dd>{{ detailDraft.application_status }}</dd></div>
               <div><dt>简历</dt><dd>{{ detailDraft.resume_title || '未关联' }}</dd></div>
             </dl>
-            <RouterLink class="ghost-button" :to="`/applications?application_id=${detailDraft.application_id}`">查看投递详情</RouterLink>
-          </template>
-          <p v-else class="interviews-muted">选中面试后，这里展示上下文摘要。</p>
-        </section>
+          </section>
 
-        <section class="interviews-card">
-          <p class="eyebrow">Actions</p>
-          <h2>快捷操作</h2>
-          <div class="interviews-rail-actions">
-            <button class="ghost-button" type="button" :disabled="!detailDraft" @click="insertInterviewInfoBlock">插入面试信息</button>
-            <button class="ghost-button" type="button" :disabled="!detailDraft" @click="insertQuestionTemplate">添加问题块</button>
-            <button class="ghost-button" type="button" :disabled="!detailDraft" @click="insertReviewTemplate">插入复盘模板</button>
-            <button class="ghost-button" type="button" :disabled="!detailDraft" @click="insertTodoTemplate">插入待办</button>
-            <button class="primary-button" type="button" :disabled="!detailDraft || savingDetail" @click="saveInterview">保存文档</button>
+          <section class="interviews-card interviews-card-plain">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Editor</p>
+                <h2>基础信息编辑</h2>
+              </div>
+            </div>
+
+            <div class="interviews-rail-form">
+              <label>
+                <span>轮次名称</span>
+                <input v-model="detailDraft.round_name" type="text" placeholder="例如：技术一面 / HR 面" />
+              </label>
+
+              <label>
+                <span>轮次序号</span>
+                <input v-model.number="detailDraft.round_index" type="number" min="1" max="99" />
+              </label>
+
+              <label>
+                <span>预约时间</span>
+                <DateTimePicker v-model="detailDraft.scheduled_at" type="datetime-local" placeholder="日 / 时 / 分" />
+              </label>
+
+              <label>
+                <span>面试形式</span>
+                <CustomSelect v-model="detailDraft.interview_type" :options="typeOptions" placeholder="选择时间" />
+              </label>
+
+              <label>
+                <span>面试状态</span>
+                <CustomSelect v-model="detailDraft.result" :options="resultOptions" placeholder="选择状态" />
+              </label>
+
+              <label>
+                <span>面试时长（分钟）</span>
+                <input v-model.number="detailDraft.duration_minutes" type="number" min="0" max="720" />
+              </label>
+
+              <label>
+                <span>面试官</span>
+                <input v-model="detailDraft.interviewer_name" type="text" placeholder="请输入面试官姓名" />
+              </label>
+
+              <label>
+                <span>面试官角色</span>
+                <input v-model="detailDraft.interviewer_role" type="text" placeholder="例如：技术负责人" />
+              </label>
+
+              <label class="full-row">
+                <span>准备重点</span>
+                <textarea v-model="detailDraft.preparation_note" rows="4" placeholder="记录面试前重点准备内容"></textarea>
+              </label>
+
+              <label class="full-row">
+                <span>后续行动</span>
+                <textarea v-model="detailDraft.follow_up_action" rows="4" placeholder="记录感谢信、HR 跟进、下一轮准备等"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="interviews-card interviews-card-plain">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Actions</p>
+                <h2>结构模板</h2>
+              </div>
+            </div>
+
+            <div class="interviews-rail-actions">
+              <button class="ghost-button" type="button" @click="insertInterviewInfoBlock">插入面试信息</button>
+              <button class="ghost-button" type="button" @click="insertQuestionTemplate">添加问题块</button>
+              <button class="ghost-button" type="button" @click="insertReviewTemplate">插入复盘模板</button>
+              <button class="ghost-button" type="button" @click="insertTodoTemplate">插入待办</button>
+              <button class="primary-button" type="button" :disabled="savingDetail" @click="saveInterview">保存文档</button>
+            </div>
+          </section>
+        </template>
+
+        <section class="interviews-card interviews-card-plain">
+          <div class="interviews-card-head">
+            <div>
+              <p class="eyebrow">Workspace</p>
+              <h2>辅助入口</h2>
+            </div>
           </div>
-        </section>
 
-        <section class="interviews-card">
-          <p class="eyebrow">Workspace</p>
-          <h2>辅助入口</h2>
           <div class="interviews-rail-actions">
+            <button class="ghost-button" type="button" @click="openCreateDialog">新建面试</button>
+            <RouterLink class="ghost-button" :to="detailDraft ? `/applications?application_id=${detailDraft.application_id}` : '/applications'">打开投递详情</RouterLink>
             <RouterLink class="ghost-button" to="/dashboard">返回工作台</RouterLink>
             <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
           </div>
@@ -171,13 +356,14 @@
 
     <div v-if="dialogOpen" class="interviews-dialog-mask" @click.self="closeDialog">
       <div class="interviews-dialog">
-        <div class="interviews-head">
+        <div class="interviews-card-head">
           <div>
             <p class="eyebrow">{{ editingId ? 'Edit Interview' : 'Create Interview' }}</p>
             <h2>{{ editingId ? '编辑面试信息' : '新建面试记录' }}</h2>
           </div>
-          <button class="interviews-dialog-close" type="button" @click="closeDialog">×</button>
+          <button class="interviews-dialog-close" type="button" @click="closeDialog">脳</button>
         </div>
+
         <div class="interviews-dialog-grid">
           <CustomSelect v-model="form.application_id" :options="applicationFormOptions" placeholder="请选择关联投递" />
           <CustomSelect v-model="form.resume_id" :options="resumeFormOptions" placeholder="自动沿用投递简历" />
@@ -191,11 +377,13 @@
           <input v-model="form.interviewer_role" type="text" placeholder="面试官角色" />
           <textarea v-model="form.preparation_note" class="full-row" rows="4" placeholder="准备重点"></textarea>
         </div>
+
         <p v-if="dialogMessage" class="interviews-message">{{ dialogMessage }}</p>
+
         <div class="interviews-actions">
           <button class="ghost-button" type="button" @click="closeDialog">取消</button>
           <button class="primary-button" type="button" :disabled="savingDialog" @click="saveDialog">
-            {{ savingDialog ? '保存中...' : editingId ? '保存修改' : '创建面试' }}
+            {{ savingDialog ? '保存中...' : '创建面试' }}
           </button>
         </div>
       </div>
@@ -204,7 +392,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import brandMark from '../assets/brand-mark.svg'
 import { requestJson } from '../api/request'
@@ -216,12 +404,29 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const editorRef = ref(null)
 
-const navItems = [
-  { to: '/dashboard', label: '工作台' },
-  { to: '/editor', label: '简历管理' },
-  { to: '/applications', label: '投递管理' },
-  { to: '/interviews', label: '面试记录' },
+const primaryNavItems = [
+  {
+    to: '/dashboard',
+    label: '工作台',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4z"/><path d="M13 4h7v5h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 13h7v7H4z"/></svg>`,
+  },
+  {
+    to: '/editor',
+    label: '简历管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>`,
+  },
+  {
+    to: '/applications',
+    label: '投递管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
+  },
+  {
+    to: '/interviews',
+    label: '面试记录',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>`,
+  },
 ]
 
 const quickViews = [
@@ -258,9 +463,21 @@ const loadingList = ref(false)
 const savingDetail = ref(false)
 const savingDialog = ref(false)
 const dialogOpen = ref(false)
-const editingId = ref('')
 const message = ref('')
 const dialogMessage = ref('')
+const isOutlinePanelCollapsed = ref(false)
+const collapsedOutlineIds = ref({})
+const autosaveState = ref('saved')
+const autosaveError = ref('')
+const lastSavedSnapshot = ref('')
+const isHydratingDraft = ref(false)
+
+let autosaveTimer = null
+let activeSavePromise = null
+let queuedAutosave = false
+const AUTOSAVE_DELAY = 1500
+
+const QUICK_VIEW_IDS = new Set(['all', 'week', 'pending', 'passed', 'rejected'])
 
 const filters = reactive({ q: '', result: '', interview_type: '', reviewed: '', application_id: '' })
 const form = reactive({
@@ -284,10 +501,137 @@ const reviewFilterOptions = computed(() => [{ label: '全部复盘', value: '' }
 const applicationFilterOptions = computed(() => [{ label: '全部投递', value: '' }, ...applications.value.map((item) => ({ label: `${item.company_name} / ${item.job_title}`, value: item.id }))])
 const applicationFormOptions = computed(() => applications.value.map((item) => ({ label: `${item.company_name} / ${item.job_title}`, value: item.id })))
 const resumeFormOptions = computed(() => [{ label: '自动沿用投递简历', value: '' }, ...resumes.value.map((item) => ({ label: item.title, value: item.id }))])
+
 const documentTitle = computed(() => {
   if (!detailDraft.value) return ''
-  return `${detailDraft.value.company_name} · ${detailDraft.value.job_title} · ${detailDraft.value.round_name}`
+  return `${detailDraft.value.company_name} · ${detailDraft.value.job_title} · ${detailDraft.value.round_name || `第 ${detailDraft.value.round_index || 1} 轮`}`
 })
+
+const autosaveText = computed(() => {
+  if (!detailDraft.value) return ''
+  if (autosaveState.value === 'saving') return '自动保存中...'
+  if (autosaveState.value === 'dirty') return '编辑中'
+  if (autosaveState.value === 'error') return autosaveError.value || '自动保存失败'
+  return '已保存'
+})
+
+const outlineItems = computed(() => {
+  const html = String(detailDraft.value?.document_content || '').trim()
+  if (!html) {
+    return []
+  }
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html')
+  const nodes = Array.from(doc.body.querySelectorAll('h1, h2, h3'))
+
+  return nodes
+    .map((node, index) => ({
+      index,
+      domIndex: index,
+      level: Number(node.tagName.slice(1)),
+      text: node.textContent?.trim() || '未命名标题',
+    }))
+    .filter((item) => item.text)
+})
+
+const visibleOutlineItems = computed(() => {
+  const html = String(detailDraft.value?.document_content || '').trim()
+  if (!html) {
+    return []
+  }
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html')
+  const nodes = Array.from(doc.body.querySelectorAll('h1, h2, h3'))
+  const tree = []
+  const stack = []
+
+  nodes.forEach((node, index) => {
+    const item = {
+      id: `outline-${index}`,
+      domIndex: index,
+      level: Number(node.tagName.slice(1)),
+      depth: 1,
+      text: node.textContent?.trim() || `标题 ${index + 1}`,
+      children: [],
+    }
+
+    while (stack.length && stack[stack.length - 1].level >= item.level) {
+      stack.pop()
+    }
+
+    item.depth = stack.length + 1
+
+    if (stack.length) {
+      stack[stack.length - 1].children.push(item)
+    } else {
+      tree.push(item)
+    }
+
+    stack.push(item)
+  })
+
+  const items = []
+
+  function walk(branches) {
+    branches.forEach((branch) => {
+      const isCollapsed = Boolean(collapsedOutlineIds.value[branch.id])
+      items.push({
+        id: branch.id,
+        domIndex: branch.domIndex,
+        level: branch.level,
+        depth: branch.depth,
+        text: branch.text,
+        hasChildren: branch.children.length > 0,
+        isCollapsed,
+      })
+
+      if (!isCollapsed && branch.children.length) {
+        walk(branch.children)
+      }
+    })
+  }
+
+  walk(tree)
+  return items
+})
+
+const trendData = computed(() => {
+  const values = [
+    Math.max(stats.value.total_count - stats.value.completed_count, 0),
+    stats.value.this_week_count,
+    stats.value.upcoming_count,
+    stats.value.pending_review_count,
+    stats.value.completed_count,
+    stats.value.total_count,
+  ]
+  return values.map((value) => Math.max(value, 0))
+})
+
+const trendPoints = computed(() => {
+  const values = trendData.value
+  const maxValue = Math.max(...values, 1)
+  const width = 220
+  const height = 84
+  const xStep = width / Math.max(values.length - 1, 1)
+  return values
+    .map((value, index) => {
+      const x = index * xStep
+      const y = height - (value / maxValue) * 54 - 10
+      return `${x},${y}`
+    })
+    .join(' ')
+})
+
+const trendAreaPath = computed(() => {
+  const points = trendPoints.value.split(' ').filter(Boolean)
+  if (!points.length) {
+    return ''
+  }
+  return `M${points[0]} L${points.slice(1).join(' L')} L220,84 L0,84 Z`
+})
+
 const resultLabel = (value) => resultOptions.find((item) => item.value === value)?.label || value
 const typeLabel = (value) => typeOptions.find((item) => item.value === value)?.label || value
 const formatDateTime = (value) => !value ? '待补充' : (Number.isNaN(new Date(value).getTime()) ? value : new Date(value).toLocaleString('zh-CN', { hour12: false }))
@@ -334,27 +678,60 @@ function queryString() {
 
 function buildDefaultDocument(detail) {
   const lines = [
-    `<p><strong>可问时间：</strong>${escapeHtml(formatDateTime(detail.scheduled_at))} · <strong>形式：</strong>${escapeHtml(typeLabel(detail.interview_type))} · <strong>结果：</strong>${escapeHtml(resultLabel(detail.result))}</p>`,
-    '<p><br></p>',
-    '<p><strong>1. 面试信息</strong></p>',
-    `<p>${escapeHtml(detail.preparation_note || '时间：\n面试官：\n准备状态：')}</p>`,
-    '<p><br></p>',
-    '<p><strong>2. 问题记录</strong></p>',
-    '<p>点击开始记录问题、回答、追问和自评。</p>',
-    '<p><br></p>',
-    '<p><strong>3. 自由笔记</strong></p>',
+    '<h2>面试信息</h2>',
+    `<p><strong>时间：</strong>${escapeHtml(formatDateTime(detail.scheduled_at))}</p>`,
+    `<p><strong>形式：</strong>${escapeHtml(typeLabel(detail.interview_type))}</p>`,
+    `<p><strong>结果：</strong>${escapeHtml(resultLabel(detail.result))}</p>`,
+    `<p><strong>准备状态：</strong>${escapeHtml(detail.preparation_note || '待补充')}</p>`,
+    '<h2>问题记录</h2>',
+    '<h3>问题 1</h3>',
+    '<p>记录问题、回答和追问。</p>',
+    '<h2>自由笔记</h2>',
     `<p>${escapeHtml(detail.free_note || '记录现场反馈、氛围和零散观察。')}</p>`,
-    '<p><br></p>',
-    '<p><strong>4. 复盘总结</strong></p>',
+    '<h2>复盘总结</h2>',
     `<p>${escapeHtml(detail.strength_note || '')}</p>`,
     `<p>${escapeHtml(detail.weakness_note || '')}</p>`,
     `<p>${escapeHtml(detail.missing_knowledge_note || '')}</p>`,
     `<p>${escapeHtml(detail.next_round_prep_note || '')}</p>`,
-    '<p><br></p>',
-    '<p><strong>5. 后续行动</strong></p>',
+    '<h2>后续行动</h2>',
     `<p>${escapeHtml(detail.follow_up_action || '发送感谢信\n跟进 HR\n整理下一轮准备')}</p>`,
   ]
   return lines.join('')
+}
+
+function getOutlineDomNodes() {
+  const surface = editorRef.value?.getSurfaceElement?.()
+  if (!surface) {
+    return []
+  }
+  return Array.from(surface.querySelectorAll('h1, h2, h3'))
+}
+
+function toggleOutlinePanel() {
+  isOutlinePanelCollapsed.value = !isOutlinePanelCollapsed.value
+}
+
+function toggleOutlineBranch(id) {
+  collapsedOutlineIds.value = {
+    ...collapsedOutlineIds.value,
+    [id]: !collapsedOutlineIds.value[id],
+  }
+}
+
+function handleOutlineItemClick(item) {
+  if (item?.hasChildren) {
+    toggleOutlineBranch(item.id)
+    return
+  }
+  scrollToOutline(item.domIndex)
+}
+
+function scrollToOutline(index) {
+  const target = getOutlineDomNodes()[index]
+  if (!target) {
+    return
+  }
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function loadStats() {
@@ -392,14 +769,23 @@ async function loadInterviews(preferredId = selectedId.value) {
 
 async function selectInterview(id) {
   if (!id) return
+  await flushAutosave()
+  clearAutosaveTimer()
   selectedId.value = id
   const detail = await requestJson(`/api/interviews/${id}`)
+  isHydratingDraft.value = true
   detailDraft.value = {
     ...detail,
     scheduled_at: detail.scheduled_at || '',
     follow_up_at: detail.follow_up_at || '',
     document_content: detail.document_content || buildDefaultDocument(detail),
   }
+  lastSavedSnapshot.value = serializeDraft(detailDraft.value)
+  autosaveState.value = 'saved'
+  autosaveError.value = ''
+  Promise.resolve().then(() => {
+    isHydratingDraft.value = false
+  })
 }
 
 function buildPayload(source) {
@@ -429,8 +815,52 @@ function buildPayload(source) {
   }
 }
 
+function serializeDraft(source) {
+  return JSON.stringify(buildPayload(source))
+}
+
+function syncInterviewListItem(source) {
+  if (!source?.id) return
+  interviews.value = interviews.value.map((item) => (
+    item.id === source.id
+      ? {
+          ...item,
+          round_name: source.round_name,
+          round_index: source.round_index,
+          scheduled_at: source.scheduled_at,
+          interview_type: source.interview_type,
+          result: source.result,
+          duration_minutes: source.duration_minutes,
+          interviewer_name: source.interviewer_name,
+        }
+      : item
+  ))
+}
+
+function clearAutosaveTimer() {
+  if (!autosaveTimer) return
+  window.clearTimeout(autosaveTimer)
+  autosaveTimer = null
+}
+
+function queueAutosave() {
+  if (!detailDraft.value) return
+  clearAutosaveTimer()
+  autosaveTimer = window.setTimeout(() => {
+    autosaveTimer = null
+    void saveInterview({ silent: true, refresh: false })
+  }, AUTOSAVE_DELAY)
+}
+
+async function flushAutosave() {
+  clearAutosaveTimer()
+  if (!detailDraft.value) return
+  const snapshot = serializeDraft(detailDraft.value)
+  if (snapshot === lastSavedSnapshot.value) return
+  await saveInterview({ silent: true, refresh: false })
+}
+
 function openCreateDialog() {
-  editingId.value = ''
   dialogMessage.value = ''
   Object.assign(form, {
     application_id: filters.application_id || (typeof route.query.application_id === 'string' ? route.query.application_id : '') || '',
@@ -448,30 +878,28 @@ function openCreateDialog() {
   dialogOpen.value = true
 }
 
-function openEditDialog() {
-  if (!detailDraft.value) return
-  editingId.value = detailDraft.value.id
-  dialogMessage.value = ''
-  Object.assign(form, {
-    application_id: detailDraft.value.application_id || '',
-    resume_id: detailDraft.value.resume_id || '',
-    round_name: detailDraft.value.round_name || '',
-    round_index: detailDraft.value.round_index || 1,
-    scheduled_at: detailDraft.value.scheduled_at || '',
-    interview_type: detailDraft.value.interview_type || 'online',
-    duration_minutes: detailDraft.value.duration_minutes || 60,
-    interviewer_name: detailDraft.value.interviewer_name || '',
-    interviewer_role: detailDraft.value.interviewer_role || '',
-    result: detailDraft.value.result || 'scheduled',
-    preparation_note: detailDraft.value.preparation_note || '',
+function applyRouteFilters() {
+  filters.application_id = typeof route.query.application_id === 'string' ? route.query.application_id : ''
+  const quick = typeof route.query.quick === 'string' ? route.query.quick : ''
+  activeQuickView.value = QUICK_VIEW_IDS.has(quick) ? quick : 'all'
+}
+
+async function maybeOpenCreateDialogFromRoute() {
+  if (route.query.create !== '1') {
+    return
+  }
+  openCreateDialog()
+  await router.replace({
+    query: {
+      ...route.query,
+      create: undefined,
+    },
   })
-  dialogOpen.value = true
 }
 
 function closeDialog() {
   dialogOpen.value = false
   dialogMessage.value = ''
-  editingId.value = ''
 }
 
 async function saveDialog() {
@@ -481,16 +909,9 @@ async function saveDialog() {
   }
   savingDialog.value = true
   try {
-    const path = editingId.value ? `/api/interviews/${editingId.value}` : '/api/interviews'
-    const method = editingId.value ? 'PUT' : 'POST'
-    const basePayload = buildPayload(editingId.value ? detailDraft.value : form)
-    const saved = await requestJson(path, {
-      method,
-      body: JSON.stringify({
-        ...basePayload,
-        ...buildPayload(form),
-        document_content: editingId.value ? detailDraft.value.document_content || '' : '',
-      }),
+    const saved = await requestJson('/api/interviews', {
+      method: 'POST',
+      body: JSON.stringify(buildPayload(form)),
     })
     closeDialog()
     await Promise.all([loadStats(), loadApplications(), loadInterviews(saved.id)])
@@ -501,17 +922,65 @@ async function saveDialog() {
   }
 }
 
-async function saveInterview() {
+async function saveInterview(options = {}) {
   if (!detailDraft.value) return
+  const { silent = false, refresh = true } = options
+  const snapshot = serializeDraft(detailDraft.value)
+
+  if (silent && snapshot === lastSavedSnapshot.value) {
+    autosaveState.value = 'saved'
+    return
+  }
+
+  if (activeSavePromise) {
+    if (silent) {
+      queuedAutosave = true
+      return activeSavePromise
+    }
+    await activeSavePromise
+  }
+
   savingDetail.value = true
-  message.value = ''
+  if (!silent) {
+    message.value = ''
+  }
+  autosaveState.value = 'saving'
+  autosaveError.value = ''
+
+  activeSavePromise = (async () => {
+    await requestJson(`/api/interviews/${detailDraft.value.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(buildPayload(detailDraft.value)),
+    })
+    lastSavedSnapshot.value = snapshot
+    const currentSnapshot = detailDraft.value ? serializeDraft(detailDraft.value) : snapshot
+    if (currentSnapshot !== snapshot) {
+      autosaveState.value = 'dirty'
+      queueAutosave()
+    } else {
+      autosaveState.value = 'saved'
+    }
+    syncInterviewListItem(detailDraft.value)
+    if (refresh) {
+      await Promise.all([loadStats(), loadApplications()])
+    }
+  })()
+
   try {
-    await requestJson(`/api/interviews/${detailDraft.value.id}`, { method: 'PUT', body: JSON.stringify(buildPayload(detailDraft.value)) })
-    await Promise.all([loadStats(), loadApplications(), loadInterviews(detailDraft.value.id)])
+    await activeSavePromise
   } catch (error) {
-    message.value = error.message || '保存失败'
+    autosaveState.value = 'error'
+    autosaveError.value = error.message || '自动保存失败'
+    if (!silent) {
+      message.value = error.message || '保存失败'
+    }
   } finally {
+    activeSavePromise = null
     savingDetail.value = false
+    if (queuedAutosave) {
+      queuedAutosave = false
+      queueAutosave()
+    }
   }
 }
 
@@ -524,17 +993,19 @@ function appendToDocument(html) {
 function insertInterviewInfoBlock() {
   if (!detailDraft.value) return
   appendToDocument([
-    '<p><strong>面试信息</strong></p>',
-    `<p>时间：${escapeHtml(formatDateTime(detailDraft.value.scheduled_at))}</p>`,
-    `<p>形式：${escapeHtml(typeLabel(detailDraft.value.interview_type))}</p>`,
-    `<p>面试官：${escapeHtml(detailDraft.value.interviewer_name || '待补充')}</p>`,
-    `<p>准备状态：${escapeHtml(detailDraft.value.preparation_note || '待补充')}</p>`,
+    '<h2>面试信息</h2>',
+    `<p><strong>时间：</strong>${escapeHtml(formatDateTime(detailDraft.value.scheduled_at))}</p>`,
+    `<p><strong>形式：</strong>${escapeHtml(typeLabel(detailDraft.value.interview_type))}</p>`,
+    `<p><strong>面试官：</strong>${escapeHtml(detailDraft.value.interviewer_name || '待补充')}</p>`,
+    `<p><strong>准备状态：</strong>${escapeHtml(detailDraft.value.preparation_note || '待补充')}</p>`,
   ].join(''))
 }
 
 function insertQuestionTemplate() {
+  if (!detailDraft.value) return
   appendToDocument([
-    '<p><strong>问题记录</strong></p>',
+    '<h2>问题记录</h2>',
+    '<h3>问题 1</h3>',
     '<p>问题内容：</p>',
     '<p>我的回答：</p>',
     '<p>面试官追问：</p>',
@@ -543,8 +1014,9 @@ function insertQuestionTemplate() {
 }
 
 function insertReviewTemplate() {
+  if (!detailDraft.value) return
   appendToDocument([
-    '<p><strong>复盘总结</strong></p>',
+    '<h2>复盘总结</h2>',
     '<ul>',
     '<li>答得好的地方：</li>',
     '<li>卡住的地方：</li>',
@@ -555,8 +1027,9 @@ function insertReviewTemplate() {
 }
 
 function insertTodoTemplate() {
+  if (!detailDraft.value) return
   appendToDocument([
-    '<p><strong>后续行动</strong></p>',
+    '<h2>后续行动</h2>',
     '<ul>',
     '<li>发送感谢信</li>',
     '<li>跟进 HR</li>',
@@ -580,9 +1053,73 @@ async function handleLogout() {
   await router.push('/login')
 }
 
+watch(
+  visibleOutlineItems,
+  (items) => {
+    const validIds = new Set(items.map((item) => item.id))
+    const nextState = Object.fromEntries(
+      Object.entries(collapsedOutlineIds.value).filter(([id, value]) => validIds.has(id) && value),
+    )
+    if (Object.keys(nextState).length !== Object.keys(collapsedOutlineIds.value).length) {
+      collapsedOutlineIds.value = nextState
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  detailDraft,
+  (draft) => {
+    if (!draft) {
+      clearAutosaveTimer()
+      autosaveState.value = 'saved'
+      autosaveError.value = ''
+      lastSavedSnapshot.value = ''
+      return
+    }
+    if (isHydratingDraft.value) {
+      return
+    }
+    const snapshot = serializeDraft(draft)
+    if (snapshot === lastSavedSnapshot.value) {
+      autosaveState.value = 'saved'
+      return
+    }
+    autosaveState.value = 'dirty'
+    autosaveError.value = ''
+    queueAutosave()
+  },
+  { deep: true },
+)
+
+watch(
+  () => [route.query.application_id, route.query.interview_id, route.query.quick, route.query.create],
+  async () => {
+    applyRouteFilters()
+    if (applications.value.length) {
+      await loadInterviews()
+    }
+    await maybeOpenCreateDialogFromRoute()
+  },
+)
+
+function handleBeforeUnload(event) {
+  if (!detailDraft.value) return
+  if (serializeDraft(detailDraft.value) === lastSavedSnapshot.value) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
 onMounted(async () => {
-  filters.application_id = typeof route.query.application_id === 'string' ? route.query.application_id : ''
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  applyRouteFilters()
   await Promise.all([loadStats(), loadApplications(), loadResumes()])
   await loadInterviews()
+  await maybeOpenCreateDialogFromRoute()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  clearAutosaveTimer()
 })
 </script>

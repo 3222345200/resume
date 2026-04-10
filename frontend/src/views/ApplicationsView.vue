@@ -314,7 +314,7 @@
             </button>
             <div v-if="detailSections.interview" class="applications-detail-row">
               <div><strong>{{ detail.interview_count }}</strong><p>当前已关联面试轮次</p></div>
-              <RouterLink class="ghost-button" :to="`/interviews?application_id=${detail.id}`">进入面试记录</RouterLink>
+              <RouterLink class="ghost-button" :to="`/interviews?application_id=${detail.id}&create=1`">进入面试记录</RouterLink>
             </div>
           </section>
         </template>
@@ -488,6 +488,8 @@ const detailSections = reactive({
   resume: true,
   interview: true,
 })
+
+const QUICK_VIEW_IDS = new Set(['all', 'todo', 'interviewing', 'offer', 'rejected', 'week'])
 
 const filters = reactive({ q: '', status: '', channel: '', city: '', dateFrom: '', dateTo: '', resumeId: '' })
 const form = reactive(emptyForm())
@@ -699,7 +701,8 @@ async function loadApplications(preferredId = selectedId.value) {
   try {
     const result = await requestJson(`/api/applications${queryString() ? `?${queryString()}` : ''}`)
     applications.value = result.items || []
-    const nextId = preferredId && applications.value.some((item) => item.id === preferredId) ? preferredId : applications.value[0]?.id || ''
+    const routeApplicationId = typeof route.query.application_id === 'string' ? route.query.application_id : ''
+    const nextId = [routeApplicationId, preferredId, applications.value[0]?.id].find((id) => id && applications.value.some((item) => item.id === id)) || ''
     if (nextId) await selectApplication(nextId)
     else { selectedId.value = ''; detail.value = null }
   } catch (error) {
@@ -828,24 +831,46 @@ function applyResumeFilterFromRoute() {
   filters.resumeId = resumeId
 }
 
+function applyQuickViewFromRoute() {
+  const quick = typeof route.query.quick === 'string' ? route.query.quick : ''
+  activeQuickView.value = QUICK_VIEW_IDS.has(quick) ? quick : 'all'
+}
+
+async function maybeOpenCreateDialogFromRoute() {
+  if (route.query.create !== '1') {
+    return
+  }
+  openCreateDialog()
+  await router.replace({
+    query: {
+      ...route.query,
+      create: undefined,
+    },
+  })
+}
+
 async function handleLogout() {
   authStore.logout()
   await router.push('/login')
 }
 
 watch(
-  () => route.query.resume_id,
+  () => [route.query.resume_id, route.query.application_id, route.query.quick, route.query.create],
   async () => {
     applyResumeFilterFromRoute()
+    applyQuickViewFromRoute()
     if (resumes.value.length) {
       await loadApplications()
     }
+    await maybeOpenCreateDialogFromRoute()
   },
 )
 
 onMounted(async () => {
   await Promise.all([loadResumes(), loadStats()])
   applyResumeFilterFromRoute()
+  applyQuickViewFromRoute()
   await loadApplications()
+  await maybeOpenCreateDialogFromRoute()
 })
 </script>
