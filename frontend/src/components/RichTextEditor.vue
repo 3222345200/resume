@@ -217,6 +217,107 @@ function restoreSelection() {
   savedRange.value = fallbackRange.cloneRange()
 }
 
+function getSelectionRange() {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) {
+    return null
+  }
+
+  const range = selection.getRangeAt(0)
+  return isSelectionInsideEditor(range) ? range : null
+}
+
+function getClosestBlockElement(node) {
+  const editor = editorRef.value
+  if (!editor || !node) {
+    return null
+  }
+
+  const startNode = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement
+  if (!startNode) {
+    return null
+  }
+
+  const block = startNode.closest?.('p, h1, h2, h3, blockquote')
+  return block && editor.contains(block) ? block : null
+}
+
+function getBlockElementFromRange(range) {
+  const editor = editorRef.value
+  if (!editor || !range) {
+    return null
+  }
+
+  const directBlock = getClosestBlockElement(range.startContainer) || getClosestBlockElement(range.commonAncestorContainer)
+  if (directBlock) {
+    return directBlock
+  }
+
+  if (range.startContainer.nodeType === Node.ELEMENT_NODE) {
+    const container = range.startContainer
+    const offset = Math.min(range.startOffset, container.childNodes.length)
+    const candidates = [
+      container.childNodes[offset],
+      container.childNodes[offset - 1],
+      container.childNodes[0],
+      container.childNodes[container.childNodes.length - 1],
+    ].filter(Boolean)
+
+    for (const candidate of candidates) {
+      const block = getClosestBlockElement(candidate)
+      if (block) {
+        return block
+      }
+    }
+  }
+
+  return null
+}
+
+function placeCaretAtEnd(element) {
+  if (!element) {
+    return
+  }
+
+  const selection = window.getSelection()
+  if (!selection) {
+    return
+  }
+
+  const range = document.createRange()
+  range.selectNodeContents(element)
+  range.collapse(false)
+  selection.removeAllRanges()
+  selection.addRange(range)
+  savedRange.value = range.cloneRange()
+}
+
+async function replaceCurrentBlock(tagName) {
+  restoreSelection()
+
+  const range = getSelectionRange()
+  const currentBlock = getBlockElementFromRange(range)
+  if (!currentBlock) {
+    return false
+  }
+
+  if (currentBlock.tagName.toLowerCase() === tagName) {
+    return true
+  }
+
+  const replacement = document.createElement(tagName)
+  while (currentBlock.firstChild) {
+    replacement.appendChild(currentBlock.firstChild)
+  }
+  currentBlock.replaceWith(replacement)
+  placeCaretAtEnd(replacement)
+  emitCurrentValue()
+  await nextTick()
+  decorateFoldableSections()
+  placeCaretAtEnd(replacement)
+  return true
+}
+
 function cleanupHeadingUi(editor) {
   Array.from(editor.querySelectorAll('[data-editor-ui="true"]')).forEach((node) => node.remove())
   Array.from(editor.querySelectorAll('.rich-fold-hidden')).forEach((node) => node.classList.remove('rich-fold-hidden'))
@@ -243,6 +344,13 @@ function getFoldableSectionNodes(heading) {
   return nodes
 }
 
+function getHeadingPlainText(heading) {
+  return String(heading?.textContent || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function decorateFoldableSections() {
   const editor = editorRef.value
   if (!editor) return
@@ -257,7 +365,11 @@ function decorateFoldableSections() {
   const nextFoldState = {}
 
   headings.forEach((heading, index) => {
-    const text = heading.textContent?.replace(/\s+/g, ' ').trim() || `heading-${index + 1}`
+    const text = getHeadingPlainText(heading)
+    if (!text) {
+      return
+    }
+
     const key = `${heading.tagName.toLowerCase()}-${index}-${text}`
     const sectionNodes = getFoldableSectionNodes(heading)
     const isCollapsed = Boolean(foldedHeadingState.value[key])
@@ -280,12 +392,6 @@ function decorateFoldableSections() {
       toggle.setAttribute('tabindex', '-1')
       toggle.setAttribute('aria-label', isCollapsed ? '展开此标题内容' : '收起此标题内容')
       heading.prepend(toggle)
-    } else {
-      const placeholder = document.createElement('span')
-      placeholder.className = 'rich-heading-toggle is-placeholder'
-      placeholder.setAttribute('data-editor-ui', 'true')
-      placeholder.setAttribute('aria-hidden', 'true')
-      heading.prepend(placeholder)
     }
 
     if (isCollapsed) {
@@ -348,7 +454,20 @@ async function execCommand(command, value = null) {
   isApplyingCommand.value = false
 }
 
-function applyBlock(tagName) {
+async function applyBlock(tagName) {
+  if (['p', 'h1', 'h2', 'h3', 'blockquote'].includes(tagName)) {
+    isApplyingCommand.value = true
+    try {
+      const replaced = await replaceCurrentBlock(tagName)
+      if (!replaced) {
+        await execCommand('formatBlock', tagName)
+      }
+    } finally {
+      isApplyingCommand.value = false
+    }
+    return
+  }
+
   execCommand('formatBlock', tagName)
 }
 
@@ -383,17 +502,15 @@ function handleSelectionChange() {
 
 function handleEditorClick(event) {
   const toggle = event.target.closest?.('.rich-heading-toggle')
-  const heading = event.target.closest?.('[data-foldable-heading="true"]')
-  const trigger = toggle || heading
 
-  if (!trigger || !editorRef.value?.contains(trigger)) {
+  if (!toggle || !editorRef.value?.contains(toggle) || toggle.classList.contains('is-placeholder')) {
     return
   }
 
   event.preventDefault()
   event.stopPropagation()
 
-  const key = trigger.getAttribute('data-heading-key')
+  const key = toggle.getAttribute('data-heading-key')
   if (!key) return
 
   foldedHeadingState.value = {

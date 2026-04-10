@@ -1,154 +1,208 @@
 <template>
-  <main class="dashboard-page">
-    <header class="dashboard-hero-card">
-      <div class="dashboard-brand-row">
-        <div class="brand-badge">
-          <img class="brand-logo" :src="brandMark" alt="OfferPilot 标志" />
-          <span class="brand-name">OfferPilot</span>
+  <main class="interviews-page interviews-page-modern dashboard-page dashboard-page-modern">
+    <section class="interviews-shell dashboard-shell" :class="{ 'sidebar-collapsed': leftSidebarCollapsed }">
+      <aside class="interviews-primary-nav">
+        <div class="interviews-primary-brand" title="OfferPilot">
+          <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
         </div>
 
-        <button class="ghost-button dashboard-logout" type="button" @click="handleLogout">
-          退出登录
-        </button>
-      </div>
+        <nav class="interviews-primary-links" aria-label="Primary navigation">
+          <RouterLink
+            v-for="item in primaryNavItems"
+            :key="item.to"
+            class="interviews-primary-link"
+            :class="{ 'is-active': item.to === '/dashboard' }"
+            :to="item.to"
+            :title="item.label"
+          >
+            <span class="interviews-primary-icon" v-html="item.icon"></span>
+            <span class="sr-only">{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+      </aside>
 
-      <div class="dashboard-hero-copy">
-        <div>
-          <p class="eyebrow">Workflow Desk</p>
-          <h1>{{ heroTitle }}</h1>
-          <p class="dashboard-subtitle">{{ heroSubtitle }}</p>
-        </div>
+      <button
+        v-if="leftSidebarCollapsed"
+        class="desktop-sidebar-reopen dashboard-desktop-sidebar-reopen"
+        type="button"
+        aria-label="展开求职工作台侧栏"
+        @click="leftSidebarCollapsed = false"
+      >
+        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
+        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
+      </button>
 
-        <div class="dashboard-hero-actions">
-          <button class="primary-button" type="button" @click="navigateTo({ path: '/applications', query: { create: '1' } })">
+      <aside class="interviews-sidebar dashboard-sidebar">
+        <div class="interviews-sidebar-shell dashboard-sidebar-shell">
+          <div class="sidebar-brand interviews-sidebar-brand dashboard-sidebar-brand">
+            <div class="brand-row interviews-brand-row dashboard-brand-row">
+              <div class="brand-copy-block interviews-brand-copy dashboard-brand-copy">
+                <p class="eyebrow">职跃 OfferPilot</p>
+                <h1>求职工作台</h1>
+              </div>
+              <button
+                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle dashboard-sidebar-desktop-toggle"
+                type="button"
+                aria-label="收起求职工作台侧栏"
+                @click="leftSidebarCollapsed = true"
+              >
+                &lt;
+              </button>
+            </div>
+            <p class="sidebar-desc interviews-sidebar-desc dashboard-sidebar-copy">从首页总览出发，逐步把简历、投递和面试串成一套连续流程。</p>
+            <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
+          </div>
+
+          <button class="primary-button interviews-sidebar-primary" type="button" @click="navigateTo({ path: '/applications', query: { create: '1' } })">
             新建投递
           </button>
-          <button class="ghost-button" type="button" @click="navigateTo('/editor')">
-            编辑简历
-          </button>
+
+          <section class="interviews-card interviews-card-soft dashboard-intro-card">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Quick Views</p>
+                <h2>快捷视图</h2>
+              </div>
+              <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
+            </div>
+
+            <div class="interviews-quick-grid dashboard-quick-grid">
+              <button
+                v-for="task in taskCards.slice(0, 4)"
+                :key="task.title"
+                class="interviews-quick-card"
+                :class="{ 'is-active': task.accent }"
+                type="button"
+                @click="navigateTo(task.to)"
+              >
+                <span>{{ task.title }}</span>
+                <strong>{{ task.cta }}</strong>
+              </button>
+            </div>
+          </section>
+
+          <section class="interviews-card interviews-card-soft">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Resumes</p>
+                <h2>最近简历</h2>
+              </div>
+              <span class="interviews-mini-pill">{{ resumeStore.resumes.length }} 份</span>
+            </div>
+
+            <div v-if="resumeStore.loading" class="dashboard-loading">正在加载简历...</div>
+            <div v-else-if="recentResumes.length" class="dashboard-sidebar-list">
+              <button
+                v-for="resume in recentResumes"
+                :key="resume.id"
+                class="dashboard-sidebar-item"
+                type="button"
+                @click="openResume(resume.id)"
+              >
+                <strong>{{ resume.title }}</strong>
+                <small>{{ formatDate(resume.updated_at) }}</small>
+              </button>
+            </div>
+            <p v-else class="muted-copy">还没有简历，建议先准备一份基础版本。</p>
+          </section>
         </div>
-      </div>
+      </aside>
 
-      <div class="dashboard-stat-grid">
-        <article class="dashboard-stat-card">
-          <span>简历版本</span>
-          <strong>{{ resumeStore.resumes.length }}</strong>
-          <small class="dashboard-stat-note">{{ latestResume ? `最近更新：${latestResume.title}` : '先创建一份基础简历' }}</small>
-        </article>
-        <article class="dashboard-stat-card">
-          <span>投递总数</span>
-          <strong>{{ applicationStats.total_count }}</strong>
-          <small class="dashboard-stat-note">本周新增 {{ applicationStats.new_this_week }}</small>
-        </article>
-        <article class="dashboard-stat-card">
-          <span>待跟进</span>
-          <strong>{{ applicationStats.todo_count }}</strong>
-          <small class="dashboard-stat-note">建议优先处理需要继续推进的岗位</small>
-        </article>
-        <article class="dashboard-stat-card">
-          <span>待复盘面试</span>
-          <strong>{{ interviewStats.pending_review_count }}</strong>
-          <small class="dashboard-stat-note">本周面试 {{ interviewStats.this_week_count }} 场</small>
-        </article>
-      </div>
-    </header>
+      <section class="interviews-main dashboard-main">
+        <section class="interviews-editor-canvas dashboard-hero-surface">
+          <header class="dashboard-hero-head">
+            <div>
+              <p class="interviews-doc-kicker">Workflow Desk</p>
+              <h1>{{ heroTitle }}</h1>
+              <p class="dashboard-hero-copy">{{ heroSubtitle }}</p>
+            </div>
 
-    <section class="dashboard-module-grid">
-      <article class="dashboard-module-card">
-        <p class="eyebrow">Next Steps</p>
-        <h2>建议先做这些事</h2>
-        <p class="muted-copy">首页不再只是统计看板，直接把下一步操作放到最前面，方便你继续推进。</p>
+            <div class="dashboard-hero-actions">
+              <button class="primary-button" type="button" @click="navigateTo({ path: '/applications', query: { create: '1' } })">
+                新建投递
+              </button>
+              <button class="ghost-button" type="button" @click="navigateTo('/editor')">
+                编辑简历
+              </button>
+            </div>
+          </header>
 
-        <div class="dashboard-task-grid">
-          <button
-            v-for="task in taskCards"
-            :key="task.title"
-            type="button"
-            class="dashboard-task-card"
-            :class="{ 'is-accent': task.accent }"
-            @click="navigateTo(task.to)"
-          >
-            <strong>{{ task.title }}</strong>
-            <p>{{ task.description }}</p>
-            <span>{{ task.cta }}</span>
-          </button>
-        </div>
-      </article>
+          <section class="dashboard-stat-grid dashboard-stat-grid-modern">
+            <article v-for="card in statCards" :key="card.label" class="dashboard-stat-card">
+              <span>{{ card.label }}</span>
+              <strong>{{ card.value }}</strong>
+              <small class="dashboard-stat-note">{{ card.hint }}</small>
+            </article>
+          </section>
 
-      <article class="dashboard-module-card">
-        <div class="dashboard-list-head">
-          <div>
-            <p class="eyebrow">Resumes</p>
-            <h2>最近的简历</h2>
+          <section class="dashboard-task-grid dashboard-task-grid-modern">
+            <button
+              v-for="task in taskCards"
+              :key="task.title"
+              type="button"
+              class="dashboard-task-card"
+              :class="{ 'is-accent': task.accent }"
+              @click="navigateTo(task.to)"
+            >
+              <strong>{{ task.title }}</strong>
+              <p>{{ task.description }}</p>
+              <span>{{ task.cta }}</span>
+            </button>
+          </section>
+        </section>
+      </section>
+
+      <aside class="interviews-rail dashboard-rail">
+        <section class="interviews-card interviews-card-plain">
+          <div class="interviews-card-head">
+            <div>
+              <p class="eyebrow">Snapshot</p>
+              <h2>当前节奏</h2>
+            </div>
           </div>
-          <button class="ghost-button" type="button" @click="navigateTo('/editor')">
-            进入编辑器
-          </button>
-        </div>
 
-        <div v-if="resumeStore.loading" class="dashboard-loading">正在加载简历...</div>
-        <div v-else-if="recentResumes.length" class="dashboard-resume-list">
-          <button
-            v-for="resume in recentResumes"
-            :key="resume.id"
-            type="button"
-            class="dashboard-resume-item"
-            @click="openResume(resume.id)"
-          >
-            <span>{{ resume.title }}</span>
-            <small>{{ formatDate(resume.updated_at) }}</small>
-          </button>
-        </div>
-        <p v-else class="dashboard-empty-copy">还没有简历，建议先创建一份基础版，再去做投递关联。</p>
-      </article>
+          <dl class="interviews-summary">
+            <div>
+              <dt>待跟进</dt>
+              <dd>{{ applicationStats.todo_count }}</dd>
+            </div>
+            <div>
+              <dt>进行中面试</dt>
+              <dd>{{ applicationStats.interviewing_count }}</dd>
+            </div>
+            <div>
+              <dt>待复盘</dt>
+              <dd>{{ interviewStats.pending_review_count }}</dd>
+            </div>
+            <div>
+              <dt>Offer</dt>
+              <dd>{{ applicationStats.offer_count }}</dd>
+            </div>
+          </dl>
+        </section>
 
-      <article class="dashboard-module-card">
-        <p class="eyebrow">Pipeline</p>
-        <h2>当前求职节奏</h2>
-        <p class="muted-copy">把简历、投递和面试串成一条连续路径，减少在模块之间来回找入口。</p>
+        <section class="interviews-card interviews-card-plain">
+          <div class="interviews-card-head">
+            <div>
+              <p class="eyebrow">Shortcuts</p>
+              <h2>快捷入口</h2>
+            </div>
+          </div>
 
-        <div class="dashboard-application-stats">
-          <span>面试中 {{ applicationStats.interviewing_count }}</span>
-          <span>Offer {{ applicationStats.offer_count }}</span>
-          <span>面试总数 {{ interviewStats.total_count }}</span>
-          <span>即将开始 {{ interviewStats.upcoming_count }}</span>
-        </div>
-
-        <div class="dashboard-action-row">
-          <button class="primary-button" type="button" @click="navigateTo('/applications')">
-            打开投递工作台
-          </button>
-        </div>
-
-        <div class="dashboard-task-grid">
-          <button
-            type="button"
-            class="dashboard-task-card"
-            @click="navigateTo({ path: '/applications', query: { quick: 'todo' } })"
-          >
-            <strong>处理待跟进投递</strong>
-            <p>集中查看需要继续推进的岗位、状态和下一步动作。</p>
-            <span>进入待跟进视图</span>
-          </button>
-
-          <button
-            type="button"
-            class="dashboard-task-card"
-            @click="navigateTo({ path: '/interviews', query: { quick: 'pending' } })"
-          >
-            <strong>复盘最近面试</strong>
-            <p>把问题、回答、失误点和下一轮准备沉淀成结构化记录。</p>
-            <span>进入复盘视图</span>
-          </button>
-        </div>
-      </article>
+          <div class="interviews-rail-actions">
+            <RouterLink class="ghost-button" to="/editor">打开简历管理</RouterLink>
+            <RouterLink class="ghost-button" to="/applications">打开投递管理</RouterLink>
+            <RouterLink class="ghost-button" :to="{ path: '/interviews', query: { quick: 'pending' } }">打开面试记录</RouterLink>
+          </div>
+        </section>
+      </aside>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import brandMark from '../assets/brand-mark.svg'
 import { requestJson } from '../api/request'
 import { useAuthStore } from '../stores/auth'
@@ -157,6 +211,29 @@ import { useResumeStore } from '../stores/resume'
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
+
+const primaryNavItems = [
+  {
+    to: '/dashboard',
+    label: '工作台',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4z"/><path d="M13 4h7v5h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 13h7v7H4z"/></svg>`,
+  },
+  {
+    to: '/editor',
+    label: '简历管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>`,
+  },
+  {
+    to: '/applications',
+    label: '投递管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
+  },
+  {
+    to: '/interviews',
+    label: '面试记录',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>`,
+  },
+]
 
 const applicationStats = reactive({
   total_count: 0,
@@ -173,34 +250,53 @@ const interviewStats = reactive({
   pending_review_count: 0,
 })
 
+const leftSidebarCollapsed = ref(false)
+
 const recentResumes = computed(() => resumeStore.resumes.slice(0, 4))
 const latestResume = computed(() => resumeStore.resumes[0] || null)
 
 const heroTitle = computed(() => {
-  if (!resumeStore.resumes.length) {
-    return '先搭好你的第一份求职资料'
-  }
-  if (applicationStats.todo_count > 0) {
-    return '今天优先推进待跟进的岗位'
-  }
-  if (interviewStats.pending_review_count > 0) {
-    return '把最近的面试尽快复盘下来'
-  }
+  if (!resumeStore.resumes.length) return '先搭好你的第一份求职材料'
+  if (applicationStats.todo_count > 0) return '今天优先推进待跟进的岗位'
+  if (interviewStats.pending_review_count > 0) return '把最近的面试尽快复盘下来'
   return `欢迎回来，${authStore.user?.username || '求职者'}`
 })
 
 const heroSubtitle = computed(() => {
   if (!resumeStore.resumes.length) {
-    return '建议先完成一份基础简历，再从投递工作台开始记录岗位、状态流转和面试过程。'
+    return '建议先完成一份基础简历，再从投递管理开始记录岗位、状态流转和面试过程。'
   }
   if (applicationStats.todo_count > 0) {
-    return `你现在有 ${applicationStats.todo_count} 条待跟进投递，首页已经帮你把继续推进的入口放到了最前面。`
+    return `你现在有 ${applicationStats.todo_count} 条待跟进投递，继续推进的入口已经放到最前面。`
   }
   if (interviewStats.pending_review_count > 0) {
-    return `还有 ${interviewStats.pending_review_count} 场面试等待复盘，及时记录会更容易沉淀经验和下一轮准备。`
+    return `还有 ${interviewStats.pending_review_count} 场面试待复盘，及时记录更容易沉淀经验。`
   }
-  return '这里是你的求职工作台，可以从简历、投递、面试三个模块继续往前推进。'
+  return '这里把简历、投递、面试三部分串成了一套统一工作台，你可以连续推进。'
 })
+
+const statCards = computed(() => [
+  {
+    label: '简历版本',
+    value: resumeStore.resumes.length,
+    hint: latestResume.value ? `最近更新：${latestResume.value.title}` : '先创建一份基础简历',
+  },
+  {
+    label: '投递总数',
+    value: applicationStats.total_count,
+    hint: `本周新增 ${applicationStats.new_this_week}`,
+  },
+  {
+    label: '待跟进',
+    value: applicationStats.todo_count,
+    hint: '优先处理需要继续推进的岗位',
+  },
+  {
+    label: '待复盘面试',
+    value: interviewStats.pending_review_count,
+    hint: `本周面试 ${interviewStats.this_week_count} 场`,
+  },
+])
 
 const taskCards = computed(() => {
   const cards = []
@@ -208,7 +304,7 @@ const taskCards = computed(() => {
   if (!resumeStore.resumes.length) {
     cards.push({
       title: '创建第一份简历',
-      description: '先准备一个可以持续迭代的基础版本，后面投递和面试都围绕它展开。',
+      description: '先准备一个可以持续迭代的基础版本，后面的投递和面试都围绕它展开。',
       cta: '打开简历编辑器',
       to: '/editor',
       accent: true,
@@ -216,7 +312,7 @@ const taskCards = computed(() => {
   } else {
     cards.push({
       title: '继续编辑最近简历',
-      description: latestResume.value ? `最近更新的是《${latestResume.value.title}》，可以继续补充项目和经历。` : '回到简历编辑器继续完善内容。',
+      description: latestResume.value ? `最近更新的是《${latestResume.value.title}》，可以继续补充项目和经历。` : '回到编辑器继续完善内容。',
       cta: '继续编辑',
       to: '/editor',
       accent: false,
@@ -234,18 +330,18 @@ const taskCards = computed(() => {
   cards.push({
     title: applicationStats.todo_count > 0 ? '先处理待跟进岗位' : '检查投递进度',
     description: applicationStats.todo_count > 0
-      ? `有 ${applicationStats.todo_count} 条投递已经到了该继续推进的时候。`
-      : '快速查看最近的岗位进展，避免投出去就忘了跟进。',
+      ? `当前有 ${applicationStats.todo_count} 条投递已经到了该继续推进的时候。`
+      : '快速查看最近岗位进展，避免投出去之后忘记跟进。',
     cta: '进入投递工作台',
     to: { path: '/applications', query: { quick: applicationStats.todo_count > 0 ? 'todo' : 'all' } },
     accent: false,
   })
 
   cards.push({
-    title: interviewStats.pending_review_count > 0 ? '复盘最近面试' : '准备一场新的面试记录',
+    title: interviewStats.pending_review_count > 0 ? '复盘最近面试' : '准备新的面试记录',
     description: interviewStats.pending_review_count > 0
       ? `当前有 ${interviewStats.pending_review_count} 场面试还没复盘，建议尽快补上。`
-      : '如果已经开始面试，可以把每一场都整理成持续编辑的记录文档。',
+      : '如果已经开始面试，可以把每一场都整理成持续更新的记录文档。',
     cta: '进入面试记录',
     to: { path: '/interviews', query: interviewStats.pending_review_count > 0 ? { quick: 'pending' } : { create: '1' } },
     accent: false,
@@ -255,13 +351,9 @@ const taskCards = computed(() => {
 })
 
 function formatDate(value) {
-  if (!value) {
-    return ''
-  }
+  if (!value) return ''
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return ''
-  }
+  if (Number.isNaN(parsed.getTime())) return ''
   return parsed.toLocaleDateString('zh-CN')
 }
 
@@ -281,8 +373,7 @@ async function handleLogout() {
 
 async function loadApplicationStats() {
   try {
-    const stats = await requestJson('/api/applications/stats/overview')
-    Object.assign(applicationStats, stats || {})
+    Object.assign(applicationStats, await requestJson('/api/applications/stats/overview'))
   } catch {
     Object.assign(applicationStats, {
       total_count: 0,
@@ -296,8 +387,7 @@ async function loadApplicationStats() {
 
 async function loadInterviewStats() {
   try {
-    const stats = await requestJson('/api/interviews/stats/overview')
-    Object.assign(interviewStats, stats || {})
+    Object.assign(interviewStats, await requestJson('/api/interviews/stats/overview'))
   } catch {
     Object.assign(interviewStats, {
       total_count: 0,

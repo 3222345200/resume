@@ -1,12 +1,12 @@
-<template>
+﻿<template>
   <main class="interviews-page interviews-page-modern">
-    <section class="interviews-shell">
+    <section class="interviews-shell" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
       <aside class="interviews-primary-nav">
         <div class="interviews-primary-brand" title="OfferPilot">
           <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
         </div>
 
-        <nav class="interviews-primary-links" aria-label="主导航">
+        <nav class="interviews-primary-links" aria-label="Primary navigation">
           <RouterLink
             v-for="item in primaryNavItems"
             :key="item.to"
@@ -21,15 +21,47 @@
         </nav>
       </aside>
 
+      <button
+        v-if="isSidebarCollapsed"
+        class="desktop-sidebar-reopen interviews-desktop-sidebar-reopen"
+        type="button"
+        aria-label="展开求职工作台侧栏"
+        @click="isSidebarCollapsed = false"
+      >
+        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
+        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
+      </button>
+
       <aside class="interviews-sidebar">
-        <section class="interviews-card interviews-card-soft">
-          <div class="interviews-card-head">
-            <div>
-              <p class="eyebrow">Quick Views</p>
-              <h2>快捷视图</h2>
+          <div class="interviews-sidebar-shell">
+            <div class="sidebar-brand interviews-sidebar-brand">
+              <div class="brand-row interviews-brand-row">
+              <div class="brand-copy-block interviews-brand-copy">
+                <p class="eyebrow">职跃 OfferPilot</p>
+                <h1>求职工作台</h1>
+              </div>
+              <button
+                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
+                type="button"
+                aria-label="收起求职工作台侧栏"
+                @click="isSidebarCollapsed = true"
+              >
+                &lt;
+              </button>
             </div>
-            <button class="primary-button" type="button" @click="openCreateDialog">新建</button>
+            <p class="sidebar-desc interviews-sidebar-desc">从面试记录出发，逐步扩展到完整的求职材料与复盘管理。</p>
+            <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
+
+          <button class="primary-button interviews-sidebar-primary" type="button" @click="openCreateDialog">新建面试</button>
+
+          <section class="interviews-card interviews-card-soft">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Quick Views</p>
+                <h2>快捷视图</h2>
+              </div>
+            </div>
 
           <div class="interviews-quick-grid">
             <button
@@ -105,11 +137,6 @@
             <CustomSelect v-model="filters.application_id" :options="applicationFilterOptions" placeholder="全部投递" />
           </div>
 
-          <div class="interviews-actions">
-            <button class="ghost-button" type="button" @click="resetFilters">重置</button>
-            <button class="ghost-button" type="button" @click="loadInterviews()">筛选</button>
-          </div>
-
           <p v-if="message" class="interviews-message">{{ message }}</p>
 
           <div class="interviews-list">
@@ -135,6 +162,7 @@
             </div>
           </div>
         </section>
+        </div>
       </aside>
 
       <section class="interviews-main">
@@ -144,8 +172,8 @@
               <div class="interviews-outline-head">
                 <div v-if="!isOutlinePanelCollapsed">
                   <p class="eyebrow">Outline</p>
-              <h2>文档目录</h2>
-              <p class="interviews-outline-copy">根据正文里的标题自动生成，点击即可快速定位。</p>
+                  <h2>文档目录</h2>
+                  <p class="interviews-outline-copy">根据正文里的标题自动生成，点击即可快速定位。</p>
 
                 </div>
                 <button
@@ -184,7 +212,7 @@
                     :aria-expanded="String(!item.isCollapsed)"
                     @click.stop="toggleOutlineBranch(item.id)"
                   >
-                    <span aria-hidden="true">⌄</span>
+                    <span aria-hidden="true">▸</span>
                     <span class="sr-only">{{ item.isCollapsed ? '展开子标题' : '收起子标题' }}</span>
                   </button>
                   <span v-else class="interviews-outline-caret interviews-outline-caret-placeholder" aria-hidden="true"></span>
@@ -235,7 +263,7 @@
 
         <section v-else class="interviews-editor-canvas interviews-empty-state interviews-editor-canvas-doc">
           <h2>选择一场面试开始记录</h2>
-          <p>左侧是主导航和面试卡片，中间是目录与正文编辑区，右侧则是基础信息编辑面板。</p>
+          <p>左侧是工作台和面试卡片，中间是目录与正文编辑区，右侧则是基础信息编辑面板。</p>
         </section>
       </section>
 
@@ -283,7 +311,7 @@
 
               <label>
                 <span>面试形式</span>
-                <CustomSelect v-model="detailDraft.interview_type" :options="typeOptions" placeholder="选择时间" />
+                <CustomSelect v-model="detailDraft.interview_type" :options="typeOptions" placeholder="选择形式" />
               </label>
 
               <label>
@@ -313,7 +341,7 @@
 
               <label class="full-row">
                 <span>后续行动</span>
-                <textarea v-model="detailDraft.follow_up_action" rows="4" placeholder="记录感谢信、HR 跟进、下一轮准备等"></textarea>
+                <textarea v-model="detailDraft.follow_up_action" rows="4" placeholder="记录感谢信、HR 跟进和下一轮准备等"></textarea>
               </label>
             </div>
           </section>
@@ -361,7 +389,7 @@
             <p class="eyebrow">{{ editingId ? 'Edit Interview' : 'Create Interview' }}</p>
             <h2>{{ editingId ? '编辑面试信息' : '新建面试记录' }}</h2>
           </div>
-          <button class="interviews-dialog-close" type="button" @click="closeDialog">脳</button>
+          <button class="interviews-dialog-close" type="button" @click="closeDialog">×</button>
         </div>
 
         <div class="interviews-dialog-grid">
@@ -373,7 +401,7 @@
           <CustomSelect v-model="form.interview_type" :options="typeOptions" placeholder="选择形式" />
           <CustomSelect v-model="form.result" :options="resultOptions" placeholder="选择结果" />
           <input v-model.number="form.duration_minutes" type="number" min="0" max="720" placeholder="时长（分钟）" />
-          <input v-model="form.interviewer_name" type="text" placeholder="面试官" />
+          <input v-model="form.interviewer_name" type="text" placeholder="面试官姓名" />
           <input v-model="form.interviewer_role" type="text" placeholder="面试官角色" />
           <textarea v-model="form.preparation_note" class="full-row" rows="4" placeholder="准备重点"></textarea>
         </div>
@@ -466,6 +494,7 @@ const dialogOpen = ref(false)
 const message = ref('')
 const dialogMessage = ref('')
 const isOutlinePanelCollapsed = ref(false)
+const isSidebarCollapsed = ref(false)
 const collapsedOutlineIds = ref({})
 const autosaveState = ref('saved')
 const autosaveError = ref('')
@@ -475,7 +504,9 @@ const isHydratingDraft = ref(false)
 let autosaveTimer = null
 let activeSavePromise = null
 let queuedAutosave = false
+let filterTimer = null
 const AUTOSAVE_DELAY = 1500
+const FILTER_DELAY = 250
 
 const QUICK_VIEW_IDS = new Set(['all', 'week', 'pending', 'passed', 'rejected'])
 
@@ -515,6 +546,13 @@ const autosaveText = computed(() => {
   return '已保存'
 })
 
+function getHeadingText(node) {
+  return String(node?.textContent || '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 const outlineItems = computed(() => {
   const html = String(detailDraft.value?.document_content || '').trim()
   if (!html) {
@@ -530,7 +568,7 @@ const outlineItems = computed(() => {
       index,
       domIndex: index,
       level: Number(node.tagName.slice(1)),
-      text: node.textContent?.trim() || '未命名标题',
+      text: getHeadingText(node),
     }))
     .filter((item) => item.text)
 })
@@ -548,12 +586,17 @@ const visibleOutlineItems = computed(() => {
   const stack = []
 
   nodes.forEach((node, index) => {
+    const text = getHeadingText(node)
+    if (!text) {
+      return
+    }
+
     const item = {
       id: `outline-${index}`,
       domIndex: index,
       level: Number(node.tagName.slice(1)),
       depth: 1,
-      text: node.textContent?.trim() || `标题 ${index + 1}`,
+      text,
       children: [],
     }
 
@@ -1053,6 +1096,20 @@ async function handleLogout() {
   await router.push('/login')
 }
 
+function clearFilterTimer() {
+  if (!filterTimer) return
+  window.clearTimeout(filterTimer)
+  filterTimer = null
+}
+
+function queueFilterLoad() {
+  clearFilterTimer()
+  filterTimer = window.setTimeout(() => {
+    filterTimer = null
+    void loadInterviews()
+  }, FILTER_DELAY)
+}
+
 watch(
   visibleOutlineItems,
   (items) => {
@@ -1093,6 +1150,22 @@ watch(
 )
 
 watch(
+  () => [filters.q, filters.result, filters.interview_type, filters.reviewed, filters.application_id],
+  (nextValues, prevValues) => {
+    if (!applications.value.length) {
+      return
+    }
+    if (!prevValues) {
+      return
+    }
+    if (nextValues.every((value, index) => value === prevValues[index])) {
+      return
+    }
+    queueFilterLoad()
+  },
+)
+
+watch(
   () => [route.query.application_id, route.query.interview_id, route.query.quick, route.query.create],
   async () => {
     applyRouteFilters()
@@ -1121,5 +1194,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
   clearAutosaveTimer()
+  clearFilterTimer()
 })
 </script>
+
+

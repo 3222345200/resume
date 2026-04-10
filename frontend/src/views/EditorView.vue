@@ -1,72 +1,79 @@
-﻿<template>
-  <main
-    class="vue-editor-page"
-    :class="{
-      'sidebar-open': sidebarOpen,
-      'desktop-sidebar-collapsed': desktopSidebarCollapsed,
-    }"
-  >
-    <button
-      class="mobile-sidebar-toggle"
-      type="button"
-      :aria-label="sidebarOpen ? '收起简历侧栏' : '打开简历侧栏'"
-      @click="sidebarOpen = !sidebarOpen"
-    >
-      <img class="mobile-sidebar-logo" :src="brandMark" alt="" aria-hidden="true" />
-      <span class="mobile-sidebar-arrow">{{ sidebarOpen ? '‹' : '›' }}</span>
-      <span class="mobile-sidebar-label">{{ sidebarOpen ? '收起' : '简历' }}</span>
-    </button>
+<template>
+  <main class="interviews-page interviews-page-modern editor-workspace-page" :class="{ 'desktop-sidebar-collapsed': desktopSidebarCollapsed }">
+    <section class="interviews-shell editor-workspace-shell">
+      <aside class="interviews-primary-nav">
+        <div class="interviews-primary-brand" title="OfferPilot">
+          <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
+        </div>
 
-    <button
-      v-if="desktopSidebarCollapsed"
-      class="desktop-sidebar-reopen"
-      type="button"
-      aria-label="展开简历侧栏"
-      @click="desktopSidebarCollapsed = false"
-    >
-      <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
-      <span class="desktop-sidebar-reopen-arrow">&gt;</span>
-    </button>
+        <nav class="interviews-primary-links" aria-label="Primary navigation">
+          <RouterLink
+            v-for="item in primaryNavItems"
+            :key="item.to"
+            class="interviews-primary-link"
+            :class="{ 'is-active': item.to === '/editor' }"
+            :to="item.to"
+            :title="item.label"
+          >
+            <span class="interviews-primary-icon" v-html="item.icon"></span>
+            <span class="sr-only">{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+      </aside>
 
-    <div v-if="sidebarOpen" class="sidebar-mask" @click="sidebarOpen = false"></div>
+      <button
+        v-if="desktopSidebarCollapsed"
+        class="desktop-sidebar-reopen editor-desktop-sidebar-reopen"
+        type="button"
+        aria-label="展开求职工作台侧栏"
+        @click="desktopSidebarCollapsed = false"
+      >
+        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
+        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
+      </button>
 
+      <aside class="interviews-sidebar editor-sidebar">
         <ResumeSidebar
           :resumes="resumeStore.resumes"
           :active-id="resumeStore.currentResumeId"
           :current-resume="resumeStore.currentResume"
           :templates="resumeStore.templates"
           :username="authStore.user?.username || ''"
-          :collapsed-on-mobile="!sidebarOpen"
+          :collapsed-on-mobile="false"
           @select-resume="handleSelectResume"
           @create-resume="handleCreateResume"
           @back-dashboard="router.push('/dashboard')"
           @logout="handleLogout"
           @toggle-sidebar="desktopSidebarCollapsed = true"
         />
+      </aside>
 
-    <section class="vue-editor-main template-editor-main">
-      <div v-if="resumeStore.loading" class="loading-card">正在加载简历数据...</div>
+      <section class="interviews-main editor-main">
+        <div v-if="resumeStore.loading" class="interviews-editor-canvas editor-loading-card">正在加载简历数据...</div>
 
-      <template v-else>
-        <ResumeBasicsForm
-          ref="basicsFormRef"
-          :draft="resumeStore.currentResume"
-          :templates="resumeStore.templates"
-          :saving="saving"
-          :rendering="rendering"
-          :avatar-uploading="avatarUploading"
-          :upload-avatar="handleUploadAvatar"
-          @view-applications="handleViewApplications"
-          @save="handleSave"
-          @render="handleRender"
-          @delete="handleDelete"
-        />
+        <template v-else>
+          <ResumeBasicsForm
+            ref="basicsFormRef"
+            :draft="resumeStore.currentResume"
+            :templates="resumeStore.templates"
+            :saving="saving"
+            :rendering="rendering"
+            :avatar-uploading="avatarUploading"
+            :upload-avatar="handleUploadAvatar"
+            @view-applications="handleViewApplications"
+            @save="handleSave"
+            @render="handleRender"
+            @delete="handleDelete"
+          />
+        </template>
+      </section>
 
+      <aside class="interviews-rail editor-rail">
         <ResumePreviewPane
           :preview-url="resumeStore.previewUrl"
           @navigate-section="handlePreviewNavigate"
         />
-      </template>
+      </aside>
     </section>
 
     <div v-if="toastText" class="vue-toast">{{ toastText }}</div>
@@ -97,7 +104,7 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import brandMark from '../assets/brand-mark.svg'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import ResumeBasicsForm from '../components/ResumeBasicsForm.vue'
@@ -110,6 +117,29 @@ const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
 
+const primaryNavItems = [
+  {
+    to: '/dashboard',
+    label: '工作台',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4z"/><path d="M13 4h7v5h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 13h7v7H4z"/></svg>`,
+  },
+  {
+    to: '/editor',
+    label: '简历管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>`,
+  },
+  {
+    to: '/applications',
+    label: '投递管理',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
+  },
+  {
+    to: '/interviews',
+    label: '面试记录',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>`,
+  },
+]
+
 const saving = ref(false)
 const rendering = ref(false)
 const avatarUploading = ref(false)
@@ -119,7 +149,6 @@ const deleteConfirmOpen = ref(false)
 const noticeDialogOpen = ref(false)
 const noticeDialogTitle = ref('提示')
 const noticeDialogMessage = ref('')
-const sidebarOpen = ref(window.matchMedia('(min-width: 1401px)').matches)
 const desktopSidebarCollapsed = ref(false)
 
 let toastTimer = null
@@ -147,23 +176,10 @@ function reportError(error) {
 
 function showToast(message) {
   toastText.value = message
-  if (toastTimer) {
-    clearTimeout(toastTimer)
-  }
+  if (toastTimer) clearTimeout(toastTimer)
   toastTimer = window.setTimeout(() => {
     toastText.value = ''
   }, 2200)
-}
-
-function syncSidebarByViewport() {
-  const isDesktop = window.matchMedia('(min-width: 1401px)').matches
-  const shouldCollapseDesktopSidebar = window.matchMedia('(max-width: 1800px)').matches
-  sidebarOpen.value = isDesktop
-  if (!isDesktop) {
-    desktopSidebarCollapsed.value = false
-    return
-  }
-  desktopSidebarCollapsed.value = shouldCollapseDesktopSidebar
 }
 
 function getAutoPreviewSnapshot() {
@@ -198,28 +214,18 @@ async function syncPreviewAutomatically() {
 }
 
 function scheduleAutoPreviewSync() {
-  if (autoPreviewTimer) {
-    clearTimeout(autoPreviewTimer)
-  }
+  if (autoPreviewTimer) clearTimeout(autoPreviewTimer)
   autoPreviewTimer = window.setTimeout(syncPreviewAutomatically, 700)
-}
-
-function closeSidebarOnMobile() {
-  if (!window.matchMedia('(min-width: 1401px)').matches) {
-    sidebarOpen.value = false
-  }
 }
 
 function handleSelectResume(resumeId) {
   resumeStore.selectResume(resumeId)
   autoPreviewSnapshot = getAutoPreviewSnapshot()
-  closeSidebarOnMobile()
 }
 
 function handleCreateResume() {
   resumeStore.createLocalResume()
   autoPreviewSnapshot = getAutoPreviewSnapshot()
-  closeSidebarOnMobile()
 }
 
 async function handleViewApplications() {
@@ -235,7 +241,6 @@ async function handleViewApplications() {
       openNoticeDialog('当前简历还没有可用的保存记录，请先保存后再查看关联投递。')
       return
     }
-    closeSidebarOnMobile()
     await router.push({ path: '/applications', query: { resume_id: resumeId } })
   } catch (error) {
     reportError(error)
@@ -308,7 +313,6 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  window.addEventListener('resize', syncSidebarByViewport)
   try {
     await resumeStore.bootstrapEditor()
     autoPreviewSnapshot = getAutoPreviewSnapshot()
@@ -318,13 +322,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncSidebarByViewport)
-  if (toastTimer) {
-    clearTimeout(toastTimer)
-  }
-  if (autoPreviewTimer) {
-    clearTimeout(autoPreviewTimer)
-  }
+  if (toastTimer) clearTimeout(toastTimer)
+  if (autoPreviewTimer) clearTimeout(autoPreviewTimer)
 })
 
 watch(
@@ -335,4 +334,3 @@ watch(
   { deep: true },
 )
 </script>
-

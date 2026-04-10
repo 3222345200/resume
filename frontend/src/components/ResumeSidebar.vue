@@ -1,9 +1,9 @@
 <template>
   <aside class="resume-sidebar" :class="{ collapsed: collapsedOnMobile }">
-    <div class="sidebar-brand">
-      <div class="brand-row sidebar-brand-row">
-        <img :src="brandMark" alt="职跃 OfferPilot 标志" />
-        <div class="brand-copy-block">
+    <div class="resume-sidebar-shell interviews-sidebar-shell">
+      <div class="sidebar-brand interviews-sidebar-brand">
+      <div class="brand-row sidebar-brand-row interviews-brand-row">
+        <div class="brand-copy-block interviews-brand-copy">
           <p class="eyebrow">职跃 OfferPilot</p>
           <h1>求职工作台</h1>
         </div>
@@ -71,13 +71,13 @@
       </component>
 
       <div v-if="!resumes.length && !showDraftCard" class="empty-list-tip">暂无已保存简历，先新建一份。</div>
+      </div>
     </div>
   </aside>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import brandMark from '../assets/brand-mark.svg'
 import CustomSelect from './CustomSelect.vue'
 
 const props = defineProps({
@@ -128,9 +128,7 @@ const isCurrentTitleDuplicated = computed(() => {
   if (!currentTitle) {
     return false
   }
-  return props.resumes.some((resume) => {
-    return resume.id !== props.activeId && String(resume?.title || '').trim() === currentTitle
-  })
+  return props.resumes.some((resume) => resume.id !== props.activeId && String(resume?.title || '').trim() === currentTitle)
 })
 
 function formatTime(value) {
