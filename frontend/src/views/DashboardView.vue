@@ -57,26 +57,50 @@
             新建投递
           </button>
 
-          <section class="interviews-card interviews-card-soft dashboard-intro-card">
-            <div class="interviews-card-head">
+          <section class="interviews-card interviews-card-soft dashboard-intro-card dashboard-overview-card">
+            <div class="interviews-card-head dashboard-overview-head">
               <div>
-                <p class="eyebrow">Quick Views</p>
-                <h2>快捷视图</h2>
+                <p class="eyebrow">Quick Panel</p>
+                <h2>快捷面板</h2>
               </div>
               <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
+            </div>
+
+            <div class="dashboard-overview-chart">
+              <div class="dashboard-overview-chart-copy">
+                <span>当前进度</span>
+                <strong>{{ quickChartHighlight.value }}</strong>
+                <p>{{ quickChartHighlight.label }}</p>
+              </div>
+
+              <div class="dashboard-overview-bars" aria-label="求职进度图表">
+                <div
+                  v-for="item in quickChartData"
+                  :key="item.label"
+                  class="dashboard-overview-bar-item"
+                >
+                  <span class="dashboard-overview-bar-track">
+                    <span class="dashboard-overview-bar-fill" :style="{ height: `${item.height}%` }"></span>
+                  </span>
+                  <strong>{{ item.value }}</strong>
+                  <small>{{ item.shortLabel }}</small>
+                </div>
+              </div>
             </div>
 
             <div class="interviews-quick-grid dashboard-quick-grid">
               <button
                 v-for="task in taskCards.slice(0, 4)"
                 :key="task.title"
-                class="interviews-quick-card"
+                class="interviews-quick-card dashboard-sidebar-quick-card"
                 :class="{ 'is-active': task.accent }"
                 type="button"
                 @click="navigateTo(task.to)"
               >
-                <span>{{ task.title }}</span>
-                <strong>{{ task.cta }}</strong>
+                <span class="dashboard-sidebar-quick-icon" v-html="getSidebarQuickIcon(task)" aria-hidden="true"></span>
+                <strong class="dashboard-sidebar-quick-title">
+                  <span v-for="line in splitSidebarQuickTitle(task.sidebarTitle || task.cta)" :key="line">{{ line }}</span>
+                </strong>
               </button>
             </div>
           </section>
@@ -298,6 +322,39 @@ const statCards = computed(() => [
   },
 ])
 
+const quickChartData = computed(() => {
+  const items = [
+    { label: '简历版本', shortLabel: '简历', value: resumeStore.resumes.length },
+    { label: '投递总数', shortLabel: '投递', value: applicationStats.total_count },
+    { label: '待跟进', shortLabel: '跟进', value: applicationStats.todo_count },
+    { label: '待复盘面试', shortLabel: '面试', value: interviewStats.pending_review_count },
+  ]
+  const maxValue = Math.max(...items.map((item) => item.value), 1)
+  return items.map((item) => ({
+    ...item,
+    height: Math.max(18, Math.round((item.value / maxValue) * 100)),
+  }))
+})
+
+const quickChartHighlight = computed(() => {
+  if (applicationStats.todo_count > 0) {
+    return {
+      value: applicationStats.todo_count,
+      label: '待跟进岗位',
+    }
+  }
+  if (interviewStats.pending_review_count > 0) {
+    return {
+      value: interviewStats.pending_review_count,
+      label: '待复盘面试',
+    }
+  }
+  return {
+    value: applicationStats.total_count,
+    label: '累计投递数',
+  }
+})
+
 const taskCards = computed(() => {
   const cards = []
 
@@ -306,6 +363,8 @@ const taskCards = computed(() => {
       title: '创建第一份简历',
       description: '先准备一个可以持续迭代的基础版本，后面的投递和面试都围绕它展开。',
       cta: '打开简历编辑器',
+      sidebarHint: '最近没有简历',
+      sidebarTitle: '创建简历',
       to: '/editor',
       accent: true,
     })
@@ -314,6 +373,7 @@ const taskCards = computed(() => {
       title: '继续编辑最近简历',
       description: latestResume.value ? `最近更新的是《${latestResume.value.title}》，可以继续补充项目和经历。` : '回到编辑器继续完善内容。',
       cta: '继续编辑',
+      sidebarTitle: '继续简历',
       to: '/editor',
       accent: false,
     })
@@ -323,6 +383,7 @@ const taskCards = computed(() => {
     title: '新增一条投递',
     description: '把岗位、渠道、状态、关联简历和下一步动作一起记录下来。',
     cta: '打开投递新建弹窗',
+    sidebarTitle: '新建投递',
     to: { path: '/applications', query: { create: '1' } },
     accent: true,
   })
@@ -333,6 +394,7 @@ const taskCards = computed(() => {
       ? `当前有 ${applicationStats.todo_count} 条投递已经到了该继续推进的时候。`
       : '快速查看最近岗位进展，避免投出去之后忘记跟进。',
     cta: '进入投递工作台',
+    sidebarTitle: '进入投递',
     to: { path: '/applications', query: { quick: applicationStats.todo_count > 0 ? 'todo' : 'all' } },
     accent: false,
   })
@@ -343,12 +405,33 @@ const taskCards = computed(() => {
       ? `当前有 ${interviewStats.pending_review_count} 场面试还没复盘，建议尽快补上。`
       : '如果已经开始面试，可以把每一场都整理成持续更新的记录文档。',
     cta: '进入面试记录',
+    sidebarTitle: '进入面试',
     to: { path: '/interviews', query: interviewStats.pending_review_count > 0 ? { quick: 'pending' } : { create: '1' } },
     accent: false,
   })
 
   return cards
 })
+
+function splitSidebarQuickTitle(value) {
+  const text = String(value || '').trim()
+  if (!text) return ['']
+  return text.match(/.{1,2}/g) || [text]
+}
+
+function getSidebarQuickIcon(task) {
+  const title = String(task?.sidebarTitle || task?.cta || '')
+  if (title.includes('简历')) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>'
+  }
+  if (title.includes('投递')) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>'
+  }
+  if (title.includes('面试')) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>'
+  }
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
+}
 
 function formatDate(value) {
   if (!value) return ''
