@@ -427,6 +427,7 @@ import CustomSelect from '../components/CustomSelect.vue'
 import DateTimePicker from '../components/DateTimePicker.vue'
 import RichTextEditor from '../components/RichTextEditor.vue'
 import { useAuthStore } from '../stores/auth'
+const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
 
 const router = useRouter()
 const route = useRoute()
@@ -506,6 +507,10 @@ let queuedAutosave = false
 let filterTimer = null
 const AUTOSAVE_DELAY = 1500
 const FILTER_DELAY = 250
+
+function syncLeftSidebarByViewport() {
+  isSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
+}
 
 const QUICK_VIEW_IDS = new Set(['all', 'week', 'pending', 'passed', 'rejected'])
 
@@ -1184,6 +1189,8 @@ function handleBeforeUnload(event) {
 
 onMounted(async () => {
   window.addEventListener('beforeunload', handleBeforeUnload)
+  window.addEventListener('resize', syncLeftSidebarByViewport)
+  syncLeftSidebarByViewport()
   applyRouteFilters()
   await Promise.all([loadStats(), loadApplications(), loadResumes()])
   await loadInterviews()
@@ -1192,6 +1199,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  window.removeEventListener('resize', syncLeftSidebarByViewport)
   clearAutosaveTimer()
   clearFilterTimer()
 })

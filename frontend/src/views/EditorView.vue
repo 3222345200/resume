@@ -114,6 +114,7 @@ import { useResumeStore } from '../stores/resume'
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
+const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
 
 const primaryNavItems = [
   {
@@ -152,6 +153,10 @@ const desktopSidebarCollapsed = ref(false)
 let toastTimer = null
 let autoPreviewTimer = null
 let autoPreviewSnapshot = ''
+
+function syncDesktopSidebarByViewport() {
+  desktopSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
+}
 
 function openNoticeDialog(message, title = '提示') {
   noticeDialogTitle.value = title
@@ -311,6 +316,8 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
+  window.addEventListener('resize', syncDesktopSidebarByViewport)
+  syncDesktopSidebarByViewport()
   try {
     await resumeStore.bootstrapEditor()
     autoPreviewSnapshot = getAutoPreviewSnapshot()
@@ -320,6 +327,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', syncDesktopSidebarByViewport)
   if (toastTimer) clearTimeout(toastTimer)
   if (autoPreviewTimer) clearTimeout(autoPreviewTimer)
 })

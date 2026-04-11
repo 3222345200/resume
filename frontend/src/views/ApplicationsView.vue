@@ -446,7 +446,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
@@ -460,6 +460,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
+const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
 
 const primaryNavItems = [
   {
@@ -561,6 +562,10 @@ const QUICK_VIEW_IDS = new Set(['all', 'todo', 'interviewing', 'offer', 'rejecte
 const filters = reactive({ q: '', status: '', channel: '', city: '', dateFrom: '', dateTo: '', resumeId: '' })
 const form = reactive(emptyForm())
 const followForm = reactive({ last_follow_up_at: '', next_follow_up_at: '', next_action: '' })
+
+function syncLeftSidebarByViewport() {
+  leftSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
+}
 
 function emptyForm() {
   return { company_name: '', job_title: '', department: '', city: '', job_link: '', jd_summary: '', salary_range: '', job_type: '', applied_at: toDateInput(new Date().toISOString()), status: '已投递', channel: '', referrer_name: '', contact_name: '', contact_value: '', resume_id: '', note: '', risk_note: '', priority: '中', next_action: '', next_follow_up_at: '', last_follow_up_at: '' }
@@ -934,10 +939,16 @@ watch(
 )
 
 onMounted(async () => {
+  window.addEventListener('resize', syncLeftSidebarByViewport)
+  syncLeftSidebarByViewport()
   await Promise.all([loadResumes(), loadStats()])
   applyResumeFilterFromRoute()
   applyQuickViewFromRoute()
   await loadApplications()
   await maybeOpenCreateDialogFromRoute()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', syncLeftSidebarByViewport)
 })
 </script>

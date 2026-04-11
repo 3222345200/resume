@@ -53,7 +53,7 @@ const props = defineProps({
 const emit = defineEmits(['navigate-section'])
 
 const zoomScale = ref(1)
-const isCompactViewport = ref(window.matchMedia('(max-width: 1400px)').matches)
+const isCompactViewport = ref(window.matchMedia('(max-width: 1180px)').matches)
 const isPreviewCollapsed = ref(isCompactViewport.value)
 
 const previewFrameStyle = computed(() => ({
@@ -79,7 +79,7 @@ function getPreviewIdentity(previewUrl) {
 }
 
 function syncPreviewCollapseByViewport() {
-  isCompactViewport.value = window.matchMedia('(max-width: 1400px)').matches
+  isCompactViewport.value = window.matchMedia('(max-width: 1180px)').matches
   if (isCompactViewport.value) {
     isPreviewCollapsed.value = true
     return

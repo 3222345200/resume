@@ -224,7 +224,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
@@ -234,6 +234,7 @@ import { useResumeStore } from '../stores/resume'
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
+const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
 
 const primaryNavItems = [
   {
@@ -274,6 +275,10 @@ const interviewStats = reactive({
 })
 
 const leftSidebarCollapsed = ref(false)
+
+function syncLeftSidebarByViewport() {
+  leftSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
+}
 
 const recentResumes = computed(() => resumeStore.resumes.slice(0, 4))
 const latestResume = computed(() => resumeStore.resumes[0] || null)
@@ -481,9 +486,15 @@ async function loadInterviewStats() {
 }
 
 onMounted(async () => {
+  window.addEventListener('resize', syncLeftSidebarByViewport)
+  syncLeftSidebarByViewport()
   if (!resumeStore.resumes.length) {
     await resumeStore.bootstrapEditor()
   }
   await Promise.all([loadApplicationStats(), loadInterviewStats()])
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', syncLeftSidebarByViewport)
 })
 </script>
