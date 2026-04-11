@@ -193,6 +193,10 @@
               <dt>Offer</dt>
               <dd>{{ applicationStats.offer_count }}</dd>
             </div>
+            <div>
+              <dt>待复盘</dt>
+              <dd>{{ interviewStats.pending_review_count }}</dd>
+            </div>
           </dl>
         </section>
 
@@ -207,6 +211,7 @@
           <div class="interviews-rail-actions">
             <RouterLink class="ghost-button" to="/editor">打开简历管理</RouterLink>
             <RouterLink class="ghost-button" to="/applications">打开投递管理</RouterLink>
+            <RouterLink class="ghost-button" to="/interviews">打开面试记录</RouterLink>
           </div>
         </section>
       </aside>
@@ -253,9 +258,18 @@ const primaryNavItems = [
 const applicationStats = reactive({
   total_count: 0,
   new_this_week: 0,
-  interviewing_count: 0,
   offer_count: 0,
   todo_count: 0,
+})
+
+const interviewStats = reactive({
+  total_count: 0,
+  this_week_count: 0,
+  upcoming_count: 0,
+  completed_count: 0,
+  pending_review_count: 0,
+  passed_count: 0,
+  rejected_count: 0,
 })
 
 const leftSidebarCollapsed = ref(false)
@@ -299,13 +313,18 @@ const statCards = computed(() => [
     value: applicationStats.todo_count,
     hint: '优先处理需要继续推进的岗位',
   },
+  {
+    label: '面试记录',
+    value: interviewStats.total_count,
+    hint: interviewStats.pending_review_count > 0 ? `${interviewStats.pending_review_count} 场待复盘` : `本周 ${interviewStats.this_week_count} 场`,
+  },
 ])
 
 const quickChartData = computed(() => {
   const items = [
     { label: '简历版本', shortLabel: '简历', value: resumeStore.resumes.length },
     { label: '投递总数', shortLabel: '投递', value: applicationStats.total_count },
-    { label: '待跟进', shortLabel: '跟进', value: applicationStats.todo_count },
+    { label: '面试记录', shortLabel: '面试', value: interviewStats.total_count },
   ]
   const maxValue = Math.max(...items.map((item) => item.value), 1)
   return items.map((item) => ({
@@ -370,6 +389,17 @@ const taskCards = computed(() => {
     accent: false,
   })
 
+  cards.push({
+    title: interviewStats.pending_review_count > 0 ? '整理面试复盘' : '记录一场面试',
+    description: interviewStats.pending_review_count > 0
+      ? `还有 ${interviewStats.pending_review_count} 场面试需要补充复盘和后续行动。`
+      : '把面试时间、轮次、问题、复盘和下一步动作都放进记录里。',
+    cta: interviewStats.pending_review_count > 0 ? '进入面试记录' : '新建面试记录',
+    sidebarTitle: interviewStats.pending_review_count > 0 ? '面试复盘' : '面试记录',
+    to: '/interviews',
+    accent: interviewStats.pending_review_count > 0,
+  })
+
   return cards
 })
 
@@ -386,6 +416,9 @@ function getSidebarQuickIcon(task) {
   }
   if (title.includes('投递')) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>'
+  }
+  if (title.includes('面试')) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>'
   }
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
 }
@@ -418,9 +451,24 @@ async function loadApplicationStats() {
     Object.assign(applicationStats, {
       total_count: 0,
       new_this_week: 0,
-      interviewing_count: 0,
       offer_count: 0,
       todo_count: 0,
+    })
+  }
+}
+
+async function loadInterviewStats() {
+  try {
+    Object.assign(interviewStats, await requestJson('/api/interviews/stats/overview'))
+  } catch {
+    Object.assign(interviewStats, {
+      total_count: 0,
+      this_week_count: 0,
+      upcoming_count: 0,
+      completed_count: 0,
+      pending_review_count: 0,
+      passed_count: 0,
+      rejected_count: 0,
     })
   }
 }
@@ -431,7 +479,7 @@ onMounted(async () => {
   if (!resumeStore.resumes.length) {
     await resumeStore.bootstrapEditor()
   }
-  await loadApplicationStats()
+  await Promise.all([loadApplicationStats(), loadInterviewStats()])
 })
 
 onUnmounted(() => {
