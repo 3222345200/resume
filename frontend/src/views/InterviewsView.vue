@@ -353,9 +353,13 @@
               </div>
             </div>
 
+            <p class="interviews-muted">模板会优先插入到当前光标位置；如果还没点进正文，就会追加到文末。</p>
+
             <div class="interviews-rail-actions">
               <button class="ghost-button" type="button" @click="insertInterviewInfoBlock">插入面试信息</button>
               <button class="ghost-button" type="button" @click="insertQuestionTemplate">添加问题块</button>
+              <button class="ghost-button" type="button" @click="insertStarAnswerTemplate">插入 STAR 回答</button>
+              <button class="ghost-button" type="button" @click="insertFeedbackTemplate">插入现场反馈</button>
               <button class="ghost-button" type="button" @click="insertReviewTemplate">插入复盘模板</button>
               <button class="ghost-button" type="button" @click="insertTodoTemplate">插入待办</button>
               <button class="primary-button" type="button" :disabled="savingDetail" @click="saveInterview">保存文档</button>
@@ -1037,9 +1041,18 @@ function appendToDocument(html) {
   detailDraft.value.document_content = `${current}${current ? '<p><br></p>' : ''}${html}`
 }
 
+async function insertIntoDocument(html) {
+  if (!detailDraft.value) return
+  const inserted = await editorRef.value?.insertHtml?.(html)
+  if (inserted) {
+    return
+  }
+  appendToDocument(html)
+}
+
 function insertInterviewInfoBlock() {
   if (!detailDraft.value) return
-  appendToDocument([
+  void insertIntoDocument([
     '<h2>面试信息</h2>',
     `<p><strong>时间：</strong>${escapeHtml(formatDateTime(detailDraft.value.scheduled_at))}</p>`,
     `<p><strong>形式：</strong>${escapeHtml(typeLabel(detailDraft.value.interview_type))}</p>`,
@@ -1050,7 +1063,7 @@ function insertInterviewInfoBlock() {
 
 function insertQuestionTemplate() {
   if (!detailDraft.value) return
-  appendToDocument([
+  void insertIntoDocument([
     '<h2>问题记录</h2>',
     '<h3>问题 1</h3>',
     '<p>问题内容：</p>',
@@ -1060,9 +1073,36 @@ function insertQuestionTemplate() {
   ].join(''))
 }
 
+function insertStarAnswerTemplate() {
+  if (!detailDraft.value) return
+  void insertIntoDocument([
+    '<h3>STAR 回答</h3>',
+    '<ul>',
+    '<li>Situation: 背景是什么？</li>',
+    '<li>Task: 我的目标是什么？</li>',
+    '<li>Action: 我具体做了什么？</li>',
+    '<li>Result: 结果和量化收益是什么？</li>',
+    '</ul>',
+  ].join(''))
+}
+
+function insertFeedbackTemplate() {
+  if (!detailDraft.value) return
+  void insertIntoDocument([
+    '<h2>现场反馈</h2>',
+    '<ul>',
+    '<li>面试官关注点：</li>',
+    '<li>我回答最顺的部分：</li>',
+    '<li>我明显卡顿的部分：</li>',
+    '<li>对方的正向信号：</li>',
+    '<li>对方的风险信号：</li>',
+    '</ul>',
+  ].join(''))
+}
+
 function insertReviewTemplate() {
   if (!detailDraft.value) return
-  appendToDocument([
+  void insertIntoDocument([
     '<h2>复盘总结</h2>',
     '<ul>',
     '<li>答得好的地方：</li>',
@@ -1075,7 +1115,7 @@ function insertReviewTemplate() {
 
 function insertTodoTemplate() {
   if (!detailDraft.value) return
-  appendToDocument([
+  void insertIntoDocument([
     '<h2>后续行动</h2>',
     '<ul>',
     '<li>发送感谢信</li>',

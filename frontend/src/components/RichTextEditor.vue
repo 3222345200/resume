@@ -20,6 +20,7 @@
       <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('bold')"><strong>B</strong></button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('italic')"><em>I</em></button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('blockquote')">引用</button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertUnorderedList')">• 列表</button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertOrderedList')">1. 列表</button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="insertLink">链接</button>
@@ -31,6 +32,7 @@
       class="rich-text-surface"
       contenteditable="true"
       :data-placeholder="placeholder"
+      @keydown="handleEditorKeydown"
       @focus="captureSelection"
       @mouseup="captureSelection"
       @keyup="captureSelection"
@@ -38,6 +40,44 @@
       @blur="handleEditorBlur"
       @paste.prevent="handlePaste"
     ></div>
+
+    <div v-if="linkDialogOpen" class="rich-link-dialog-mask" @click.self="closeLinkDialog">
+      <section class="rich-link-dialog-card" role="dialog" aria-modal="true" aria-label="设置链接">
+        <p class="eyebrow rich-link-dialog-eyebrow">Link</p>
+        <h3 class="rich-link-dialog-title">设置超链接</h3>
+        <p class="rich-link-dialog-copy">可以分别设置跳转地址和显示名称。</p>
+
+        <div class="rich-link-dialog-form">
+          <label>
+            <span>链接地址</span>
+            <input
+              ref="linkUrlInputRef"
+              v-model.trim="linkDialog.url"
+              type="text"
+              placeholder="https://example.com"
+              @keydown.enter.prevent="submitLinkDialog"
+            />
+          </label>
+          <label>
+            <span>显示名称</span>
+            <input
+              v-model="linkDialog.text"
+              type="text"
+              placeholder="例如：项目主页"
+              @keydown.enter.prevent="submitLinkDialog"
+            />
+          </label>
+        </div>
+
+        <p v-if="linkDialogError" class="rich-link-dialog-error">{{ linkDialogError }}</p>
+
+        <div class="rich-link-dialog-actions">
+          <button type="button" class="ghost-button" @click="closeLinkDialog">取消</button>
+          <button type="button" class="primary-button" @click="submitLinkDialog">插入链接</button>
+        </div>
+      </section>
+    </div>
+
   </div>
 </template>
 
@@ -70,11 +110,18 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const editorRef = ref(null)
+const linkUrlInputRef = ref(null)
 const savedRange = ref(null)
 const isComposing = ref(false)
 const isApplyingCommand = ref(false)
 const lastHtml = ref('')
 const foldedHeadingState = ref({})
+const linkDialogOpen = ref(false)
+const linkDialogError = ref('')
+const linkDialog = ref({
+  url: '',
+  text: '',
+})
 
 const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A', 'H1', 'H2', 'H3', 'BLOCKQUOTE'])
 
@@ -148,6 +195,13 @@ function sanitizeNode(node) {
     }
   }
 
+  if (node.tagName === 'OL') {
+    const start = Number(node.getAttribute('start'))
+    if (Number.isInteger(start) && start > 1) {
+      element.setAttribute('start', String(start))
+    }
+  }
+
   Array.from(node.childNodes).forEach((child) => {
     element.appendChild(sanitizeNode(child))
   })
@@ -164,6 +218,20 @@ function sanitizeHtml(html) {
   const wrapper = document.createElement('div')
   wrapper.appendChild(fragment)
   return wrapper.innerHTML
+}
+
+function normalizeLinkHref(value) {
+  const raw = String(value || '').trim()
+  if (!raw) {
+    return ''
+  }
+  if (/^(https?:\/\/|mailto:)/i.test(raw)) {
+    return raw
+  }
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+    return `mailto:${raw}`
+  }
+  return `https://${raw}`
 }
 
 function isSelectionInsideEditor(range) {
@@ -238,7 +306,7 @@ function getClosestBlockElement(node) {
     return null
   }
 
-  const block = startNode.closest?.('p, h1, h2, h3, blockquote')
+  const block = startNode.closest?.('p, h1, h2, h3, blockquote, li')
   return block && editor.contains(block) ? block : null
 }
 
@@ -274,6 +342,85 @@ function getBlockElementFromRange(range) {
   return null
 }
 
+function getCurrentBlockElement() {
+  return getBlockElementFromRange(getSelectionRange())
+}
+
+function getTextBeforeCaretInBlock(block) {
+  const range = getSelectionRange()
+  if (!block || !range || !range.collapsed) {
+    return ''
+  }
+
+  const probe = range.cloneRange()
+  probe.selectNodeContents(block)
+  probe.setEnd(range.startContainer, range.startOffset)
+  return String(probe.toString() || '')
+}
+
+function isBlockElement(node) {
+  return Boolean(node?.nodeType === Node.ELEMENT_NODE && /^(P|H1|H2|H3|BLOCKQUOTE|UL|OL|LI)$/.test(node.tagName))
+}
+
+function getTopLevelChild(node) {
+  const editor = editorRef.value
+  if (!editor || !node) {
+    return null
+  }
+
+  let current = node.nodeType === Node.ELEMENT_NODE ? node : node.parentNode
+  while (current && current.parentNode && current.parentNode !== editor) {
+    current = current.parentNode
+  }
+
+  if (current && current.parentNode === editor) {
+    return current
+  }
+  return null
+}
+
+function wrapCurrentInlineRun(tagName) {
+  const editor = editorRef.value
+  const range = getSelectionRange()
+  if (!editor || !range) {
+    return false
+  }
+
+  const anchorNode = getTopLevelChild(range.startContainer)
+  if (!anchorNode || isBlockElement(anchorNode)) {
+    return false
+  }
+
+  const inlineNodes = Array.from(editor.childNodes)
+  const anchorIndex = inlineNodes.indexOf(anchorNode)
+  if (anchorIndex === -1) {
+    return false
+  }
+
+  let startIndex = anchorIndex
+  let endIndex = anchorIndex
+
+  while (startIndex > 0 && !isBlockElement(inlineNodes[startIndex - 1])) {
+    startIndex -= 1
+  }
+
+  while (endIndex < inlineNodes.length - 1 && !isBlockElement(inlineNodes[endIndex + 1])) {
+    endIndex += 1
+  }
+
+  const replacement = document.createElement(tagName)
+  const fragment = document.createDocumentFragment()
+  for (let index = startIndex; index <= endIndex; index += 1) {
+    fragment.appendChild(inlineNodes[index])
+  }
+  replacement.appendChild(fragment)
+
+  const insertBeforeNode = editor.childNodes[startIndex] || null
+  editor.insertBefore(replacement, insertBeforeNode)
+  placeCaretAtEnd(replacement)
+  return true
+}
+
 function placeCaretAtEnd(element) {
   if (!element) {
     return
@@ -301,6 +448,10 @@ async function replaceCurrentBlock(tagName) {
     return false
   }
 
+  if (currentBlock.tagName === 'LI') {
+    return replaceCurrentListItem(tagName, currentBlock)
+  }
+
   if (currentBlock.tagName.toLowerCase() === tagName) {
     return true
   }
@@ -310,6 +461,55 @@ async function replaceCurrentBlock(tagName) {
     replacement.appendChild(currentBlock.firstChild)
   }
   currentBlock.replaceWith(replacement)
+  placeCaretAtEnd(replacement)
+  emitCurrentValue()
+  await nextTick()
+  decorateFoldableSections()
+  placeCaretAtEnd(replacement)
+  return true
+}
+
+async function replaceCurrentListItem(tagName, listItem) {
+  const list = listItem?.parentElement
+  if (!list || !/^(UL|OL)$/.test(list.tagName)) {
+    return false
+  }
+
+  const editor = editorRef.value
+  if (!editor) {
+    return false
+  }
+
+  const items = Array.from(list.children).filter((node) => node.tagName === 'LI')
+  const currentIndex = items.indexOf(listItem)
+  if (currentIndex === -1) {
+    return false
+  }
+
+  const replacement = document.createElement(tagName)
+  while (listItem.firstChild) {
+    replacement.appendChild(listItem.firstChild)
+  }
+
+  const fragment = document.createDocumentFragment()
+  const beforeItems = items.slice(0, currentIndex)
+  const afterItems = items.slice(currentIndex + 1)
+
+  if (beforeItems.length) {
+    const beforeList = document.createElement(list.tagName.toLowerCase())
+    beforeItems.forEach((item) => beforeList.appendChild(item))
+    fragment.appendChild(beforeList)
+  }
+
+  fragment.appendChild(replacement)
+
+  if (afterItems.length) {
+    const afterList = document.createElement(list.tagName.toLowerCase())
+    afterItems.forEach((item) => afterList.appendChild(item))
+    fragment.appendChild(afterList)
+  }
+
+  list.replaceWith(fragment)
   placeCaretAtEnd(replacement)
   emitCurrentValue()
   await nextTick()
@@ -418,8 +618,18 @@ function renderValueToDom(value) {
   })
 }
 
+function serializeEditorHtml() {
+  const editor = editorRef.value
+  if (!editor) {
+    return ''
+  }
+  const clone = editor.cloneNode(true)
+  const html = sanitizeHtml(clone.innerHTML || '')
+  return html
+}
+
 function emitCurrentValue() {
-  const html = sanitizeHtml(editorRef.value?.innerHTML || '')
+  const html = serializeEditorHtml()
   lastHtml.value = html
   emit('update:modelValue', html)
 }
@@ -443,6 +653,82 @@ function handleEditorBlur() {
   })
 }
 
+function handleEditorKeydown(event) {
+  if (event.key === 'Tab') {
+    event.preventDefault()
+    const currentBlock = getCurrentBlockElement()
+    if (currentBlock?.tagName === 'LI') {
+      void execCommand(event.shiftKey ? 'outdent' : 'indent')
+      return
+    }
+    void insertHtml('&nbsp;&nbsp;&nbsp;&nbsp;')
+    return
+  }
+
+  if (event.key === ' ' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (maybeConvertBlockShortcut()) {
+      event.preventDefault()
+    }
+  }
+}
+
+function maybeConvertBlockShortcut() {
+  const currentBlock = getCurrentBlockElement()
+  const range = getSelectionRange()
+  if (!currentBlock || !range || !range.collapsed) {
+    return false
+  }
+
+  if (!['P', 'DIV'].includes(currentBlock.tagName)) {
+    return false
+  }
+
+  const textBeforeCaret = getTextBeforeCaretInBlock(currentBlock)
+  const orderedMatch = textBeforeCaret.match(/^(\d+)\.$/)
+  if (orderedMatch) {
+    return convertBlockToList(currentBlock, {
+      type: 'ol',
+      start: Number(orderedMatch[1]),
+      prefixLength: textBeforeCaret.length,
+    })
+  }
+
+  if (/^[-*]$/.test(textBeforeCaret)) {
+    return convertBlockToList(currentBlock, {
+      type: 'ul',
+      prefixLength: textBeforeCaret.length,
+    })
+  }
+
+  return false
+}
+
+function convertBlockToList(currentBlock, options) {
+  const { type, start = 1, prefixLength = 0 } = options
+  const finalList = document.createElement(type === 'ol' ? 'ol' : 'ul')
+  if (type === 'ol' && Number.isFinite(start) && start > 1) {
+    finalList.setAttribute('start', String(start))
+  }
+
+  const item = document.createElement('li')
+  const trailingText = String(currentBlock.textContent || '').slice(prefixLength)
+  if (trailingText) {
+    item.textContent = trailingText
+  } else {
+    item.innerHTML = '<br>'
+  }
+  finalList.appendChild(item)
+
+  currentBlock.replaceWith(finalList)
+  placeCaretAtEnd(item)
+  emitCurrentValue()
+  nextTick(() => {
+    decorateFoldableSections()
+    placeCaretAtEnd(item)
+  })
+  return true
+}
+
 async function execCommand(command, value = null) {
   isApplyingCommand.value = true
   restoreSelection()
@@ -454,11 +740,67 @@ async function execCommand(command, value = null) {
   isApplyingCommand.value = false
 }
 
+async function insertHtml(html) {
+  const editor = editorRef.value
+  if (!editor) {
+    return false
+  }
+
+  const sanitized = sanitizeHtml(html)
+  if (!sanitized.trim()) {
+    return false
+  }
+
+  isApplyingCommand.value = true
+  restoreSelection()
+
+  const selection = window.getSelection()
+  const range = getSelectionRange()
+  if (!selection || !range) {
+    isApplyingCommand.value = false
+    return false
+  }
+
+  range.deleteContents()
+  const fragment = range.createContextualFragment(sanitized)
+  const insertedNodes = Array.from(fragment.childNodes)
+  const lastNode = insertedNodes[insertedNodes.length - 1] || null
+  range.insertNode(fragment)
+
+  if (lastNode) {
+    const nextRange = document.createRange()
+    if (lastNode.nodeType === Node.TEXT_NODE) {
+      nextRange.setStart(lastNode, lastNode.textContent?.length || 0)
+    } else {
+      nextRange.selectNodeContents(lastNode)
+    }
+    nextRange.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(nextRange)
+    savedRange.value = nextRange.cloneRange()
+  } else {
+    captureSelection()
+  }
+
+  emitCurrentValue()
+  await nextTick()
+  decorateFoldableSections()
+  restoreSelection()
+  isApplyingCommand.value = false
+  return true
+}
+
 async function applyBlock(tagName) {
   if (['p', 'h1', 'h2', 'h3', 'blockquote'].includes(tagName)) {
     isApplyingCommand.value = true
     try {
       const replaced = await replaceCurrentBlock(tagName)
+      if (!replaced && wrapCurrentInlineRun(tagName)) {
+        emitCurrentValue()
+        await nextTick()
+        decorateFoldableSections()
+        return
+      }
       if (!replaced) {
         await execCommand('formatBlock', tagName)
       }
@@ -473,14 +815,67 @@ async function applyBlock(tagName) {
 
 function insertLink() {
   restoreSelection()
-  const selectedText = window.getSelection()?.toString().trim()
-  const fallback = selectedText && /^(https?:\/\/|mailto:)/i.test(selectedText) ? selectedText : 'https://'
-  const href = window.prompt('请输入链接地址', fallback)
-  if (!href) {
+  const selectedText = window.getSelection()?.toString().trim() || ''
+  const selectedLink = getSelectedAnchorElement()
+  linkDialog.value = {
+    url: selectedLink?.getAttribute('href') || (selectedText && /^(https?:\/\/|mailto:)/i.test(selectedText) ? selectedText : ''),
+    text: selectedText || selectedLink?.textContent || '',
+  }
+  linkDialogError.value = ''
+  linkDialogOpen.value = true
+  nextTick(() => {
+    linkUrlInputRef.value?.focus()
+    linkUrlInputRef.value?.select?.()
+  })
+}
+
+function getSelectedAnchorElement() {
+  const range = getSelectionRange()
+  if (!range) {
+    return null
+  }
+
+  const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer
+    : range.startContainer.parentElement
+  const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE
+    ? range.endContainer
+    : range.endContainer.parentElement
+
+  const startAnchor = startElement?.closest?.('a')
+  const endAnchor = endElement?.closest?.('a')
+  if (startAnchor && startAnchor === endAnchor && editorRef.value?.contains(startAnchor)) {
+    return startAnchor
+  }
+  return null
+}
+
+function closeLinkDialog() {
+  linkDialogOpen.value = false
+  linkDialogError.value = ''
+  nextTick(() => {
     restoreSelection()
+  })
+}
+
+async function submitLinkDialog() {
+  const href = normalizeLinkHref(linkDialog.value.url)
+  const displayText = String(linkDialog.value.text || '').trim()
+
+  if (!href) {
+    linkDialogError.value = '请先填写链接地址。'
     return
   }
-  execCommand('createLink', href)
+
+  const linkHtml = `<a href="${escapeHtml(href)}">${escapeHtml(displayText || href)}</a>`
+  const inserted = await insertHtml(linkHtml)
+  if (!inserted) {
+    linkDialogError.value = '当前无法插入链接，请先把光标放回编辑区。'
+    return
+  }
+
+  linkDialogOpen.value = false
+  linkDialogError.value = ''
 }
 
 function handlePaste(event) {
@@ -558,6 +953,10 @@ defineExpose({
   getSurfaceElement() {
     return editorRef.value
   },
+  focusEditor() {
+    restoreSelection()
+  },
+  insertHtml,
 })
 </script>
 
