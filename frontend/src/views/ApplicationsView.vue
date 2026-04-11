@@ -348,19 +348,6 @@
             <p v-else-if="detailSections.resume" class="applications-muted">暂无关联简历。</p>
           </section>
 
-          <section class="applications-detail-card">
-            <button class="applications-section-toggle" type="button" @click="toggleDetailSection('interview')">
-              <div class="applications-section-head">
-                <h3>面试记录入口</h3>
-                <p>从投递进入后续面试流程</p>
-              </div>
-              <span class="applications-section-arrow" :class="{ 'is-open': detailSections.interview }"></span>
-            </button>
-            <div v-if="detailSections.interview" class="applications-detail-row">
-              <div><strong>{{ detail.interview_count }}</strong><p>当前已关联面试轮次</p></div>
-              <RouterLink class="ghost-button" :to="`/interviews?application_id=${detail.id}&create=1`">进入面试记录</RouterLink>
-            </div>
-          </section>
         </template>
         <div v-else class="applications-detail-empty">选择一条投递记录后，这里会展示完整详情。</div>
       </aside>

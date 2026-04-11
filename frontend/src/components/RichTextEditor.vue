@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="rich-text-editor" :class="{ 'is-left-toolbar': toolbarMode === 'left' }">
     <div class="rich-text-toolbar">
       <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('p')">T</button>
@@ -20,9 +20,15 @@
       <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('bold')"><strong>B</strong></button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('italic')"><em>I</em></button>
+      <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('underline')"><u>U</u></button>
+      <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('strikeThrough')"><s>S</s></button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('blockquote')">引用</button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertUnorderedList')">• 列表</button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertOrderedList')">1. 列表</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyLeft')">左对齐</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyCenter')">居中</button>
+      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyRight')">右对齐</button>
+      <button v-if="toolbarMode !== 'left' && enableTables" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="requestInsertTable">表格</button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="insertLink">链接</button>
       <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('removeFormat')">清格式</button>
     </div>
@@ -39,6 +45,8 @@
       @input="handleEditorInput"
       @blur="handleEditorBlur"
       @paste.prevent="handlePaste"
+      @dragstart.prevent="handleEditorDragStart"
+      @drop.prevent="handleEditorDrop"
     ></div>
 
     <div v-if="linkDialogOpen" class="rich-link-dialog-mask" @click.self="closeLinkDialog">
@@ -105,9 +113,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  enableTables: {
+    type: Boolean,
+    default: false,
+  },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'table-state-change', 'request-insert-table'])
 
 const editorRef = ref(null)
 const linkUrlInputRef = ref(null)
@@ -122,8 +134,40 @@ const linkDialog = ref({
   url: '',
   text: '',
 })
+const tableResizeState = ref(null)
+const isPointerSelecting = ref(false)
+let decorationTimer = null
 
-const allowedTags = new Set(['P', 'DIV', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A', 'H1', 'H2', 'H3', 'BLOCKQUOTE'])
+const allowedTags = new Set([
+  'P',
+  'DIV',
+  'BR',
+  'STRONG',
+  'B',
+  'EM',
+  'I',
+  'U',
+  'S',
+  'STRIKE',
+  'SPAN',
+  'FONT',
+  'UL',
+  'OL',
+  'LI',
+  'A',
+  'H1',
+  'H2',
+  'H3',
+  'BLOCKQUOTE',
+  'TABLE',
+  'THEAD',
+  'TBODY',
+  'TR',
+  'TH',
+  'TD',
+  'COLGROUP',
+  'COL',
+])
 
 function escapeHtml(value) {
   return String(value || '')
@@ -149,6 +193,43 @@ function plainTextToHtml(value) {
   }
 
   return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join('')
+}
+
+function clampTableSize(value, minimum, maximum) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) {
+    return minimum
+  }
+  return Math.min(maximum, Math.max(minimum, Math.round(number)))
+}
+
+function normalizePixelSize(value, minimum = 48, maximum = 1200) {
+  const match = String(value || '').match(/(\d+(?:\.\d+)?)px/i)
+  if (!match) {
+    return ''
+  }
+  const number = Number(match[1])
+  if (!Number.isFinite(number)) {
+    return ''
+  }
+  return `${Math.min(maximum, Math.max(minimum, Math.round(number)))}px`
+}
+
+function normalizeCssColor(value) {
+  const raw = String(value || '').trim()
+  if (!raw) {
+    return ''
+  }
+  const tester = new Option().style
+  tester.color = ''
+  tester.color = raw
+  return tester.color || ''
+}
+
+function extractStyleValue(styleText, propertyName) {
+  const pattern = new RegExp(`${propertyName}\\s*:\\s*([^;]+)`, 'i')
+  const matched = String(styleText || '').match(pattern)
+  return matched ? matched[1].trim() : ''
 }
 
 function normalizeInputHtml(value) {
@@ -202,9 +283,65 @@ function sanitizeNode(node) {
     }
   }
 
+  if (node.tagName === 'TABLE') {
+    element.classList.add('rich-doc-table')
+  }
+
+  if (node.tagName === 'FONT') {
+    const color = normalizeCssColor(node.getAttribute('color'))
+    if (color) {
+      element.style.color = color
+    }
+  }
+
+  if (node.tagName === 'SPAN') {
+    const color = normalizeCssColor(extractStyleValue(node.getAttribute('style'), 'color'))
+    if (color) {
+      element.style.color = color
+    }
+  }
+
+  if (['P', 'DIV', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'LI', 'TD', 'TH'].includes(node.tagName)) {
+    const textAlign = (
+      extractStyleValue(node.getAttribute('style'), 'text-align')
+      || String(node.getAttribute('align') || '')
+    ).toLowerCase()
+    if (['left', 'center', 'right'].includes(textAlign)) {
+      element.style.textAlign = textAlign
+    }
+    const color = normalizeCssColor(extractStyleValue(node.getAttribute('style'), 'color'))
+    if (color) {
+      element.style.color = color
+    }
+  }
+
+  if (node.tagName === 'COL') {
+    const width = normalizePixelSize(node.getAttribute('style') || node.style?.width || node.getAttribute('width'))
+    if (width) {
+      element.style.width = width
+    }
+  }
+
+  if (['TD', 'TH'].includes(node.tagName)) {
+    const colspan = Number(node.getAttribute('colspan'))
+    const rowspan = Number(node.getAttribute('rowspan'))
+    if (Number.isInteger(colspan) && colspan > 1 && colspan <= 12) {
+      element.setAttribute('colspan', String(colspan))
+    }
+    if (Number.isInteger(rowspan) && rowspan > 1 && rowspan <= 50) {
+      element.setAttribute('rowspan', String(rowspan))
+    }
+  }
+
   Array.from(node.childNodes).forEach((child) => {
     element.appendChild(sanitizeNode(child))
   })
+
+  if (['TD', 'TH'].includes(node.tagName) && !element.childNodes.length) {
+    const paragraph = document.createElement('p')
+    paragraph.innerHTML = '<br>'
+    element.appendChild(paragraph)
+  }
   return element
 }
 
@@ -295,6 +432,34 @@ function getSelectionRange() {
   return isSelectionInsideEditor(range) ? range : null
 }
 
+function hasExpandedSelectionInEditor() {
+  const range = getSelectionRange()
+  return Boolean(range && !range.collapsed)
+}
+
+function shouldDeferDecoration() {
+  return isPointerSelecting.value || hasExpandedSelectionInEditor()
+}
+
+function isEditorFocused() {
+  return document.activeElement === editorRef.value
+}
+
+function scheduleDecoration(delay = 80) {
+  if (decorationTimer) {
+    clearTimeout(decorationTimer)
+  }
+
+  decorationTimer = window.setTimeout(() => {
+    decorationTimer = null
+    if (shouldDeferDecoration()) {
+      scheduleDecoration(120)
+      return
+    }
+    decorateFoldableSections()
+  }, delay)
+}
+
 function getClosestBlockElement(node) {
   const editor = editorRef.value
   if (!editor || !node) {
@@ -344,6 +509,122 @@ function getBlockElementFromRange(range) {
 
 function getCurrentBlockElement() {
   return getBlockElementFromRange(getSelectionRange())
+}
+
+function getSelectedTableCell(range = getSelectionRange()) {
+  const editor = editorRef.value
+  if (!editor || !range) {
+    return null
+  }
+
+  const startElement = range.startContainer.nodeType === Node.ELEMENT_NODE
+    ? range.startContainer
+    : range.startContainer.parentElement
+  const endElement = range.endContainer.nodeType === Node.ELEMENT_NODE
+    ? range.endContainer
+    : range.endContainer.parentElement
+
+  const startCell = startElement?.closest?.('td, th')
+  const endCell = endElement?.closest?.('td, th')
+  if (startCell && startCell === endCell && editor.contains(startCell)) {
+    return startCell
+  }
+  return null
+}
+
+function getSelectedTable(range = getSelectionRange()) {
+  return getSelectedTableCell(range)?.closest?.('table') || null
+}
+
+function getTableRows(table) {
+  return Array.from(table?.querySelectorAll?.('tr') || [])
+}
+
+function getTableCells(row) {
+  return Array.from(row?.children || []).filter((node) => /^(TD|TH)$/.test(node.tagName))
+}
+
+function ensureCellContent(cell) {
+  if (!cell) {
+    return
+  }
+  if (!cell.childNodes.length) {
+    const paragraph = document.createElement('p')
+    paragraph.innerHTML = '<br>'
+    cell.appendChild(paragraph)
+  }
+}
+
+function getTableColumnCount(table) {
+  const firstRow = getTableRows(table)[0]
+  return getTableCells(firstRow).length
+}
+
+function getTableCellPosition(cell) {
+  const row = cell?.parentElement
+  const table = row?.closest?.('table')
+  if (!row || !table) {
+    return null
+  }
+
+  const rows = getTableRows(table)
+  const rowIndex = rows.indexOf(row)
+  const columnIndex = getTableCells(row).indexOf(cell)
+  if (rowIndex === -1 || columnIndex === -1) {
+    return null
+  }
+
+  return {
+    table,
+    row,
+    rows,
+    rowIndex,
+    columnIndex,
+  }
+}
+
+function createTableCell(tagName = 'td') {
+  const cell = document.createElement(tagName)
+  const paragraph = document.createElement('p')
+  paragraph.innerHTML = '<br>'
+  cell.appendChild(paragraph)
+  return cell
+}
+
+function getOrCreateColgroup(table, columnCount) {
+  let colgroup = table.querySelector('colgroup')
+  if (!colgroup) {
+    colgroup = document.createElement('colgroup')
+    table.insertBefore(colgroup, table.firstChild)
+  }
+
+  while (colgroup.children.length < columnCount) {
+    const col = document.createElement('col')
+    col.style.width = `${Math.max(120, Math.round(1000 / Math.max(columnCount, 1)))}px`
+    colgroup.appendChild(col)
+  }
+
+  while (colgroup.children.length > columnCount) {
+    colgroup.lastElementChild?.remove()
+  }
+
+  return colgroup
+}
+
+function setCaretInsideCell(cell) {
+  ensureCellContent(cell)
+  const anchor = cell.querySelector('p, div, br') || cell
+  placeCaretAtEnd(anchor)
+}
+
+function emitTableState() {
+  const activeCell = getSelectedTableCell()
+  const table = activeCell?.closest?.('table') || null
+  emit('table-state-change', {
+    inTable: Boolean(table),
+    rows: table ? getTableRows(table).length : 0,
+    cols: table ? getTableColumnCount(table) : 0,
+  })
 }
 
 function getTextBeforeCaretInBlock(block) {
@@ -528,6 +809,46 @@ function cleanupHeadingUi(editor) {
   })
 }
 
+function cleanupTableUi(editor) {
+  Array.from(editor.querySelectorAll('.rich-table-cell-selected')).forEach((node) => {
+    node.classList.remove('rich-table-cell-selected')
+  })
+  Array.from(editor.querySelectorAll('.rich-table-resize-handle')).forEach((node) => node.remove())
+}
+
+function decorateTables(editor) {
+  cleanupTableUi(editor)
+
+  const activeCell = getSelectedTableCell()
+  if (activeCell && editor.contains(activeCell)) {
+    activeCell.classList.add('rich-table-cell-selected')
+  }
+
+  Array.from(editor.querySelectorAll('table')).forEach((table) => {
+    table.classList.add('rich-doc-table')
+    const firstRow = getTableRows(table)[0]
+    const columnCount = getTableCells(firstRow).length
+    if (!columnCount) {
+      return
+    }
+
+    getOrCreateColgroup(table, columnCount)
+
+    getTableRows(table).forEach((row) => {
+      getTableCells(row).forEach((cell) => {
+        const handle = document.createElement('button')
+        handle.type = 'button'
+        handle.className = 'rich-table-resize-handle'
+        handle.setAttribute('data-editor-ui', 'true')
+        handle.setAttribute('contenteditable', 'false')
+        handle.setAttribute('tabindex', '-1')
+        handle.setAttribute('aria-label', '调整列表格宽度')
+        cell.appendChild(handle)
+      })
+    })
+  })
+}
+
 function getFoldableSectionNodes(heading) {
   const nodes = []
   const currentLevel = Number(heading.tagName.slice(1))
@@ -551,13 +872,21 @@ function getHeadingPlainText(heading) {
     .trim()
 }
 
-function decorateFoldableSections() {
+function decorateFoldableSections(options = {}) {
   const editor = editorRef.value
   if (!editor) return
+  const { force = false } = options
+
+  if (!force && shouldDeferDecoration()) {
+    scheduleDecoration(120)
+    return
+  }
 
   cleanupHeadingUi(editor)
+  decorateTables(editor)
 
-  if (!props.enableSectionFolding) {
+  if (!props.enableSectionFolding || isEditorFocused()) {
+    emitTableState()
     return
   }
 
@@ -600,6 +929,7 @@ function decorateFoldableSections() {
   })
 
   foldedHeadingState.value = nextFoldState
+  emitTableState()
 }
 
 function renderValueToDom(value) {
@@ -613,7 +943,7 @@ function renderValueToDom(value) {
   }
   lastHtml.value = nextHtml
   nextTick(() => {
-    decorateFoldableSections()
+    decorateFoldableSections({ force: true })
     captureSelection()
   })
 }
@@ -641,7 +971,7 @@ function handleEditorInput() {
   captureSelection()
   emitCurrentValue()
   nextTick(() => {
-    decorateFoldableSections()
+    scheduleDecoration()
   })
 }
 
@@ -649,13 +979,18 @@ function handleEditorBlur() {
   captureSelection()
   emitCurrentValue()
   nextTick(() => {
-    decorateFoldableSections()
+    scheduleDecoration(120)
   })
 }
 
 function handleEditorKeydown(event) {
+  const activeCell = getSelectedTableCell()
   if (event.key === 'Tab') {
     event.preventDefault()
+    if (activeCell) {
+      moveTableSelection(activeCell, event.shiftKey ? -1 : 1)
+      return
+    }
     const currentBlock = getCurrentBlockElement()
     if (currentBlock?.tagName === 'LI') {
       void execCommand(event.shiftKey ? 'outdent' : 'indent')
@@ -669,6 +1004,34 @@ function handleEditorKeydown(event) {
     if (maybeConvertBlockShortcut()) {
       event.preventDefault()
     }
+  }
+}
+
+function moveTableSelection(cell, offset) {
+  const position = getTableCellPosition(cell)
+  if (!position) {
+    return
+  }
+
+  const nextRowIndex = position.rowIndex
+  const nextColumnIndex = position.columnIndex + offset
+  let nextCell = getTableCells(position.rows[nextRowIndex])[nextColumnIndex]
+
+  if (!nextCell && offset > 0) {
+    nextCell = getTableCells(position.rows[nextRowIndex + 1])[0]
+  }
+
+  if (!nextCell && offset < 0) {
+    const previousRow = position.rows[nextRowIndex - 1]
+    const previousCells = getTableCells(previousRow)
+    nextCell = previousCells[previousCells.length - 1]
+  }
+
+  if (nextCell) {
+    setCaretInsideCell(nextCell)
+    nextTick(() => {
+      decorateFoldableSections()
+    })
   }
 }
 
@@ -829,6 +1192,10 @@ function insertLink() {
   })
 }
 
+function requestInsertTable() {
+  emit('request-insert-table')
+}
+
 function getSelectedAnchorElement() {
   const range = getSelectionRange()
   if (!range) {
@@ -890,12 +1257,25 @@ function handlePaste(event) {
 }
 
 function handleSelectionChange() {
-  if (document.activeElement === editorRef.value) {
+  if (editorRef.value?.contains(document.activeElement) || document.activeElement === editorRef.value) {
     captureSelection()
   }
 }
 
+function handleEditorDragStart(event) {
+  event.preventDefault()
+}
+
+function handleEditorDrop(event) {
+  event.preventDefault()
+}
+
 function handleEditorClick(event) {
+  const resizeHandle = event.target.closest?.('.rich-table-resize-handle')
+  if (resizeHandle) {
+    return
+  }
+
   const toggle = event.target.closest?.('.rich-heading-toggle')
 
   if (!toggle || !editorRef.value?.contains(toggle) || toggle.classList.contains('is-placeholder')) {
@@ -924,6 +1304,199 @@ function handleEditorClick(event) {
   })
 }
 
+function handleEditorMouseDown(event) {
+  if (editorRef.value?.contains(event.target)) {
+    isPointerSelecting.value = true
+  }
+
+  const handle = event.target.closest?.('.rich-table-resize-handle')
+  if (!handle || !editorRef.value?.contains(handle)) {
+    return
+  }
+
+  event.preventDefault()
+  event.stopPropagation()
+
+  const cell = handle.closest('td, th')
+  const position = getTableCellPosition(cell)
+  if (!position) {
+    return
+  }
+
+  const colgroup = getOrCreateColgroup(position.table, getTableColumnCount(position.table))
+  const col = colgroup.children[position.columnIndex]
+  const width = col ? Number.parseInt(col.style.width, 10) || cell.getBoundingClientRect().width : cell.getBoundingClientRect().width
+
+  tableResizeState.value = {
+    table: position.table,
+    columnIndex: position.columnIndex,
+    startX: event.clientX,
+    startWidth: Math.max(72, Math.round(width)),
+  }
+}
+
+function handleWindowMouseMove(event) {
+  const state = tableResizeState.value
+  if (!state) {
+    return
+  }
+
+  const colgroup = getOrCreateColgroup(state.table, getTableColumnCount(state.table))
+  const col = colgroup.children[state.columnIndex]
+  if (!col) {
+    return
+  }
+
+  const width = Math.max(72, state.startWidth + event.clientX - state.startX)
+  col.style.width = `${Math.round(width)}px`
+}
+
+function handleWindowMouseUp() {
+  isPointerSelecting.value = false
+
+  if (!tableResizeState.value) {
+    captureSelection()
+    return
+  }
+  tableResizeState.value = null
+  captureSelection()
+  emitCurrentValue()
+  nextTick(() => {
+    decorateFoldableSections()
+  })
+}
+
+function buildTableHtml(options = {}) {
+  const rows = clampTableSize(options.rows, 1, 20)
+  const cols = clampTableSize(options.cols, 1, 8)
+  const withHeader = options.withHeader !== false
+  const columnWidth = Math.max(120, Math.round(960 / cols))
+  const colgroupHtml = Array.from({ length: cols }, () => `<col style="width:${columnWidth}px">`).join('')
+  const headerHtml = withHeader
+    ? `<thead><tr>${Array.from({ length: cols }, (_, index) => `<th><p>表头 ${index + 1}</p></th>`).join('')}</tr></thead>`
+    : ''
+  const bodyRowCount = Math.max(rows - (withHeader ? 1 : 0), 1)
+  const rowsHtml = Array.from({ length: bodyRowCount }, () => (
+    `<tr>${Array.from({ length: cols }, () => '<td><p><br></p></td>').join('')}</tr>`
+  )).join('')
+  return `<table class="rich-doc-table"><colgroup>${colgroupHtml}</colgroup>${headerHtml}<tbody>${rowsHtml}</tbody></table><p><br></p>`
+}
+
+async function insertTable(options = {}) {
+  return insertHtml(buildTableHtml(options))
+}
+
+async function mutateSelectedTable(mutator) {
+  restoreSelection()
+  const cell = getSelectedTableCell()
+  if (!cell) {
+    return false
+  }
+
+  isApplyingCommand.value = true
+  let nextCell = cell
+  try {
+    nextCell = mutator(cell) || cell
+    emitCurrentValue()
+    await nextTick()
+    decorateFoldableSections()
+    if (nextCell) {
+      setCaretInsideCell(nextCell)
+    } else {
+      restoreSelection()
+    }
+    return true
+  } finally {
+    isApplyingCommand.value = false
+  }
+}
+
+async function addTableRow(after = true) {
+  return mutateSelectedTable((cell) => {
+    const position = getTableCellPosition(cell)
+    if (!position) {
+      return cell
+    }
+
+    const newRow = document.createElement('tr')
+    const cells = getTableCells(position.row)
+    cells.forEach(() => {
+      newRow.appendChild(createTableCell('td'))
+    })
+
+    position.row.parentElement?.insertBefore(newRow, after ? position.row.nextSibling : position.row)
+    return getTableCells(newRow)[position.columnIndex] || getTableCells(newRow)[0]
+  })
+}
+
+async function addTableColumn(after = true) {
+  return mutateSelectedTable((cell) => {
+    const position = getTableCellPosition(cell)
+    if (!position) {
+      return cell
+    }
+
+    position.rows.forEach((row) => {
+      const cells = getTableCells(row)
+      const reference = cells[position.columnIndex] || null
+      row.insertBefore(createTableCell(row.parentElement?.tagName === 'THEAD' ? 'th' : 'td'), after ? reference?.nextSibling || null : reference)
+    })
+
+    const colgroup = getOrCreateColgroup(position.table, getTableColumnCount(position.table))
+    const referenceCol = colgroup.children[position.columnIndex] || null
+    const newCol = document.createElement('col')
+    newCol.style.width = `${Math.max(120, Math.round((referenceCol?.getBoundingClientRect?.().width || 160)))}px`
+    colgroup.insertBefore(newCol, after ? referenceCol?.nextSibling || null : referenceCol)
+    return getTableCells(position.rows[position.rowIndex])[position.columnIndex + (after ? 1 : 0)] || cell
+  })
+}
+
+async function deleteTableRow() {
+  return mutateSelectedTable((cell) => {
+    const position = getTableCellPosition(cell)
+    if (!position) {
+      return cell
+    }
+
+    if (position.rows.length <= 1) {
+      const onlyCell = getTableCells(position.row)[0]
+      onlyCell.innerHTML = '<p><br></p>'
+      return onlyCell
+    }
+
+    const fallbackRow = position.rows[position.rowIndex + 1] || position.rows[position.rowIndex - 1]
+    position.row.remove()
+    return getTableCells(fallbackRow)[Math.min(position.columnIndex, getTableCells(fallbackRow).length - 1)] || null
+  })
+}
+
+async function deleteTableColumn() {
+  return mutateSelectedTable((cell) => {
+    const position = getTableCellPosition(cell)
+    if (!position) {
+      return cell
+    }
+
+    const columnCount = getTableColumnCount(position.table)
+    if (columnCount <= 1) {
+      const onlyCell = getTableCells(position.rows[0])[0]
+      onlyCell.innerHTML = '<p><br></p>'
+      return onlyCell
+    }
+
+    position.rows.forEach((row) => {
+      const targetCell = getTableCells(row)[position.columnIndex]
+      targetCell?.remove()
+    })
+
+    const colgroup = getOrCreateColgroup(position.table, columnCount)
+    colgroup.children[position.columnIndex]?.remove()
+
+    const fallbackColumnIndex = Math.max(0, position.columnIndex - 1)
+    return getTableCells(position.rows[position.rowIndex])[fallbackColumnIndex] || null
+  })
+}
+
 watch(
   () => props.modelValue,
   (value) => {
@@ -942,11 +1515,20 @@ onMounted(() => {
   renderValueToDom(props.modelValue)
   document.addEventListener('selectionchange', handleSelectionChange)
   editorRef.value?.addEventListener('click', handleEditorClick)
+  editorRef.value?.addEventListener('mousedown', handleEditorMouseDown)
+  window.addEventListener('mousemove', handleWindowMouseMove)
+  window.addEventListener('mouseup', handleWindowMouseUp)
 })
 
 onUnmounted(() => {
   document.removeEventListener('selectionchange', handleSelectionChange)
   editorRef.value?.removeEventListener('click', handleEditorClick)
+  editorRef.value?.removeEventListener('mousedown', handleEditorMouseDown)
+  window.removeEventListener('mousemove', handleWindowMouseMove)
+  window.removeEventListener('mouseup', handleWindowMouseUp)
+  if (decorationTimer) {
+    clearTimeout(decorationTimer)
+  }
 })
 
 defineExpose({
@@ -957,6 +1539,21 @@ defineExpose({
     restoreSelection()
   },
   insertHtml,
+  insertTable,
+  addTableRowAfter() {
+    return addTableRow(true)
+  },
+  addTableRowBefore() {
+    return addTableRow(false)
+  },
+  addTableColumnAfter() {
+    return addTableColumn(true)
+  },
+  addTableColumnBefore() {
+    return addTableColumn(false)
+  },
+  deleteTableRow,
+  deleteTableColumn,
 })
 </script>
 

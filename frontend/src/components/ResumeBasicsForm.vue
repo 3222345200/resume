@@ -43,10 +43,6 @@
                 <span>字体</span>
                 <CustomSelect v-model="draft.content.layout.section_title_font_family" :options="fontFamilyOptions" />
               </label>
-              <label class="plain-field color-field">
-                <span>颜色</span>
-                <ColorPicker v-model="draft.content.layout.section_title_color" />
-              </label>
               <label class="plain-field">
                 <span>大小</span>
                 <CustomSelect v-model="draft.content.layout.section_title_size" :options="sectionTitleSizeOptions" />
@@ -64,10 +60,6 @@
               <label class="plain-field">
                 <span>字体</span>
                 <CustomSelect v-model="draft.content.layout.content_font_family" :options="fontFamilyOptions" />
-              </label>
-              <label class="plain-field color-field">
-                <span>颜色</span>
-                <ColorPicker v-model="draft.content.layout.content_font_color" />
               </label>
               <label class="plain-field">
                 <span>大小</span>
@@ -503,7 +495,6 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import defaultAvatar from '../assets/default-avatar.jpg'
 import { createCustomSection } from '../stores/resume'
 import AvatarCropDialog from './AvatarCropDialog.vue'
-import ColorPicker from './ColorPicker.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 import CustomSelect from './CustomSelect.vue'
 import MonthPicker from './MonthPicker.vue'

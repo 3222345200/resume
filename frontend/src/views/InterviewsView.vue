@@ -253,7 +253,10 @@
                   v-model="detailDraft.document_content"
                   class="interviews-doc-editor"
                   :enable-section-folding="true"
+                  :enable-tables="true"
                   placeholder="点击开始记录面试过程、问题、复盘和后续行动..."
+                  @table-state-change="handleTableStateChange"
+                  @request-insert-table="openTableDialog"
                 />
               </section>
             </section>
@@ -365,6 +368,31 @@
               <button class="primary-button" type="button" :disabled="savingDetail" @click="saveInterview">保存文档</button>
             </div>
           </section>
+
+          <section class="interviews-card interviews-card-plain">
+            <div class="interviews-card-head">
+              <div>
+                <p class="eyebrow">Tables</p>
+                <h2>表格工具</h2>
+              </div>
+            </div>
+
+            <p class="interviews-muted">点击按钮先设置行数、列数，再把表格插入到当前光标位置。插入后可继续增删行列，并拖拽列边调整宽度。</p>
+
+            <div class="interviews-rail-actions">
+              <button class="primary-button" type="button" @click="openTableDialog">插入表格</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="addTableRowBefore">上方加一行</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="addTableRowAfter">下方加一行</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="addTableColumnBefore">左侧加一列</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="addTableColumnAfter">右侧加一列</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="removeTableRow">删除当前行</button>
+              <button class="ghost-button" type="button" :disabled="!tableState.inTable" @click="removeTableColumn">删除当前列</button>
+            </div>
+
+            <p class="interviews-table-state" :class="{ 'is-active': tableState.inTable }">
+              {{ tableState.inTable ? `当前表格：${tableState.rows} 行 / ${tableState.cols} 列` : '把光标放进表格单元格后，这里会显示当前表格尺寸。' }}
+            </p>
+          </section>
         </template>
 
         <section class="interviews-card interviews-card-plain">
@@ -416,6 +444,42 @@
           <button class="primary-button" type="button" :disabled="savingDialog" @click="saveDialog">
             {{ savingDialog ? '保存中...' : '创建面试' }}
           </button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="tableDialogOpen" class="interviews-dialog-mask" @click.self="closeTableDialog">
+      <div class="interviews-dialog interviews-table-dialog">
+        <div class="interviews-card-head">
+          <div>
+            <p class="eyebrow">Insert Table</p>
+            <h2>插入表格</h2>
+          </div>
+          <button class="interviews-dialog-close" type="button" @click="closeTableDialog">×</button>
+        </div>
+
+        <div class="interviews-dialog-grid">
+          <label>
+            <span>行数</span>
+            <input v-model.number="tableDraft.rows" type="number" min="1" max="20" />
+          </label>
+
+          <label>
+            <span>列数</span>
+            <input v-model.number="tableDraft.cols" type="number" min="1" max="8" />
+          </label>
+
+          <label class="full-row interviews-checkbox-row">
+            <input v-model="tableDraft.withHeader" type="checkbox" />
+            <span>首行为表头</span>
+          </label>
+        </div>
+
+        <p v-if="tableDialogMessage" class="interviews-message">{{ tableDialogMessage }}</p>
+
+        <div class="interviews-actions">
+          <button class="ghost-button" type="button" @click="closeTableDialog">取消</button>
+          <button class="primary-button" type="button" @click="confirmInsertTable">插入表格</button>
         </div>
       </div>
     </div>
@@ -488,6 +552,8 @@ const stats = ref({ total_count: 0, this_week_count: 0, upcoming_count: 0, compl
 const applications = ref([])
 const resumes = ref([])
 const interviews = ref([])
+const tableDraft = reactive({ rows: 3, cols: 3, withHeader: true })
+const tableState = ref({ inTable: false, rows: 0, cols: 0 })
 const detailDraft = ref(null)
 const selectedId = ref('')
 const activeQuickView = ref('all')
@@ -495,8 +561,10 @@ const loadingList = ref(false)
 const savingDetail = ref(false)
 const savingDialog = ref(false)
 const dialogOpen = ref(false)
+const tableDialogOpen = ref(false)
 const message = ref('')
 const dialogMessage = ref('')
+const tableDialogMessage = ref('')
 const isOutlinePanelCollapsed = ref(false)
 const isSidebarCollapsed = ref(false)
 const collapsedOutlineIds = ref({})
@@ -824,8 +892,8 @@ async function selectInterview(id) {
   clearAutosaveTimer()
   selectedId.value = id
   const detail = await requestJson(`/api/interviews/${id}`)
-  isHydratingDraft.value = true
-  detailDraft.value = {
+      isHydratingDraft.value = true
+      detailDraft.value = {
     ...detail,
     scheduled_at: detail.scheduled_at || '',
     follow_up_at: detail.follow_up_at || '',
@@ -1050,6 +1118,105 @@ async function insertIntoDocument(html) {
   appendToDocument(html)
 }
 
+function handleTableStateChange(state) {
+  tableState.value = {
+    inTable: Boolean(state?.inTable),
+    rows: Number(state?.rows) || 0,
+    cols: Number(state?.cols) || 0,
+  }
+}
+
+function openTableDialog() {
+  if (!detailDraft.value) return
+  tableDialogMessage.value = ''
+  tableDraft.rows = Math.min(20, Math.max(1, Number(tableDraft.rows) || 3))
+  tableDraft.cols = Math.min(8, Math.max(1, Number(tableDraft.cols) || 3))
+  tableDialogOpen.value = true
+}
+
+function closeTableDialog() {
+  tableDialogOpen.value = false
+  tableDialogMessage.value = ''
+}
+
+async function insertTableAtSelection() {
+  const inserted = await editorRef.value?.insertTable?.({
+    rows: tableDraft.rows,
+    cols: tableDraft.cols,
+    withHeader: tableDraft.withHeader,
+  })
+  if (inserted) {
+    return true
+  }
+  const rows = Math.min(20, Math.max(1, Number(tableDraft.rows) || 3))
+  const cols = Math.min(8, Math.max(1, Number(tableDraft.cols) || 3))
+  const withHeader = tableDraft.withHeader !== false
+  const colgroup = Array.from({ length: cols }, () => '<col style="width:160px">').join('')
+  const header = withHeader ? `<thead><tr>${Array.from({ length: cols }, (_, index) => `<th><p>表头 ${index + 1}</p></th>`).join('')}</tr></thead>` : ''
+  const bodyRows = Math.max(rows - (withHeader ? 1 : 0), 1)
+  const body = Array.from({ length: bodyRows }, () => `<tr>${Array.from({ length: cols }, () => '<td><p><br></p></td>').join('')}</tr>`).join('')
+  appendToDocument(`<table class="rich-doc-table"><colgroup>${colgroup}</colgroup>${header}<tbody>${body}</tbody></table>`)
+  return false
+}
+
+async function confirmInsertTable() {
+  if (!detailDraft.value) return
+  const rows = Number(tableDraft.rows)
+  const cols = Number(tableDraft.cols)
+  if (!Number.isFinite(rows) || rows < 1 || rows > 20) {
+    tableDialogMessage.value = '行数请填写 1 到 20 之间的数字。'
+    return
+  }
+  if (!Number.isFinite(cols) || cols < 1 || cols > 8) {
+    tableDialogMessage.value = '列数请填写 1 到 8 之间的数字。'
+    return
+  }
+  if (tableDraft.withHeader && rows < 2) {
+    tableDialogMessage.value = '启用表头时，行数至少需要 2 行。'
+    return
+  }
+  closeTableDialog()
+  await insertTableAtSelection()
+}
+
+function syncTableDraft() {
+  if (!tableState.value.inTable) {
+    return
+  }
+  tableDraft.rows = tableState.value.rows
+  tableDraft.cols = tableState.value.cols
+}
+
+async function addTableRowBefore() {
+  await editorRef.value?.addTableRowBefore?.()
+  syncTableDraft()
+}
+
+async function addTableRowAfter() {
+  await editorRef.value?.addTableRowAfter?.()
+  syncTableDraft()
+}
+
+async function addTableColumnBefore() {
+  await editorRef.value?.addTableColumnBefore?.()
+  syncTableDraft()
+}
+
+async function addTableColumnAfter() {
+  await editorRef.value?.addTableColumnAfter?.()
+  syncTableDraft()
+}
+
+async function removeTableRow() {
+  await editorRef.value?.deleteTableRow?.()
+  syncTableDraft()
+}
+
+async function removeTableColumn() {
+  await editorRef.value?.deleteTableColumn?.()
+  syncTableDraft()
+}
+
 function insertInterviewInfoBlock() {
   if (!detailDraft.value) return
   void insertIntoDocument([
@@ -1176,6 +1343,9 @@ watch(
       autosaveState.value = 'saved'
       autosaveError.value = ''
       lastSavedSnapshot.value = ''
+      tableState.value = { inTable: false, rows: 0, cols: 0 }
+      tableDialogOpen.value = false
+      tableDialogMessage.value = ''
       return
     }
     if (isHydratingDraft.value) {

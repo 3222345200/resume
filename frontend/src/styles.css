@@ -3784,20 +3784,23 @@ p {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 16px;
-  overflow: hidden;
+  overflow: visible;
   background: #ffffff;
 }
 
 .rich-text-toolbar {
+  position: relative;
+  z-index: 40;
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
   padding: 10px 12px;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   background: #f7f8fb;
   border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 16px 16px 0 0;
 }
 
 .rich-tool-btn {
@@ -3818,6 +3821,29 @@ p {
   border-color: rgba(15, 23, 42, 0.1);
 }
 
+.rich-toolbar-color {
+  position: relative;
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.rich-toolbar-color-label {
+  font-size: 13px;
+  color: #384250;
+}
+
+.rich-toolbar-color .color-picker {
+  position: relative;
+  z-index: 90;
+}
+
+.rich-toolbar-color .color-picker-panel {
+  z-index: 9999;
+}
+
 .rich-tool-divider {
   flex: 0 0 auto;
   width: 1px;
@@ -3828,6 +3854,7 @@ p {
 
 .rich-text-surface {
   position: relative;
+  z-index: 1;
   width: 100%;
   min-width: 0;
   min-height: 240px;
@@ -3835,6 +3862,8 @@ p {
   color: #111827;
   line-height: 1.85;
   outline: none;
+  border-radius: 0 0 16px 16px;
+  background: #ffffff;
 }
 
 .rich-text-surface:empty::before {
@@ -3874,6 +3903,91 @@ p {
 .rich-text-surface a {
   color: #4f4f4f;
   text-decoration: underline;
+}
+
+.rich-text-surface s,
+.rich-text-surface strike {
+  text-decoration: line-through;
+}
+
+.rich-text-surface table {
+  width: max-content;
+  min-width: 0;
+  margin: 14px 0 18px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  border: 2px solid rgba(55, 65, 81, 0.82);
+  border-radius: 14px 14px 0 0;
+  background: #fff;
+  overflow: hidden;
+}
+
+.rich-text-surface th,
+.rich-text-surface td {
+  position: relative;
+  min-width: 72px;
+  padding: 10px 12px;
+  vertical-align: top;
+  border: 1px solid rgba(75, 85, 99, 0.58);
+  background: #fff;
+}
+
+.rich-text-surface th {
+  background: linear-gradient(180deg, rgba(244, 238, 229, 0.98), rgba(233, 224, 210, 0.96));
+  color: #3e3428;
+  font-weight: 700;
+  box-shadow: inset 0 -1px 0 rgba(133, 108, 78, 0.16);
+}
+
+.rich-text-surface thead tr:first-child th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.rich-text-surface thead tr:first-child th:last-child {
+  border-top-right-radius: 12px;
+}
+
+.rich-text-surface td.rich-table-cell-selected,
+.rich-text-surface th.rich-table-cell-selected {
+  box-shadow: inset 0 0 0 2px rgba(31, 122, 114, 0.48);
+}
+
+.rich-text-surface td > *:last-child,
+.rich-text-surface th > *:last-child {
+  margin-bottom: 0;
+}
+
+.rich-table-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.rich-table-resize-handle::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 3px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(174, 146, 110, 0.26);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.rich-text-surface th:hover .rich-table-resize-handle::before,
+.rich-text-surface td:hover .rich-table-resize-handle::before,
+.rich-table-resize-handle:hover::before {
+  opacity: 1;
 }
 
 .rich-text-surface h1,
@@ -6130,11 +6244,14 @@ body,
   }
 }
 
-.rich-text-surface,
-.rich-text-surface * {
+.rich-text-surface {
   font-family: inherit;
   font-size: 13px;
   line-height: 1.85;
+}
+
+.rich-text-surface * {
+  font-family: inherit;
 }
 
 .avatar-crop-mask {
@@ -8880,6 +8997,19 @@ body,
   gap: 10px;
 }
 
+.interviews-table-state {
+  color: rgba(66, 72, 82, 0.84);
+  font-size: 12px;
+}
+
+.interviews-table-state {
+  margin: 10px 0 0;
+}
+
+.interviews-table-state.is-active {
+  color: rgba(31, 122, 114, 0.96);
+}
+
 .interviews-question-selects {
   grid-template-columns: repeat(2, minmax(120px, 1fr));
 }
@@ -9692,6 +9822,10 @@ body,
   background: rgba(31, 122, 114, 0.05);
 }
 
+.interviews-page-modern .interviews-doc-editor .rich-toolbar-color-label {
+  color: var(--iv-text);
+}
+
 .interviews-page-modern .interviews-doc-editor .rich-text-surface {
   min-height: 0;
   flex: 1 1 auto;
@@ -9726,6 +9860,59 @@ body,
 
 .interviews-page-modern .interviews-doc-editor .rich-text-surface li + li {
   margin-top: 3px;
+}
+
+.interviews-page-modern .interviews-doc-editor .rich-text-surface table {
+  border-color: rgba(42, 52, 64, 0.88);
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+}
+
+.interviews-page-modern .interviews-doc-editor .rich-text-surface th,
+.interviews-page-modern .interviews-doc-editor .rich-text-surface td {
+  border-color: rgba(71, 85, 105, 0.7);
+}
+
+.interviews-page-modern .interviews-doc-editor .rich-text-surface th {
+  background: linear-gradient(180deg, rgba(243, 236, 225, 0.98), rgba(230, 219, 202, 0.96));
+  color: #4a3c2d;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 -1px 0 rgba(137, 111, 77, 0.18);
+}
+
+.interviews-page-modern .interviews-doc-editor .rich-table-resize-handle::before {
+  background: rgba(126, 104, 77, 0.34);
+}
+
+.interviews-table-dialog {
+  width: min(520px, 100%);
+}
+
+.interviews-table-dialog .interviews-dialog-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.interviews-table-dialog .interviews-dialog-grid span {
+  color: rgba(66, 72, 82, 0.84);
+  font-size: 12px;
+}
+
+.interviews-checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.interviews-checkbox-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  margin: 0;
+}
+
+.interviews-checkbox-row span {
+  font-size: 14px !important;
+  color: var(--iv-text, #2c332f) !important;
 }
 
 .rich-fold-heading {

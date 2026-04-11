@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="interviews-page interviews-page-modern dashboard-page dashboard-page-modern">
     <section class="interviews-shell dashboard-shell" :class="{ 'sidebar-collapsed': leftSidebarCollapsed }">
       <aside class="interviews-primary-nav">
@@ -25,7 +25,7 @@
         v-if="leftSidebarCollapsed"
         class="desktop-sidebar-reopen dashboard-desktop-sidebar-reopen"
         type="button"
-        aria-label="展开求职工作台侧栏"
+        aria-label="展开侧栏"
         @click="leftSidebarCollapsed = false"
       >
         <span class="desktop-sidebar-reopen-arrow">&gt;</span>
@@ -36,19 +36,19 @@
           <div class="sidebar-brand interviews-sidebar-brand">
             <div class="brand-row interviews-brand-row">
               <div class="brand-copy-block interviews-brand-copy">
-                <p class="eyebrow">职跃 OfferPilot</p>
+                <p class="eyebrow">OfferPilot</p>
                 <h1>求职工作台</h1>
               </div>
               <button
                 class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
                 type="button"
-                aria-label="收起求职工作台侧栏"
+                aria-label="收起侧栏"
                 @click="leftSidebarCollapsed = true"
               >
                 &lt;
               </button>
             </div>
-            <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
+            <p class="sidebar-desc interviews-sidebar-desc">从这里继续管理简历和投递进度。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
 
@@ -67,17 +67,13 @@
 
             <div class="dashboard-overview-chart">
               <div class="dashboard-overview-chart-copy">
-                <span>当前进度</span>
+                <span>当前重点</span>
                 <strong>{{ quickChartHighlight.value }}</strong>
                 <p>{{ quickChartHighlight.label }}</p>
               </div>
 
               <div class="dashboard-overview-bars" aria-label="求职进度图表">
-                <div
-                  v-for="item in quickChartData"
-                  :key="item.label"
-                  class="dashboard-overview-bar-item"
-                >
+                <div v-for="item in quickChartData" :key="item.label" class="dashboard-overview-bar-item">
                   <span class="dashboard-overview-bar-track">
                     <span class="dashboard-overview-bar-fill" :style="{ height: `${item.height}%` }"></span>
                   </span>
@@ -190,12 +186,8 @@
               <dd>{{ applicationStats.todo_count }}</dd>
             </div>
             <div>
-              <dt>进行中面试</dt>
-              <dd>{{ applicationStats.interviewing_count }}</dd>
-            </div>
-            <div>
-              <dt>待复盘</dt>
-              <dd>{{ interviewStats.pending_review_count }}</dd>
+              <dt>总投递</dt>
+              <dd>{{ applicationStats.total_count }}</dd>
             </div>
             <div>
               <dt>Offer</dt>
@@ -215,7 +207,6 @@
           <div class="interviews-rail-actions">
             <RouterLink class="ghost-button" to="/editor">打开简历管理</RouterLink>
             <RouterLink class="ghost-button" to="/applications">打开投递管理</RouterLink>
-            <RouterLink class="ghost-button" :to="{ path: '/interviews', query: { quick: 'pending' } }">打开面试记录</RouterLink>
           </div>
         </section>
       </aside>
@@ -267,13 +258,6 @@ const applicationStats = reactive({
   todo_count: 0,
 })
 
-const interviewStats = reactive({
-  total_count: 0,
-  this_week_count: 0,
-  upcoming_count: 0,
-  pending_review_count: 0,
-})
-
 const leftSidebarCollapsed = ref(false)
 
 function syncLeftSidebarByViewport() {
@@ -284,23 +268,19 @@ const recentResumes = computed(() => resumeStore.resumes.slice(0, 4))
 const latestResume = computed(() => resumeStore.resumes[0] || null)
 
 const heroTitle = computed(() => {
-  if (!resumeStore.resumes.length) return '先搭好你的第一份求职材料'
-  if (applicationStats.todo_count > 0) return '今天优先推进待跟进的岗位'
-  if (interviewStats.pending_review_count > 0) return '把最近的面试尽快复盘下来'
+  if (!resumeStore.resumes.length) return '先准备你的第一份简历'
+  if (applicationStats.todo_count > 0) return '今天优先推进待跟进岗位'
   return `欢迎回来，${authStore.user?.username || '求职者'}`
 })
 
 const heroSubtitle = computed(() => {
   if (!resumeStore.resumes.length) {
-    return '建议先完成一份基础简历，再从投递管理开始记录岗位、状态流转和面试过程。'
+    return '建议先完成一份基础简历，再开始整理投递记录和跟进节奏。'
   }
   if (applicationStats.todo_count > 0) {
-    return `你现在有 ${applicationStats.todo_count} 条待跟进投递，继续推进的入口已经放到最前面。`
+    return `当前还有 ${applicationStats.todo_count} 条投递待跟进，继续推进就能更快拿到反馈。`
   }
-  if (interviewStats.pending_review_count > 0) {
-    return `还有 ${interviewStats.pending_review_count} 场面试待复盘，及时记录更容易沉淀经验。`
-  }
-  return '这里把简历、投递、面试三部分串成了一套统一工作台，你可以连续推进。'
+  return '这里把简历和投递串成了一套顺手的工作流，可以继续往前推进。'
 })
 
 const statCards = computed(() => [
@@ -319,11 +299,6 @@ const statCards = computed(() => [
     value: applicationStats.todo_count,
     hint: '优先处理需要继续推进的岗位',
   },
-  {
-    label: '待复盘面试',
-    value: interviewStats.pending_review_count,
-    hint: `本周面试 ${interviewStats.this_week_count} 场`,
-  },
 ])
 
 const quickChartData = computed(() => {
@@ -331,7 +306,6 @@ const quickChartData = computed(() => {
     { label: '简历版本', shortLabel: '简历', value: resumeStore.resumes.length },
     { label: '投递总数', shortLabel: '投递', value: applicationStats.total_count },
     { label: '待跟进', shortLabel: '跟进', value: applicationStats.todo_count },
-    { label: '待复盘面试', shortLabel: '面试', value: interviewStats.pending_review_count },
   ]
   const maxValue = Math.max(...items.map((item) => item.value), 1)
   return items.map((item) => ({
@@ -347,12 +321,6 @@ const quickChartHighlight = computed(() => {
       label: '待跟进岗位',
     }
   }
-  if (interviewStats.pending_review_count > 0) {
-    return {
-      value: interviewStats.pending_review_count,
-      label: '待复盘面试',
-    }
-  }
   return {
     value: applicationStats.total_count,
     label: '累计投递数',
@@ -365,9 +333,8 @@ const taskCards = computed(() => {
   if (!resumeStore.resumes.length) {
     cards.push({
       title: '创建第一份简历',
-      description: '先准备一个可以持续迭代的基础版本，后面的投递和面试都围绕它展开。',
+      description: '先准备一份可以持续迭代的基础版本，后续投递都围绕它展开。',
       cta: '打开简历编辑器',
-      sidebarHint: '最近没有简历',
       sidebarTitle: '创建简历',
       to: '/editor',
       accent: true,
@@ -403,17 +370,6 @@ const taskCards = computed(() => {
     accent: false,
   })
 
-  cards.push({
-    title: interviewStats.pending_review_count > 0 ? '复盘最近面试' : '准备新的面试记录',
-    description: interviewStats.pending_review_count > 0
-      ? `当前有 ${interviewStats.pending_review_count} 场面试还没复盘，建议尽快补上。`
-      : '如果已经开始面试，可以把每一场都整理成持续更新的记录文档。',
-    cta: '进入面试记录',
-    sidebarTitle: '进入面试',
-    to: { path: '/interviews', query: interviewStats.pending_review_count > 0 ? { quick: 'pending' } : { create: '1' } },
-    accent: false,
-  })
-
   return cards
 })
 
@@ -430,9 +386,6 @@ function getSidebarQuickIcon(task) {
   }
   if (title.includes('投递')) {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>'
-  }
-  if (title.includes('面试')) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>'
   }
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
 }
@@ -472,26 +425,13 @@ async function loadApplicationStats() {
   }
 }
 
-async function loadInterviewStats() {
-  try {
-    Object.assign(interviewStats, await requestJson('/api/interviews/stats/overview'))
-  } catch {
-    Object.assign(interviewStats, {
-      total_count: 0,
-      this_week_count: 0,
-      upcoming_count: 0,
-      pending_review_count: 0,
-    })
-  }
-}
-
 onMounted(async () => {
   window.addEventListener('resize', syncLeftSidebarByViewport)
   syncLeftSidebarByViewport()
   if (!resumeStore.resumes.length) {
     await resumeStore.bootstrapEditor()
   }
-  await Promise.all([loadApplicationStats(), loadInterviewStats()])
+  await loadApplicationStats()
 })
 
 onUnmounted(() => {

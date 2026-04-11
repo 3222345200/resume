@@ -1,4 +1,4 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import ApplicationsView from '../views/ApplicationsView.vue'
 import DashboardView from '../views/DashboardView.vue'

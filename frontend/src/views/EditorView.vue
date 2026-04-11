@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <main class="interviews-page interviews-page-modern editor-workspace-page" :class="{ 'desktop-sidebar-collapsed': desktopSidebarCollapsed }">
     <section class="interviews-shell editor-workspace-shell">
       <aside class="interviews-primary-nav">
@@ -25,7 +25,7 @@
         v-if="desktopSidebarCollapsed"
         class="desktop-sidebar-reopen editor-desktop-sidebar-reopen"
         type="button"
-        aria-label="展开求职工作台侧栏"
+        aria-label="展开侧栏"
         @click="desktopSidebarCollapsed = false"
       >
         <span class="desktop-sidebar-reopen-arrow">&gt;</span>
@@ -67,10 +67,7 @@
       </section>
 
       <aside class="interviews-rail editor-rail">
-        <ResumePreviewPane
-          :preview-url="resumeStore.previewUrl"
-          @navigate-section="handlePreviewNavigate"
-        />
+        <ResumePreviewPane :preview-url="resumeStore.previewUrl" @navigate-section="handlePreviewNavigate" />
       </aside>
     </section>
 
