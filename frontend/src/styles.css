@@ -765,7 +765,7 @@ p {
   height: 6px;
   border-radius: 50%;
   background: #16202d;
-  transition: transform 0.12s ease;
+  transition: transform 0.08s ease-out, opacity 0.12s ease;
 }
 
 .compass-character.goose .compass-eye {

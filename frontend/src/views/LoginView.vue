@@ -1,11 +1,6 @@
 ﻿<template>
   <main class="auth-page auth-page-compass">
-    <section
-      ref="heroRef"
-      class="auth-hero compass-hero"
-      @pointermove="handleHeroPointerMove"
-      @pointerleave="resetHeroPointer"
-    >
+    <section class="auth-hero compass-hero">
       <div class="compass-hero-noise"></div>
 
       <div class="compass-scene">
@@ -192,7 +187,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import brandMark from '../assets/logo.png'
 import { useAuthStore } from '../stores/auth'
@@ -206,7 +201,6 @@ const isError = ref(false)
 const usernameFocused = ref(false)
 const passwordFocused = ref(false)
 const showPassword = ref(false)
-const heroRef = ref(null)
 
 const form = reactive({
   username: '',
@@ -226,18 +220,34 @@ const characterFactors = {
   pig: { x: 0.32, y: 0.2, rotate: 3.2, tilt: 7, lift: 0, scale: 1.92 },
 }
 
-function handleHeroPointerMove(event) {
-  const hero = heroRef.value
-  if (!hero) {
-    return
-  }
+const pupilFactors = {
+  chicken: { x: 5.4, y: 4.4, focus: -1.2 },
+  duck: { x: 5.8, y: 4.8, focus: -0.8 },
+  goose: { x: 3.8, y: 2.2, focus: 0.8 },
+  dog: { x: 5.6, y: 4.4, focus: 1.3 },
+  pig: { x: 5.2, y: 4.2, focus: 1 },
+}
 
-  const rect = hero.getBoundingClientRect()
-  const normalizedX = ((event.clientX - rect.left) / rect.width) * 2 - 1
-  const normalizedY = ((event.clientY - rect.top) / rect.height) * 2 - 1
+const bodyFollowFactors = {
+  chicken: { x: 0.7, y: 0.65 },
+  duck: { x: 0.86, y: 0.8 },
+  goose: { x: 1, y: 0.92 },
+  dog: { x: 0.9, y: 0.82 },
+  pig: { x: 1.08, y: 0.98 },
+}
 
-  pointer.x = Math.max(-1, Math.min(1, normalizedX))
-  pointer.y = Math.max(-1, Math.min(1, normalizedY))
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function handlePagePointerMove(event) {
+  const width = window.innerWidth || document.documentElement.clientWidth || 1
+  const height = window.innerHeight || document.documentElement.clientHeight || 1
+  const normalizedX = (event.clientX / width) * 2 - 1
+  const normalizedY = (event.clientY / height) * 2 - 1
+
+  pointer.x = clamp(normalizedX, -1, 1)
+  pointer.y = clamp(normalizedY, -1, 1)
 }
 
 function resetHeroPointer() {
@@ -245,20 +255,27 @@ function resetHeroPointer() {
   pointer.y = 0
 }
 
+function handlePagePointerOut(event) {
+  if (!event.relatedTarget) {
+    resetHeroPointer()
+  }
+}
+
 function pupilStyle(name) {
-  const factor = characterFactors[name]
-  const x = pointer.x * 10 * factor.x + (usernameFocused.value ? factor.rotate * 1.5 : 0)
-  const y = pointer.y * 8 * factor.y
+  const factor = pupilFactors[name]
+  const x = pointer.x * factor.x + (usernameFocused.value ? factor.focus : 0)
+  const y = pointer.y * factor.y
   const scale = passwordFocused.value && !showPassword.value ? 0.62 : 1
   return {
-    transform: `translate(${x}px, ${y}px) scale(${scale})`,
+    transform: `translate(${clamp(x, -factor.x, factor.x)}px, ${clamp(y, -factor.y, factor.y)}px) scale(${scale})`,
   }
 }
 
 function headStyle(name) {
   const factor = characterFactors[name]
-  const offsetX = pointer.x * 14 * factor.x
-  const offsetY = pointer.y * 10 * factor.y
+  const follow = bodyFollowFactors[name]
+  const offsetX = pointer.x * 7 * follow.x
+  const offsetY = pointer.y * 6 * follow.y
   const rotate = pointer.x * factor.rotate
   const extra = passwordFocused.value && !showPassword.value && (name === 'duck' || name === 'goose') ? -10 : 0
   return {
@@ -268,9 +285,10 @@ function headStyle(name) {
 
 function characterStyle(name) {
   const factor = characterFactors[name]
+  const follow = bodyFollowFactors[name]
   const lift = (passwordFocused.value && !showPassword.value && name === 'goose' ? -16 : 0) + factor.lift
   return {
-    transform: `translate(${pointer.x * 16 * factor.x}px, ${pointer.y * 14 * factor.y + lift}px) rotate(${factor.tilt + pointer.x * factor.rotate * 0.6}deg) scale(${factor.scale})`,
+    transform: `translate(${pointer.x * 12 * follow.x}px, ${pointer.y * 10 * follow.y + lift}px) rotate(${factor.tilt + pointer.x * factor.rotate * 0.6}deg) scale(${factor.scale})`,
   }
 }
 
@@ -321,4 +339,14 @@ async function handleLogin() {
     submitting.value = false
   }
 }
+
+onMounted(() => {
+  window.addEventListener('pointermove', handlePagePointerMove)
+  window.addEventListener('pointerout', handlePagePointerOut)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', handlePagePointerMove)
+  window.removeEventListener('pointerout', handlePagePointerOut)
+})
 </script>

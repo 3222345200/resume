@@ -1,9 +1,6 @@
 <template>
   <section
-    ref="heroRef"
     class="auth-hero compass-hero"
-    @pointermove="handleHeroPointerMove"
-    @pointerleave="resetHeroPointer"
   >
     <div class="compass-hero-noise"></div>
 
@@ -118,9 +115,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-
-const heroRef = ref(null)
+import { onBeforeUnmount, onMounted, reactive } from 'vue'
 
 const pointer = reactive({
   x: 0,
@@ -135,16 +130,34 @@ const characterFactors = {
   pig: { x: 0.32, y: 0.2, rotate: 3.2, tilt: 7, lift: 0, scale: 1.92 },
 }
 
-function handleHeroPointerMove(event) {
-  const hero = heroRef.value
-  if (!hero) {
-    return
-  }
-  const rect = hero.getBoundingClientRect()
-  const normalizedX = ((event.clientX - rect.left) / rect.width) * 2 - 1
-  const normalizedY = ((event.clientY - rect.top) / rect.height) * 2 - 1
-  pointer.x = Math.max(-1, Math.min(1, normalizedX))
-  pointer.y = Math.max(-1, Math.min(1, normalizedY))
+const pupilFactors = {
+  chicken: { x: 5.4, y: 4.4 },
+  duck: { x: 5.8, y: 4.8 },
+  goose: { x: 3.8, y: 2.2 },
+  dog: { x: 5.6, y: 4.4 },
+  pig: { x: 5.2, y: 4.2 },
+}
+
+const bodyFollowFactors = {
+  chicken: { x: 0.7, y: 0.65 },
+  duck: { x: 0.86, y: 0.8 },
+  goose: { x: 1, y: 0.92 },
+  dog: { x: 0.9, y: 0.82 },
+  pig: { x: 1.08, y: 0.98 },
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value))
+}
+
+function handlePagePointerMove(event) {
+  const width = window.innerWidth || document.documentElement.clientWidth || 1
+  const height = window.innerHeight || document.documentElement.clientHeight || 1
+  const normalizedX = (event.clientX / width) * 2 - 1
+  const normalizedY = (event.clientY / height) * 2 - 1
+
+  pointer.x = clamp(normalizedX, -1, 1)
+  pointer.y = clamp(normalizedY, -1, 1)
 }
 
 function resetHeroPointer() {
@@ -152,24 +165,34 @@ function resetHeroPointer() {
   pointer.y = 0
 }
 
+function handlePagePointerOut(event) {
+  if (!event.relatedTarget) {
+    resetHeroPointer()
+  }
+}
+
 function pupilStyle(name) {
-  const factor = characterFactors[name]
+  const factor = pupilFactors[name]
+  const x = pointer.x * factor.x
+  const y = pointer.y * factor.y
   return {
-    transform: `translate(${pointer.x * 10 * factor.x}px, ${pointer.y * 8 * factor.y}px)`,
+    transform: `translate(${clamp(x, -factor.x, factor.x)}px, ${clamp(y, -factor.y, factor.y)}px)`,
   }
 }
 
 function headStyle(name) {
   const factor = characterFactors[name]
+  const follow = bodyFollowFactors[name]
   return {
-    transform: `translate(${pointer.x * 14 * factor.x}px, ${pointer.y * 10 * factor.y}px) rotate(${pointer.x * factor.rotate}deg)`,
+    transform: `translate(${pointer.x * 7 * follow.x}px, ${pointer.y * 6 * follow.y}px) rotate(${pointer.x * factor.rotate}deg)`,
   }
 }
 
 function characterStyle(name) {
   const factor = characterFactors[name]
+  const follow = bodyFollowFactors[name]
   return {
-    transform: `translate(${pointer.x * 16 * factor.x}px, ${pointer.y * 14 * factor.y}px) rotate(${factor.tilt + pointer.x * factor.rotate * 0.6}deg) scale(${factor.scale})`,
+    transform: `translate(${pointer.x * 12 * follow.x}px, ${pointer.y * 10 * follow.y}px) rotate(${factor.tilt + pointer.x * factor.rotate * 0.6}deg) scale(${factor.scale})`,
   }
 }
 
@@ -179,4 +202,14 @@ function armStyle(name, side) {
     transform: `translate(${pointer.x * 7 * sign}px, ${pointer.y * 5}px) rotate(${16 * sign + pointer.x * 8 * sign}deg)`,
   }
 }
+
+onMounted(() => {
+  window.addEventListener('pointermove', handlePagePointerMove)
+  window.addEventListener('pointerout', handlePagePointerOut)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', handlePagePointerMove)
+  window.removeEventListener('pointerout', handlePagePointerOut)
+})
 </script>
