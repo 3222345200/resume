@@ -28,25 +28,23 @@
         aria-label="展开求职工作台侧栏"
         @click="desktopSidebarCollapsed = false"
       >
-        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
         <span class="desktop-sidebar-reopen-arrow">&gt;</span>
       </button>
 
-      <aside class="interviews-sidebar editor-sidebar">
-        <ResumeSidebar
-          :resumes="resumeStore.resumes"
-          :active-id="resumeStore.currentResumeId"
-          :current-resume="resumeStore.currentResume"
-          :templates="resumeStore.templates"
-          :username="authStore.user?.username || ''"
-          :collapsed-on-mobile="false"
-          @select-resume="handleSelectResume"
-          @create-resume="handleCreateResume"
-          @back-dashboard="router.push('/dashboard')"
-          @logout="handleLogout"
-          @toggle-sidebar="desktopSidebarCollapsed = true"
-        />
-      </aside>
+      <ResumeSidebar
+        class="interviews-sidebar editor-sidebar"
+        :resumes="resumeStore.resumes"
+        :active-id="resumeStore.currentResumeId"
+        :current-resume="resumeStore.currentResume"
+        :templates="resumeStore.templates"
+        :username="authStore.user?.username || ''"
+        :collapsed-on-mobile="false"
+        @select-resume="handleSelectResume"
+        @create-resume="handleCreateResume"
+        @back-dashboard="router.push('/dashboard')"
+        @logout="handleLogout"
+        @toggle-sidebar="desktopSidebarCollapsed = true"
+      />
 
       <section class="interviews-main editor-main">
         <div v-if="resumeStore.loading" class="interviews-editor-canvas editor-loading-card">正在加载简历数据...</div>

@@ -28,7 +28,6 @@
         aria-label="展开求职工作台侧栏"
         @click="isSidebarCollapsed = false"
       >
-        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
         <span class="desktop-sidebar-reopen-arrow">&gt;</span>
       </button>
 
@@ -49,7 +48,7 @@
                 &lt;
               </button>
             </div>
-            <p class="sidebar-desc interviews-sidebar-desc">从面试记录出发，逐步扩展到完整的求职材料与复盘管理。</p>
+            <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
 

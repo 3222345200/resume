@@ -25,10 +25,9 @@
         v-if="leftSidebarCollapsed"
         class="desktop-sidebar-reopen applications-desktop-sidebar-reopen"
         type="button"
-        aria-label="展开投递侧栏"
+        aria-label="展开求职工作台侧栏"
         @click="leftSidebarCollapsed = false"
       >
-        <img class="desktop-sidebar-reopen-logo" :src="brandMark" alt="" aria-hidden="true" />
         <span class="desktop-sidebar-reopen-arrow">&gt;</span>
       </button>
 
@@ -47,9 +46,11 @@
                 @click="leftSidebarCollapsed = true"
               >&lt;</button>
             </div>
-            <p class="sidebar-desc interviews-sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
+            <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
+
+          <button class="primary-button interviews-sidebar-primary" type="button" @click="openCreateDialog">新建投递</button>
 
           <section class="interviews-card interviews-card-soft applications-sidebar-panel">
             <div class="interviews-card-head">

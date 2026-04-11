@@ -14,9 +14,11 @@
           @click="$emit('toggle-sidebar')"
         >&lt;</button>
       </div>
-      <p class="sidebar-desc interviews-sidebar-desc">从简历编辑开始，逐步扩展到完整的求职材料与投递管理。</p>
+      <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
       <p class="sidebar-user interviews-sidebar-user">已登录：{{ username || '用户' }}</p>
     </div>
+
+    <button class="primary-button interviews-sidebar-primary" type="button" @click="$emit('create-resume')">新建简历</button>
 
     <section class="interviews-card interviews-card-soft resume-sidebar-panel">
       <div class="interviews-card-head">
@@ -26,7 +28,6 @@
         </div>
       </div>
 
-      <button class="primary-button" type="button" @click="$emit('create-resume')">新建简历</button>
       <button class="ghost-button sidebar-workspace-button" type="button" @click="$emit('back-dashboard')">
         返回工作台
       </button>
