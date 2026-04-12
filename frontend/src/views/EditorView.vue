@@ -1,5 +1,5 @@
 ﻿<template>
-  <main class="interviews-page interviews-page-modern editor-workspace-page" :class="{ 'desktop-sidebar-collapsed': desktopSidebarCollapsed }">
+  <main class="interviews-page interviews-page-modern editor-workspace-page">
     <section class="interviews-shell editor-workspace-shell">
       <aside class="interviews-primary-nav">
         <div class="interviews-primary-brand" title="OfferPilot">
@@ -21,32 +21,48 @@
         </nav>
       </aside>
 
-      <button
-        v-if="desktopSidebarCollapsed"
-        class="desktop-sidebar-reopen editor-desktop-sidebar-reopen"
-        type="button"
-        aria-label="展开侧栏"
-        @click="desktopSidebarCollapsed = false"
-      >
-        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
-      </button>
+      <div v-if="isMobileWorkspace" class="editor-mobile-switcher" role="tablist" aria-label="移动端简历工作区切换">
+        <button
+          type="button"
+          class="editor-mobile-switch"
+          :class="{ 'is-active': activeMobilePanel === 'sidebar' }"
+          @click="activeMobilePanel = 'sidebar'"
+        >
+          简历
+        </button>
+        <button
+          type="button"
+          class="editor-mobile-switch"
+          :class="{ 'is-active': activeMobilePanel === 'main' }"
+          @click="activeMobilePanel = 'main'"
+        >
+          编辑
+        </button>
+        <button
+          type="button"
+          class="editor-mobile-switch"
+          :class="{ 'is-active': activeMobilePanel === 'rail' }"
+          @click="activeMobilePanel = 'rail'"
+        >
+          预览
+        </button>
+      </div>
 
       <ResumeSidebar
         class="interviews-sidebar editor-sidebar"
+        :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'sidebar' }"
         :resumes="resumeStore.resumes"
         :active-id="resumeStore.currentResumeId"
         :current-resume="resumeStore.currentResume"
         :templates="resumeStore.templates"
         :username="authStore.user?.username || ''"
-        :collapsed-on-mobile="false"
         @select-resume="handleSelectResume"
         @create-resume="handleCreateResume"
         @back-dashboard="router.push('/dashboard')"
         @logout="handleLogout"
-        @toggle-sidebar="desktopSidebarCollapsed = true"
       />
 
-      <section class="interviews-main editor-main">
+      <section class="interviews-main editor-main" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'main' }">
         <div v-if="resumeStore.loading" class="interviews-editor-canvas editor-loading-card">正在加载简历数据...</div>
 
         <template v-else>
@@ -66,7 +82,7 @@
         </template>
       </section>
 
-      <aside class="interviews-rail editor-rail">
+      <aside class="interviews-rail editor-rail" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'rail' }">
         <ResumePreviewPane :preview-url="resumeStore.previewUrl" @navigate-section="handlePreviewNavigate" />
       </aside>
     </section>
@@ -111,8 +127,6 @@ import { useResumeStore } from '../stores/resume'
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
-const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
-
 const primaryNavItems = [
   {
     to: '/dashboard',
@@ -145,14 +159,15 @@ const deleteConfirmOpen = ref(false)
 const noticeDialogOpen = ref(false)
 const noticeDialogTitle = ref('提示')
 const noticeDialogMessage = ref('')
-const desktopSidebarCollapsed = ref(false)
-
+const activeMobilePanel = ref('main')
+const isMobileWorkspace = ref(false)
 let toastTimer = null
 let autoPreviewTimer = null
 let autoPreviewSnapshot = ''
 
-function syncDesktopSidebarByViewport() {
-  desktopSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
+function syncWorkspaceMode() {
+  if (typeof window === 'undefined') return
+  isMobileWorkspace.value = window.innerWidth <= 1024
 }
 
 function openNoticeDialog(message, title = '提示') {
@@ -221,11 +236,13 @@ function scheduleAutoPreviewSync() {
 function handleSelectResume(resumeId) {
   resumeStore.selectResume(resumeId)
   autoPreviewSnapshot = getAutoPreviewSnapshot()
+  activeMobilePanel.value = 'main'
 }
 
 function handleCreateResume() {
   resumeStore.createLocalResume()
   autoPreviewSnapshot = getAutoPreviewSnapshot()
+  activeMobilePanel.value = 'main'
 }
 
 async function handleViewApplications() {
@@ -293,6 +310,7 @@ function handleDelete() {
 }
 
 function handlePreviewNavigate(sectionKey) {
+  activeMobilePanel.value = 'main'
   basicsFormRef.value?.navigateToSection?.(sectionKey)
 }
 
@@ -313,9 +331,9 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  window.addEventListener('resize', syncDesktopSidebarByViewport)
-  syncDesktopSidebarByViewport()
   try {
+    syncWorkspaceMode()
+    window.addEventListener('resize', syncWorkspaceMode)
     await resumeStore.bootstrapEditor()
     autoPreviewSnapshot = getAutoPreviewSnapshot()
   } catch (error) {
@@ -324,7 +342,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncDesktopSidebarByViewport)
+  window.removeEventListener('resize', syncWorkspaceMode)
   if (toastTimer) clearTimeout(toastTimer)
   if (autoPreviewTimer) clearTimeout(autoPreviewTimer)
 })

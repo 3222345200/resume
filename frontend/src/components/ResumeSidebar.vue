@@ -1,5 +1,5 @@
-<template>
-  <aside class="resume-sidebar" :class="{ collapsed: collapsedOnMobile }">
+﻿<template>
+  <aside class="resume-sidebar">
     <div class="resume-sidebar-shell interviews-sidebar-shell">
       <div class="sidebar-brand interviews-sidebar-brand">
       <div class="brand-row interviews-brand-row">
@@ -7,12 +7,6 @@
           <p class="eyebrow">职跃 OfferPilot</p>
           <h1>求职工作台</h1>
         </div>
-        <button
-          class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
-          type="button"
-          aria-label="收起求职工作台侧栏"
-          @click="$emit('toggle-sidebar')"
-        >&lt;</button>
       </div>
       <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
       <p class="sidebar-user interviews-sidebar-user">已登录：{{ username || '用户' }}</p>
@@ -123,13 +117,9 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  collapsedOnMobile: {
-    type: Boolean,
-    default: false,
-  },
 })
 
-defineEmits(['select-resume', 'create-resume', 'back-dashboard', 'logout', 'toggle-sidebar'])
+defineEmits(['select-resume', 'create-resume', 'back-dashboard', 'logout'])
 
 const templateOptions = computed(() =>
   props.templates.map((template) => ({

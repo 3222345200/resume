@@ -1,6 +1,6 @@
 ﻿<template>
   <main class="interviews-page interviews-page-modern">
-    <section class="interviews-shell" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+    <section class="interviews-shell">
       <aside class="interviews-primary-nav">
         <div class="interviews-primary-brand" title="OfferPilot">
           <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
@@ -21,17 +21,13 @@
         </nav>
       </aside>
 
-      <button
-        v-if="isSidebarCollapsed"
-        class="desktop-sidebar-reopen interviews-desktop-sidebar-reopen"
-        type="button"
-        aria-label="展开求职工作台侧栏"
-        @click="isSidebarCollapsed = false"
-      >
-        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
-      </button>
+      <div v-if="isMobileWorkspace" class="workspace-mobile-switcher" role="tablist" aria-label="移动端面试工作区切换">
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'sidebar' }" @click="activeMobilePanel = 'sidebar'">列表</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'main' }" @click="activeMobilePanel = 'main'">记录</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'rail' }" @click="activeMobilePanel = 'rail'">信息</button>
+      </div>
 
-      <aside class="interviews-sidebar">
+      <aside class="interviews-sidebar" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'sidebar' }">
           <div class="interviews-sidebar-shell">
             <div class="sidebar-brand interviews-sidebar-brand">
               <div class="brand-row interviews-brand-row">
@@ -39,14 +35,6 @@
                 <p class="eyebrow">职跃 OfferPilot</p>
                 <h1>求职工作台</h1>
               </div>
-              <button
-                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
-                type="button"
-                aria-label="收起求职工作台侧栏"
-                @click="isSidebarCollapsed = true"
-              >
-                &lt;
-              </button>
             </div>
             <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
@@ -145,7 +133,7 @@
               class="interviews-list-card"
               :class="{ 'is-active': selectedId === item.id }"
               type="button"
-              @click="selectInterview(item.id)"
+              @click="handleSelectInterview(item.id)"
             >
               <div class="interviews-list-top">
                 <strong>{{ item.company_name }}</strong>
@@ -164,7 +152,7 @@
         </div>
       </aside>
 
-      <section class="interviews-main">
+      <section class="interviews-main" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'main' }">
         <div v-if="detailDraft" class="interviews-workspace" :class="{ 'is-outline-collapsed': isOutlinePanelCollapsed }">
           <aside class="interviews-outline-panel" :class="{ 'is-collapsed': isOutlinePanelCollapsed }">
             <section class="interviews-outline-card">
@@ -269,7 +257,7 @@
         </section>
       </section>
 
-      <aside class="interviews-rail">
+      <aside class="interviews-rail" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'rail' }">
         <template v-if="detailDraft">
           <section class="interviews-card interviews-card-plain">
             <div class="interviews-card-head">
@@ -495,8 +483,6 @@ import CustomSelect from '../components/CustomSelect.vue'
 import DateTimePicker from '../components/DateTimePicker.vue'
 import RichTextEditor from '../components/RichTextEditor.vue'
 import { useAuthStore } from '../stores/auth'
-const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
-
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -556,6 +542,8 @@ const tableDraft = reactive({ rows: 3, cols: 3, withHeader: true })
 const tableState = ref({ inTable: false, rows: 0, cols: 0 })
 const detailDraft = ref(null)
 const selectedId = ref('')
+const activeMobilePanel = ref('main')
+const isMobileWorkspace = ref(false)
 const activeQuickView = ref('all')
 const loadingList = ref(false)
 const savingDetail = ref(false)
@@ -566,7 +554,6 @@ const message = ref('')
 const dialogMessage = ref('')
 const tableDialogMessage = ref('')
 const isOutlinePanelCollapsed = ref(false)
-const isSidebarCollapsed = ref(false)
 const collapsedOutlineIds = ref({})
 const autosaveState = ref('saved')
 const autosaveError = ref('')
@@ -579,10 +566,6 @@ let queuedAutosave = false
 let filterTimer = null
 const AUTOSAVE_DELAY = 1500
 const FILTER_DELAY = 250
-
-function syncLeftSidebarByViewport() {
-  isSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
-}
 
 const QUICK_VIEW_IDS = new Set(['all', 'week', 'pending', 'passed', 'rejected'])
 
@@ -830,6 +813,11 @@ function toggleOutlinePanel() {
   isOutlinePanelCollapsed.value = !isOutlinePanelCollapsed.value
 }
 
+function syncWorkspaceMode() {
+  if (typeof window === 'undefined') return
+  isMobileWorkspace.value = window.innerWidth <= 1024
+}
+
 function toggleOutlineBranch(id) {
   collapsedOutlineIds.value = {
     ...collapsedOutlineIds.value,
@@ -905,6 +893,11 @@ async function selectInterview(id) {
   Promise.resolve().then(() => {
     isHydratingDraft.value = false
   })
+}
+
+async function handleSelectInterview(id) {
+  await selectInterview(id)
+  activeMobilePanel.value = 'main'
 }
 
 function buildPayload(source) {
@@ -995,6 +988,7 @@ function openCreateDialog() {
     preparation_note: '',
   })
   dialogOpen.value = true
+  activeMobilePanel.value = 'sidebar'
 }
 
 function applyRouteFilters() {
@@ -1398,9 +1392,9 @@ function handleBeforeUnload(event) {
 }
 
 onMounted(async () => {
+  syncWorkspaceMode()
+  window.addEventListener('resize', syncWorkspaceMode)
   window.addEventListener('beforeunload', handleBeforeUnload)
-  window.addEventListener('resize', syncLeftSidebarByViewport)
-  syncLeftSidebarByViewport()
   applyRouteFilters()
   await Promise.all([loadStats(), loadApplications(), loadResumes()])
   await loadInterviews()
@@ -1408,8 +1402,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', syncWorkspaceMode)
   window.removeEventListener('beforeunload', handleBeforeUnload)
-  window.removeEventListener('resize', syncLeftSidebarByViewport)
   clearAutosaveTimer()
   clearFilterTimer()
 })

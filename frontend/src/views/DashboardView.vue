@@ -1,9 +1,9 @@
 ﻿<template>
   <main class="interviews-page interviews-page-modern dashboard-page dashboard-page-modern">
-    <section class="interviews-shell dashboard-shell" :class="{ 'sidebar-collapsed': leftSidebarCollapsed }">
+    <section class="interviews-shell dashboard-shell">
       <aside class="interviews-primary-nav">
-        <div class="interviews-primary-brand" title="OfferPilot">
-          <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
+        <div class="interviews-primary-brand" title="职跃 OfferPilot">
+          <img class="brand-logo" :src="brandMark" alt="职跃 OfferPilot" />
         </div>
 
         <nav class="interviews-primary-links" aria-label="Primary navigation">
@@ -21,34 +21,22 @@
         </nav>
       </aside>
 
-      <button
-        v-if="leftSidebarCollapsed"
-        class="desktop-sidebar-reopen dashboard-desktop-sidebar-reopen"
-        type="button"
-        aria-label="展开侧栏"
-        @click="leftSidebarCollapsed = false"
-      >
-        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
-      </button>
+      <div v-if="isMobileWorkspace" class="workspace-mobile-switcher" role="tablist" aria-label="移动端工作台切换">
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'main' }" @click="activeMobilePanel = 'main'">总览</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'sidebar' }" @click="activeMobilePanel = 'sidebar'">快捷</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'rail' }" @click="activeMobilePanel = 'rail'">数据</button>
+      </div>
 
-      <aside class="interviews-sidebar dashboard-sidebar">
+      <aside class="interviews-sidebar dashboard-sidebar" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'sidebar' }">
         <div class="interviews-sidebar-shell dashboard-sidebar-shell">
           <div class="sidebar-brand interviews-sidebar-brand">
             <div class="brand-row interviews-brand-row">
               <div class="brand-copy-block interviews-brand-copy">
-                <p class="eyebrow">OfferPilot</p>
+                <p class="eyebrow">职跃 OfferPilot</p>
                 <h1>求职工作台</h1>
               </div>
-              <button
-                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
-                type="button"
-                aria-label="收起侧栏"
-                @click="leftSidebarCollapsed = true"
-              >
-                &lt;
-              </button>
             </div>
-            <p class="sidebar-desc interviews-sidebar-desc">从这里继续管理简历和投递进度。</p>
+            <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
 
@@ -127,7 +115,7 @@
         </div>
       </aside>
 
-      <section class="interviews-main dashboard-main">
+      <section class="interviews-main dashboard-main" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'main' }">
         <section class="interviews-editor-canvas dashboard-hero-surface">
           <header class="dashboard-hero-head">
             <div>
@@ -171,7 +159,7 @@
         </section>
       </section>
 
-      <aside class="interviews-rail dashboard-rail">
+      <aside class="interviews-rail dashboard-rail" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'rail' }">
         <section class="interviews-card interviews-card-plain">
           <div class="interviews-card-head">
             <div>
@@ -230,8 +218,8 @@ import { useResumeStore } from '../stores/resume'
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
 const router = useRouter()
-const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
-
+const activeMobilePanel = ref('main')
+const isMobileWorkspace = ref(false)
 const primaryNavItems = [
   {
     to: '/dashboard',
@@ -271,12 +259,6 @@ const interviewStats = reactive({
   passed_count: 0,
   rejected_count: 0,
 })
-
-const leftSidebarCollapsed = ref(false)
-
-function syncLeftSidebarByViewport() {
-  leftSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
-}
 
 const recentResumes = computed(() => resumeStore.resumes.slice(0, 4))
 const latestResume = computed(() => resumeStore.resumes[0] || null)
@@ -444,6 +426,11 @@ async function handleLogout() {
   await router.push('/login')
 }
 
+function syncWorkspaceMode() {
+  if (typeof window === 'undefined') return
+  isMobileWorkspace.value = window.innerWidth <= 1024
+}
+
 async function loadApplicationStats() {
   try {
     Object.assign(applicationStats, await requestJson('/api/applications/stats/overview'))
@@ -474,8 +461,8 @@ async function loadInterviewStats() {
 }
 
 onMounted(async () => {
-  window.addEventListener('resize', syncLeftSidebarByViewport)
-  syncLeftSidebarByViewport()
+  syncWorkspaceMode()
+  window.addEventListener('resize', syncWorkspaceMode)
   if (!resumeStore.resumes.length) {
     await resumeStore.bootstrapEditor()
   }
@@ -483,6 +470,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncLeftSidebarByViewport)
+  window.removeEventListener('resize', syncWorkspaceMode)
 })
 </script>

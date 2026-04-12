@@ -1,6 +1,6 @@
 <template>
   <main class="interviews-page interviews-page-modern applications-page applications-page-modernized">
-    <section class="applications-shell applications-shell-modernized" :class="{ 'sidebar-collapsed': leftSidebarCollapsed }">
+    <section class="applications-shell applications-shell-modernized">
       <aside class="interviews-primary-nav">
         <div class="interviews-primary-brand" title="OfferPilot">
           <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
@@ -21,17 +21,13 @@
         </nav>
       </aside>
 
-      <button
-        v-if="leftSidebarCollapsed"
-        class="desktop-sidebar-reopen applications-desktop-sidebar-reopen"
-        type="button"
-        aria-label="展开求职工作台侧栏"
-        @click="leftSidebarCollapsed = false"
-      >
-        <span class="desktop-sidebar-reopen-arrow">&gt;</span>
-      </button>
+      <div v-if="isMobileWorkspace" class="workspace-mobile-switcher" role="tablist" aria-label="移动端投递工作区切换">
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'main' }" @click="activeMobilePanel = 'main'">列表</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'detail' }" @click="activeMobilePanel = 'detail'">详情</button>
+        <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'sidebar' }" @click="activeMobilePanel = 'sidebar'">筛选</button>
+      </div>
 
-      <aside class="applications-sidebar">
+      <aside class="applications-sidebar" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'sidebar' }">
         <div class="applications-sidebar-shell interviews-sidebar-shell">
           <div class="sidebar-brand interviews-sidebar-brand">
             <div class="brand-row interviews-brand-row">
@@ -39,12 +35,6 @@
                 <p class="eyebrow">职跃 OfferPilot</p>
                 <h1>求职工作台</h1>
               </div>
-              <button
-                class="desktop-sidebar-toggle interviews-sidebar-desktop-toggle"
-                type="button"
-                aria-label="收起求职工作台侧栏"
-                @click="leftSidebarCollapsed = true"
-              >&lt;</button>
             </div>
             <p class="sidebar-desc interviews-sidebar-desc">从求职工作台出发，逐步串联简历、投递与面试管理。</p>
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
@@ -104,7 +94,7 @@
         </div>
       </aside>
 
-      <section class="applications-main">
+      <section class="applications-main" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'main' }">
         <header class="applications-header applications-surface">
           <div>
             <p class="eyebrow">Application Workspace</p>
@@ -178,7 +168,7 @@
           </div>
 
           <section class="applications-list">
-          <article v-for="item in filteredApplications" :key="item.id" class="applications-card" :class="{ 'is-selected': item.id === selectedId, 'is-todo': item.is_todo, 'is-reviewed': isReviewed(item.id) }" @click="selectApplication(item.id)">
+          <article v-for="item in filteredApplications" :key="item.id" class="applications-card" :class="{ 'is-selected': item.id === selectedId, 'is-todo': item.is_todo, 'is-reviewed': isReviewed(item.id) }" @click="handleSelectApplication(item.id)">
             <div class="applications-card-rail">
               <span class="applications-card-dot" :class="{ 'is-active': item.id === selectedId, 'is-warning': item.is_todo || !isReviewed(item.id) }"></span>
             </div>
@@ -245,7 +235,7 @@
         </section>
       </section>
 
-      <aside class="applications-detail">
+      <aside class="applications-detail" :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'detail' }">
         <div v-if="loadingDetail" class="applications-detail-empty">正在加载详情...</div>
         <template v-else-if="detail">
           <header class="applications-detail-header applications-surface">
@@ -447,8 +437,6 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
-const DESKTOP_SIDEBAR_COLLAPSE_QUERY = '(max-width: 1360px)'
-
 const primaryNavItems = [
   {
     to: '/dashboard',
@@ -518,6 +506,8 @@ const applications = ref([])
 const resumes = ref([])
 const selectedId = ref('')
 const detail = ref(null)
+const activeMobilePanel = ref('main')
+const isMobileWorkspace = ref(false)
 const activeQuickView = ref('all')
 const loadingList = ref(false)
 const loadingDetail = ref(false)
@@ -528,7 +518,6 @@ const dialogMessage = ref('')
 const dialogOpen = ref(false)
 const editingId = ref('')
 const fieldSettingsOpen = ref(false)
-const leftSidebarCollapsed = ref(false)
 const visibleOptionalFields = ref(loadOptionalFields())
 const reviewedIds = ref(loadReviewedIds())
 const deleteDialog = reactive({
@@ -549,10 +538,6 @@ const QUICK_VIEW_IDS = new Set(['all', 'todo', 'interviewing', 'offer', 'rejecte
 const filters = reactive({ q: '', status: '', channel: '', city: '', dateFrom: '', dateTo: '', resumeId: '' })
 const form = reactive(emptyForm())
 const followForm = reactive({ last_follow_up_at: '', next_follow_up_at: '', next_action: '' })
-
-function syncLeftSidebarByViewport() {
-  leftSidebarCollapsed.value = window.matchMedia(DESKTOP_SIDEBAR_COLLAPSE_QUERY).matches
-}
 
 function emptyForm() {
   return { company_name: '', job_title: '', department: '', city: '', job_link: '', jd_summary: '', salary_range: '', job_type: '', applied_at: toDateInput(new Date().toISOString()), status: '已投递', channel: '', referrer_name: '', contact_name: '', contact_value: '', resume_id: '', note: '', risk_note: '', priority: '中', next_action: '', next_follow_up_at: '', last_follow_up_at: '' }
@@ -607,6 +592,11 @@ function persistReviewedIds() {
 
 function isReviewed(id) {
   return reviewedIds.value.includes(id)
+}
+
+function syncWorkspaceMode() {
+  if (typeof window === 'undefined') return
+  isMobileWorkspace.value = window.innerWidth <= 1024
 }
 
 function toggleReviewed(id) {
@@ -784,11 +774,17 @@ async function selectApplication(id) {
   }
 }
 
+async function handleSelectApplication(id) {
+  await selectApplication(id)
+  activeMobilePanel.value = 'detail'
+}
+
 function openCreateDialog() {
   editingId.value = ''
   dialogMessage.value = ''
   resetForm()
   dialogOpen.value = true
+  activeMobilePanel.value = 'main'
 }
 
 function openEditDialog(item) {
@@ -926,8 +922,8 @@ watch(
 )
 
 onMounted(async () => {
-  window.addEventListener('resize', syncLeftSidebarByViewport)
-  syncLeftSidebarByViewport()
+  syncWorkspaceMode()
+  window.addEventListener('resize', syncWorkspaceMode)
   await Promise.all([loadResumes(), loadStats()])
   applyResumeFilterFromRoute()
   applyQuickViewFromRoute()
@@ -936,6 +932,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', syncLeftSidebarByViewport)
+  window.removeEventListener('resize', syncWorkspaceMode)
 })
 </script>

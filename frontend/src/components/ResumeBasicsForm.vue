@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <section class="editor-card resume-form-card template-editor-card">
     <header class="template-editor-header">
       <div>
@@ -18,24 +18,8 @@
     </header>
 
     <div class="template-editor-scroll">
-      <section class="layout-setting-panel" :class="{ 'is-expanded': !layoutCollapsed }">
-        <button v-if="layoutCollapsed" class="layout-setting-toggle" type="button" @click="layoutCollapsed = false">
-          <span class="layout-setting-title">版式设置</span>
-          <span class="layout-setting-tip">这里控制 PDF 的整体版式，建议先调整字号和行距，排版会更稳定。</span>
-          <span class="section-toggle-chevron is-collapsed" aria-hidden="true"></span>
-        </button>
-
-        <div v-else class="layout-setting-groups">
-          <button
-            class="layout-setting-inline-toggle"
-            type="button"
-            aria-label="收起版式设置"
-            title="收起版式设置"
-            @click="layoutCollapsed = true"
-          >
-            <span class="section-toggle-chevron" aria-hidden="true"></span>
-          </button>
-
+      <section class="layout-setting-panel is-expanded">
+        <div class="layout-setting-groups">
           <div class="layout-setting-group">
             <div class="layout-setting-group-title">标题样式</div>
             <div class="layout-setting-fields">
@@ -74,19 +58,14 @@
         </div>
       </section>
 
-      <div class="template-editor-layout" :class="{ 'module-nav-collapsed': moduleNavCollapsed }">
-        <aside class="section-nav-panel vue-section-nav-panel" :class="{ 'is-collapsed': moduleNavCollapsed }">
-          <button type="button" class="module-nav-collapse-toggle" @click="moduleNavCollapsed = !moduleNavCollapsed">
+      <div class="template-editor-layout">
+        <aside class="section-nav-panel vue-section-nav-panel">
           <div class="section-nav-copy">
             <h3>编辑模块</h3>
             <p class="meta-text">左侧选模块，右侧编辑内容。</p>
           </div>
 
-            <span v-if="moduleNavCollapsed" class="module-nav-collapsed-label">模块</span>
-            <span class="section-toggle-chevron" :class="{ 'is-collapsed': moduleNavCollapsed }" aria-hidden="true"></span>
-          </button>
-
-          <div v-show="!moduleNavCollapsed" class="section-nav-scrollbox">
+          <div class="section-nav-scrollbox">
             <div class="editor-section-nav vue-editor-section-nav">
               <div
                 v-for="sectionBlock in sectionNavBlocks"
@@ -126,39 +105,6 @@
             </div>
 
             <button class="ghost-button section-nav-add-button" type="button" @click="addCustomSection">新增自定义模块</button>
-          </div>
-
-          <div v-show="moduleNavCollapsed" class="section-nav-mini-stack">
-            <button
-              v-for="sectionBlock in sectionNavBlocks"
-              :key="`mini-${sectionBlock.key}`"
-              type="button"
-              class="section-nav-mini-button"
-              :class="{
-                'is-active': activeSectionKey === sectionBlock.key,
-                'is-reorderable': sectionBlock.reorderable,
-                'is-dragging': draggedSectionKey === sectionBlock.key,
-                'is-drop-target': dropTargetSectionKey === sectionBlock.key,
-              }"
-              :title="sectionBlock.title"
-              :draggable="sectionBlock.reorderable"
-              @click="selectSection(sectionBlock.key)"
-              @dragstart="sectionBlock.reorderable ? handleSectionDragStart(sectionBlock.key, $event) : null"
-              @dragend="handleSectionDragEnd"
-              @dragover.prevent="handleSectionDragOver(sectionBlock)"
-              @dragleave="handleSectionDragLeave(sectionBlock)"
-              @drop.prevent="handleSectionDrop(sectionBlock)"
-            >
-              {{ sectionBlock.title.slice(0, 2) }}
-            </button>
-            <button
-              type="button"
-              class="section-nav-mini-button section-nav-mini-add-button"
-              title="新增自定义模块"
-              @click="addCustomSection"
-            >
-              新增
-            </button>
           </div>
         </aside>
 
@@ -491,7 +437,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
 import defaultAvatar from '../assets/default-avatar.jpg'
 import { createCustomSection } from '../stores/resume'
 import AvatarCropDialog from './AvatarCropDialog.vue'
@@ -517,8 +463,6 @@ const avatarFileInputRef = ref(null)
 const pendingAvatarFile = ref(null)
 const avatarSourceFile = ref(null)
 const activeSectionKey = ref('basics')
-const layoutCollapsed = ref(false)
-const moduleNavCollapsed = ref(false)
 const jumpHighlightSectionKey = ref('')
 const draggedSectionKey = ref('')
 const dropTargetSectionKey = ref('')
@@ -681,18 +625,7 @@ watch(
   { immediate: true },
 )
 
-function syncFoldablePanelsByViewport() {
-  layoutCollapsed.value = window.matchMedia('(max-width: 1900px)').matches
-  moduleNavCollapsed.value = window.matchMedia('(max-width: 1800px)').matches
-}
-
-onMounted(() => {
-  window.addEventListener('resize', syncFoldablePanelsByViewport)
-  syncFoldablePanelsByViewport()
-})
-
 onUnmounted(() => {
-  window.removeEventListener('resize', syncFoldablePanelsByViewport)
   if (jumpHighlightTimer) {
     clearTimeout(jumpHighlightTimer)
   }
