@@ -1,10 +1,10 @@
 ﻿<template>
   <section class="editor-card resume-form-card template-editor-card">
     <header class="template-editor-header">
-      <div>
+      <!-- <div>
         <p class="eyebrow">Editor</p>
         <h2>模板字段编辑</h2>
-      </div>
+      </div> -->
         <div class="form-actions">
           <button class="ghost-button" type="button" @click="$emit('view-applications')">查看关联投递</button>
           <button class="primary-button" type="button" :disabled="saving" @click="$emit('save')">
@@ -21,40 +21,34 @@
       <section class="layout-setting-panel is-expanded">
         <div class="layout-setting-groups">
           <div class="layout-setting-group">
-            <div class="layout-setting-group-title">标题样式</div>
             <div class="layout-setting-fields">
               <label class="plain-field">
-                <span>字体</span>
+                <span>标题字体</span>
                 <CustomSelect v-model="draft.content.layout.section_title_font_family" :options="fontFamilyOptions" />
               </label>
               <label class="plain-field">
-                <span>大小</span>
+                <span>标题字体大小</span>
                 <CustomSelect v-model="draft.content.layout.section_title_size" :options="sectionTitleSizeOptions" />
               </label>
               <label class="plain-field">
                 <span>标题下边距</span>
                 <CustomSelect v-model="draft.content.layout.section_divider_gap" :options="dividerGapOptions" />
               </label>
-            </div>
-          </div>
-
-          <div class="layout-setting-group">
-            <div class="layout-setting-group-title">正文样式</div>
-            <div class="layout-setting-fields">
               <label class="plain-field">
-                <span>字体</span>
+                <span>正文字体</span>
                 <CustomSelect v-model="draft.content.layout.content_font_family" :options="fontFamilyOptions" />
               </label>
               <label class="plain-field">
-                <span>大小</span>
+                <span>正文字体大小</span>
                 <CustomSelect v-model="draft.content.layout.content_font_size" :options="contentFontSizeOptions" />
               </label>
               <label class="plain-field">
-                <span>行距</span>
+                <span>正文行距</span>
                 <CustomSelect v-model="draft.content.layout.content_line_height" :options="lineHeightOptions" />
               </label>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -185,7 +179,7 @@
                 <label class="plain-field basics-email-field"><span>邮箱</span><input v-model.trim="draft.content.basics.email" /></label>
                 <label class="plain-field basics-city-field"><span>意向城市</span><input v-model.trim="draft.content.basics.location" /></label>
                 <label class="plain-field basics-job-target-field"><span>求职意向</span><input v-model.trim="draft.content.basics.job_target" placeholder="例如：后端开发" /></label>
-                <div class="single-rich-field full-row"><span>个人简介</span><RichTextEditor v-model="draft.content.basics.summary" placeholder="用一段话概括你的方向、优势和背景" /></div>
+                <div class="single-rich-field full-row"><span>个人简介</span><RichTextEditor v-model="draft.content.basics.summary" toolbar-preset="resume" placeholder="用一段话概括你的方向、优势和背景" /></div>
               </form>
             </div>
           </section>
@@ -214,7 +208,7 @@
                   </label>
                   <label class="item-start-date-field"><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
                   <label class="item-end-date-field"><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
-                  <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
+                  <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" toolbar-preset="resume" placeholder="每行一条，支持加粗/链接" /></div>
                 </div>
               </template>
             </ResumeRepeatSection>
@@ -230,7 +224,7 @@
               :data-section-key="sectionBlock.key"
             >
               <div class="editor-card-header"><h3>专业技能</h3></div>
-              <div class="single-rich-field"><span>专业技能</span><RichTextEditor v-model="draft.content.skills" mode="list" placeholder="每行一条技能，支持加粗/斜体/列表/链接" /></div>
+              <div class="single-rich-field"><span>专业技能</span><RichTextEditor v-model="draft.content.skills" mode="list" toolbar-preset="resume" placeholder="每行一条技能，支持加粗/斜体/列表/链接" /></div>
             </section>
 
             <div
@@ -253,7 +247,7 @@
                     <label><span>岗位</span><input v-model.trim="item.role" /></label>
                     <label class="item-start-date-field"><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
                     <label class="item-end-date-field"><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
-                    <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
+                  <div class="single-rich-field full-row"><span>亮点</span><RichTextEditor v-model="item.highlights" mode="list" toolbar-preset="resume" placeholder="每行一条，支持加粗/链接" /></div>
                   </div>
                 </template>
               </ResumeRepeatSection>
@@ -277,8 +271,8 @@
                       <MonthPicker v-model="item.end_date" allow-present />
                       <small v-if="getDateRangeError(item.start_date, item.end_date)" class="date-range-error-text">{{ getDateRangeError(item.start_date, item.end_date) }}</small>
                     </label>
-                    <div class="single-rich-field full-row"><span>项目描述</span><RichTextEditor v-model="item.description" placeholder="例如：企业级权限后台与数据分析平台，支持加粗/链接" /></div>
-                    <div class="single-rich-field full-row"><span>主要工作</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
+                    <div class="single-rich-field full-row"><span>项目描述</span><RichTextEditor v-model="item.description" toolbar-preset="resume" placeholder="例如：企业级权限后台与数据分析平台，支持加粗/链接" /></div>
+                    <div class="single-rich-field full-row"><span>主要工作</span><RichTextEditor v-model="item.highlights" mode="list" toolbar-preset="resume" placeholder="每行一条，支持加粗/链接" /></div>
                   </div>
                 </template>
               </ResumeRepeatSection>
@@ -297,7 +291,7 @@
                   <div class="repeat-item-grid">
                     <label><span>标题</span><input v-model.trim="item.title" /></label>
                     <label><span>链接</span><input v-model.trim="item.link" placeholder="https://github.com/yourname/project" /></label>
-                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
+                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" toolbar-preset="resume" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
                   </div>
                 </template>
               </ResumeRepeatSection>
@@ -316,7 +310,7 @@
                   <div class="repeat-item-grid">
                     <label><span>标题</span><input v-model.trim="item.title" /></label>
                     <label><span>标签</span><input v-model.trim="item.label" placeholder="JSA 在投（二作）" /></label>
-                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
+                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" toolbar-preset="resume" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
                   </div>
                 </template>
               </ResumeRepeatSection>
@@ -335,7 +329,7 @@
                   <div class="repeat-item-grid">
                     <label><span>标题</span><input v-model.trim="item.title" /></label>
                     <label><span>标签</span><input v-model.trim="item.label" placeholder="国家奖学金 / 竞赛一等奖" /></label>
-                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
+                    <div class="single-rich-field full-row"><span>简介</span><RichTextEditor v-model="item.summary" toolbar-preset="resume" placeholder="请输入简介，支持加粗/斜体/链接" /></div>
                   </div>
                 </template>
               </ResumeRepeatSection>
@@ -388,8 +382,8 @@
                         <label><span>副标题</span><input v-model.trim="item.subtitle" /></label>
                         <label><span>开始时间</span><MonthPicker v-model="item.start_date" /></label>
                         <label><span>结束时间</span><MonthPicker v-model="item.end_date" allow-present /></label>
-                        <div class="single-rich-field full-row"><span>描述</span><RichTextEditor v-model="item.description" placeholder="请输入描述，支持加粗/链接" /></div>
-                        <div class="single-rich-field full-row"><span>重点内容</span><RichTextEditor v-model="item.highlights" mode="list" placeholder="每行一条，支持加粗/链接" /></div>
+                        <div class="single-rich-field full-row"><span>描述</span><RichTextEditor v-model="item.description" toolbar-preset="resume" placeholder="请输入描述，支持加粗/链接" /></div>
+                        <div class="single-rich-field full-row"><span>重点内容</span><RichTextEditor v-model="item.highlights" mode="list" toolbar-preset="resume" placeholder="每行一条，支持加粗/链接" /></div>
                       </div>
                     </article>
 

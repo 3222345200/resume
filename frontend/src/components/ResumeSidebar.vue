@@ -14,7 +14,7 @@
 
     <button class="primary-button interviews-sidebar-primary" type="button" @click="$emit('create-resume')">新建简历</button>
 
-    <section class="interviews-card interviews-card-soft resume-sidebar-panel">
+    <!-- <section class="interviews-card interviews-card-soft resume-sidebar-panel">
       <div class="interviews-card-head">
         <div>
           <p class="eyebrow">Workspace</p>
@@ -26,7 +26,7 @@
         返回工作台
       </button>
       <button class="ghost-button" type="button" @click="$emit('logout')">退出登录</button>
-    </section>
+    </section> -->
 
     <section class="interviews-card interviews-card-soft resume-sidebar-panel resume-sidebar-list-panel">
       <div class="sidebar-list-head">

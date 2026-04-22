@@ -1,25 +1,6 @@
 ﻿<template>
   <main class="interviews-page interviews-page-modern dashboard-page dashboard-page-modern">
     <section class="interviews-shell dashboard-shell">
-      <aside class="interviews-primary-nav">
-        <div class="interviews-primary-brand" title="职跃 OfferPilot">
-          <img class="brand-logo" :src="brandMark" alt="职跃 OfferPilot" />
-        </div>
-
-        <nav class="interviews-primary-links" aria-label="Primary navigation">
-          <RouterLink
-            v-for="item in primaryNavItems"
-            :key="item.to"
-            class="interviews-primary-link"
-            :class="{ 'is-active': item.to === '/dashboard' }"
-            :to="item.to"
-            :title="item.label"
-          >
-            <span class="interviews-primary-icon" v-html="item.icon"></span>
-            <span class="sr-only">{{ item.label }}</span>
-          </RouterLink>
-        </nav>
-      </aside>
 
       <div v-if="isMobileWorkspace" class="workspace-mobile-switcher" role="tablist" aria-label="移动端工作台切换">
         <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'main' }" @click="activeMobilePanel = 'main'">总览</button>
@@ -40,9 +21,9 @@
             <p class="sidebar-user interviews-sidebar-user">已登录：{{ authStore.user?.username || '用户' }}</p>
           </div>
 
-          <button class="primary-button interviews-sidebar-primary" type="button" @click="navigateTo({ path: '/applications', query: { create: '1' } })">
+          <!-- <button class="primary-button interviews-sidebar-primary" type="button" @click="navigateTo({ path: '/applications', query: { create: '1' } })">
             新建投递
-          </button>
+          </button> -->
 
           <section class="interviews-card interviews-card-soft dashboard-intro-card dashboard-overview-card">
             <div class="interviews-card-head dashboard-overview-head">
@@ -50,7 +31,6 @@
                 <p class="eyebrow">Quick Panel</p>
                 <h2>快捷面板</h2>
               </div>
-              <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
             </div>
 
             <div class="dashboard-overview-chart">
@@ -71,21 +51,6 @@
               </div>
             </div>
 
-            <div class="interviews-quick-grid dashboard-quick-grid">
-              <button
-                v-for="task in taskCards.slice(0, 4)"
-                :key="task.title"
-                class="interviews-quick-card dashboard-sidebar-quick-card"
-                :class="{ 'is-active': task.accent }"
-                type="button"
-                @click="navigateTo(task.to)"
-              >
-                <span class="dashboard-sidebar-quick-icon" v-html="getSidebarQuickIcon(task)" aria-hidden="true"></span>
-                <strong class="dashboard-sidebar-quick-title">
-                  <span v-for="line in splitSidebarQuickTitle(task.sidebarTitle || task.cta)" :key="line">{{ line }}</span>
-                </strong>
-              </button>
-            </div>
           </section>
 
           <section class="interviews-card interviews-card-soft">
@@ -210,7 +175,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import brandMark from '../assets/logo.png'
 import { requestJson } from '../api/request'
 import { useAuthStore } from '../stores/auth'
 import { useResumeStore } from '../stores/resume'
@@ -220,28 +184,6 @@ const resumeStore = useResumeStore()
 const router = useRouter()
 const activeMobilePanel = ref('main')
 const isMobileWorkspace = ref(false)
-const primaryNavItems = [
-  {
-    to: '/dashboard',
-    label: '工作台',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4z"/><path d="M13 4h7v5h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 13h7v7H4z"/></svg>`,
-  },
-  {
-    to: '/editor',
-    label: '简历管理',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>`,
-  },
-  {
-    to: '/applications',
-    label: '投递管理',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
-  },
-  {
-    to: '/interviews',
-    label: '面试记录',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>`,
-  },
-]
 
 const applicationStats = reactive({
   total_count: 0,
@@ -385,25 +327,6 @@ const taskCards = computed(() => {
   return cards
 })
 
-function splitSidebarQuickTitle(value) {
-  const text = String(value || '').trim()
-  if (!text) return ['']
-  return text.match(/.{1,2}/g) || [text]
-}
-
-function getSidebarQuickIcon(task) {
-  const title = String(task?.sidebarTitle || task?.cta || '')
-  if (title.includes('简历')) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>'
-  }
-  if (title.includes('投递')) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>'
-  }
-  if (title.includes('面试')) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>'
-  }
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
-}
 
 function formatDate(value) {
   if (!value) return ''

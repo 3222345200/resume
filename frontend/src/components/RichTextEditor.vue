@@ -1,36 +1,36 @@
 <template>
   <div class="rich-text-editor" :class="{ 'is-left-toolbar': toolbarMode === 'left' }">
     <div class="rich-text-toolbar">
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('p')">T</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h1')">H1</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h2')">H2</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h3')">H3</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('insertOrderedList')">1.</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('insertUnorderedList')">•</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('blockquote')">“</button>
-      <button v-if="toolbarMode === 'left'" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('removeFormat')">Tx</button>
-      <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('p')">正文</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h1')">H1</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h2')">H2</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h3')">H3</button>
-      <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('paragraph')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('p')">T</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('heading1')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h1')">H1</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('heading2')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h2')">H2</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('heading3')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('h3')">H3</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('orderedList')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('insertOrderedList')">1.</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('unorderedList')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('insertUnorderedList')">•</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('blockquote')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="applyBlock('blockquote')">“</button>
+      <button v-if="toolbarMode === 'left' && hasToolbarItem('clearFormat')" type="button" tabindex="-1" class="rich-tool-btn rich-tool-btn-block" @mousedown.prevent="execCommand('removeFormat')">Tx</button>
+      <span v-if="toolbarMode !== 'left' && showTopBlockDivider" class="rich-tool-divider"></span>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('paragraph')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('p')">正文</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('heading1')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h1')">H1</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('heading2')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h2')">H2</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('heading3')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('h3')">H3</button>
+      <span v-if="toolbarMode !== 'left' && showFormatDivider" class="rich-tool-divider"></span>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('undo')">撤销</button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('redo')">重做</button>
-      <span v-if="toolbarMode !== 'left'" class="rich-tool-divider"></span>
+      <span v-if="toolbarMode !== 'left' && showStructureDivider" class="rich-tool-divider"></span>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('bold')"><strong>B</strong></button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('italic')"><em>I</em></button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('underline')"><u>U</u></button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('strikeThrough')"><s>S</s></button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('blockquote')">引用</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertUnorderedList')">• 列表</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertOrderedList')">1. 列表</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyLeft')">左对齐</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyCenter')">居中</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyRight')">右对齐</button>
-      <button v-if="toolbarMode !== 'left' && enableTables" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="requestInsertTable">表格</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('blockquote')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="applyBlock('blockquote')">引用</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('unorderedList')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertUnorderedList')">• 列表</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('orderedList')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('insertOrderedList')">1. 列表</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('alignLeft')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyLeft')">左对齐</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('alignCenter')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyCenter')">居中</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('alignRight')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('justifyRight')">右对齐</button>
+      <button v-if="toolbarMode !== 'left' && enableTables && hasToolbarItem('table')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="requestInsertTable">表格</button>
       <button type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="insertLink">链接</button>
-      <button v-if="toolbarMode !== 'left'" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('removeFormat')">清格式</button>
+      <button v-if="toolbarMode !== 'left' && hasToolbarItem('clearFormat')" type="button" tabindex="-1" class="rich-tool-btn" @mousedown.prevent="execCommand('removeFormat')">清格式</button>
     </div>
 
     <div
@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -108,6 +108,10 @@ const props = defineProps({
   toolbarMode: {
     type: String,
     default: 'top',
+  },
+  toolbarPreset: {
+    type: String,
+    default: 'full',
   },
   enableSectionFolding: {
     type: Boolean,
@@ -137,6 +141,47 @@ const linkDialog = ref({
 const tableResizeState = ref(null)
 const isPointerSelecting = ref(false)
 let decorationTimer = null
+
+const TOOLBAR_PRESETS = {
+  full: new Set([
+    'paragraph',
+    'heading1',
+    'heading2',
+    'heading3',
+    'orderedList',
+    'unorderedList',
+    'blockquote',
+    'alignLeft',
+    'alignCenter',
+    'alignRight',
+    'table',
+    'clearFormat',
+  ]),
+  resume: new Set([
+    'orderedList',
+    'unorderedList',
+    'table',
+    'clearFormat',
+  ]),
+}
+
+const activeToolbarItems = computed(() => TOOLBAR_PRESETS[props.toolbarPreset] || TOOLBAR_PRESETS.full)
+const showTopBlockDivider = computed(() => activeToolbarItems.value.has('paragraph') || activeToolbarItems.value.has('heading1') || activeToolbarItems.value.has('heading2') || activeToolbarItems.value.has('heading3'))
+const showFormatDivider = computed(() => showTopBlockDivider.value)
+const showStructureDivider = computed(() => (
+  activeToolbarItems.value.has('blockquote') ||
+  activeToolbarItems.value.has('unorderedList') ||
+  activeToolbarItems.value.has('orderedList') ||
+  activeToolbarItems.value.has('alignLeft') ||
+  activeToolbarItems.value.has('alignCenter') ||
+  activeToolbarItems.value.has('alignRight') ||
+  activeToolbarItems.value.has('table') ||
+  activeToolbarItems.value.has('clearFormat')
+))
+
+function hasToolbarItem(name) {
+  return activeToolbarItems.value.has(name)
+}
 
 const allowedTags = new Set([
   'P',

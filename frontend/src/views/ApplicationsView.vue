@@ -1,25 +1,6 @@
 <template>
   <main class="interviews-page interviews-page-modern applications-page applications-page-modernized">
     <section class="applications-shell applications-shell-modernized">
-      <aside class="interviews-primary-nav">
-        <div class="interviews-primary-brand" title="OfferPilot">
-          <img class="brand-logo" :src="brandMark" alt="OfferPilot" />
-        </div>
-
-        <nav class="interviews-primary-links" aria-label="Primary navigation">
-          <RouterLink
-            v-for="item in primaryNavItems"
-            :key="item.to"
-            class="interviews-primary-link"
-            :class="{ 'is-active': item.to === '/applications' }"
-            :to="item.to"
-            :title="item.label"
-          >
-            <span class="interviews-primary-icon" v-html="item.icon"></span>
-            <span class="sr-only">{{ item.label }}</span>
-          </RouterLink>
-        </nav>
-      </aside>
 
       <div v-if="isMobileWorkspace" class="workspace-mobile-switcher" role="tablist" aria-label="移动端投递工作区切换">
         <button type="button" class="workspace-mobile-switch" :class="{ 'is-active': activeMobilePanel === 'main' }" @click="activeMobilePanel = 'main'">列表</button>
@@ -45,28 +26,6 @@
           <section class="interviews-card interviews-card-soft applications-sidebar-panel">
             <div class="interviews-card-head">
               <div>
-                <p class="eyebrow">Workspace</p>
-                <h2>工作台切换</h2>
-              </div>
-            </div>
-
-            <nav class="applications-nav">
-              <RouterLink
-                v-for="item in navItems"
-                :key="item.to"
-                class="applications-nav-link"
-                :class="{ 'is-active': item.to === '/applications' }"
-                :to="item.to"
-              >
-                <span>{{ item.label }}</span>
-                <small>{{ item.hint }}</small>
-              </RouterLink>
-            </nav>
-          </section>
-
-          <section class="interviews-card interviews-card-soft applications-sidebar-panel">
-            <div class="interviews-card-head">
-              <div>
                 <p class="eyebrow">Quick Views</p>
                 <h2>快捷视图</h2>
               </div>
@@ -86,10 +45,6 @@
               </button>
             </div>
 
-            <div class="applications-side-actions">
-              <RouterLink class="ghost-button" to="/dashboard">返回工作台</RouterLink>
-              <button class="ghost-button" type="button" @click="handleLogout">退出登录</button>
-            </div>
           </section>
         </div>
       </aside>
@@ -437,35 +392,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const resumeStore = useResumeStore()
-const primaryNavItems = [
-  {
-    to: '/dashboard',
-    label: '工作台',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h7v7H4z"/><path d="M13 4h7v5h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 13h7v7H4z"/></svg>`,
-  },
-  {
-    to: '/editor',
-    label: '简历管理',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h6"/></svg>`,
-  },
-  {
-    to: '/applications',
-    label: '投递管理',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>`,
-  },
-  {
-    to: '/interviews',
-    label: '面试记录',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16v10H8l-4 4z"/><path d="M8 10h8"/><path d="M8 13h5"/></svg>`,
-  },
-]
 
-const navItems = [
-  { to: '/dashboard', label: '工作台', hint: '总览首页' },
-  { to: '/editor', label: '简历管理', hint: '编辑与预览' },
-  { to: '/applications', label: '投递管理', hint: '当前模块' },
-  { to: '/interviews', label: '面试记录', hint: '复盘与跟进' },
-]
+
 const quickViews = [
   { id: 'all', label: '全部投递' },
   { id: 'todo', label: '待跟进' },

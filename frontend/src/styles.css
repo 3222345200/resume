@@ -20,6 +20,7 @@ body,
 #app {
   margin: 0;
   min-height: 100%;
+  height: 100%;
 }
 
 body {
@@ -4710,7 +4711,10 @@ p {
 
 .layout-setting-fields {
   display: grid;
-  grid-template-columns: repeat(4, max-content);
+  /* grid-template-columns: repeat(4, max-content); */
+  /* grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); */
+  /* grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); */
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
   align-items: end;
   justify-content: start;
@@ -6080,7 +6084,7 @@ body,
 }
 
 .applications-page {
-  height: 100dvh;
+  height: 100%;
   overflow: hidden;
   padding: 12px 20px 20px;
 }
@@ -6089,8 +6093,8 @@ body,
   display: grid;
   grid-template-columns: 280px minmax(0, 1.5fr) 420px;
   gap: 18px;
-  height: calc(100dvh - 32px);
-  max-height: calc(100dvh - 32px);
+  height: 100%;
+  max-height: 100%;
   align-items: start;
   overflow: hidden;
 }
@@ -6124,8 +6128,8 @@ body,
 }
 
 .applications-main {
-  height: calc(100dvh - 24px);
-  max-height: calc(100dvh - 24px);
+  height: 100%;
+  max-height: 100%;
   min-height: 0;
   padding: 18px;
   display: flex;
@@ -6140,9 +6144,9 @@ body,
   gap: 18px;
   background: linear-gradient(180deg, rgba(251, 248, 244, 0.92), rgba(245, 239, 233, 0.9));
   position: sticky;
-  top: 12px;
-  height: calc(100dvh - 24px);
-  max-height: calc(100dvh - 24px);
+  top: 0;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
   padding-top: 14px;
 }
@@ -6817,13 +6821,13 @@ body,
   flex-direction: column;
   gap: 12px;
   min-height: 0;
-  height: calc(100dvh - 24px);
-  max-height: calc(100dvh - 24px);
+  height: 100%;
+  max-height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   background: linear-gradient(180deg, rgba(248, 244, 239, 0.92), rgba(244, 239, 233, 0.88));
   position: sticky;
-  top: 12px;
+  top: 0;
   scrollbar-gutter: stable;
   padding-top: 12px;
 }
@@ -7262,7 +7266,7 @@ body,
 
 
 .interviews-page {
-  height: 100dvh;
+  height: 100%;
   padding: 12px;
   background:
     radial-gradient(circle at 12% 14%, rgba(165, 157, 149, 0.12), transparent 24%),
@@ -7273,9 +7277,11 @@ body,
 
 .interviews-shell {
   display: grid;
-  grid-template-columns: clamp(240px, 22vw, 300px) minmax(0, 1fr) clamp(248px, 24vw, 292px);
+  /* grid-template-columns: clamp(240px, 22vw, 300px) minmax(0, 1fr) clamp(248px, 24vw, 292px); */
+  /* grid-template-columns: 320px minmax(0, 1fr) 320px; */
+  grid-template-columns: 0 minmax(0, 1fr) 320px;
   gap: 14px;
-  height: calc(100dvh - 24px);
+  height: 100%;
 }
 
 .interviews-sidebar,
@@ -8166,14 +8172,14 @@ body,
 }
 
 .interviews-page-modern .interviews-shell {
-  grid-template-columns: 60px clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(272px, 24vw, 320px);
-  grid-template-areas: "primary sidebar main rail";
+  grid-template-columns: clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(272px, 24vw, 320px);
+  grid-template-areas: "sidebar main rail";
   gap: 16px;
-  height: calc(100dvh - 24px);
+  height: 100%;
 }
 
 .interviews-page-modern .interviews-shell.sidebar-collapsed {
-  grid-template-columns: 60px 44px minmax(0, 1fr) clamp(272px, 24vw, 320px);
+  grid-template-columns: 44px minmax(0, 1fr) clamp(272px, 24vw, 320px);
 }
 
 .interviews-page-modern .interviews-primary-nav,
@@ -9005,12 +9011,12 @@ body,
 
 
 .dashboard-page-modern .dashboard-shell {
-  grid-template-columns: 60px clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(272px, 24vw, 320px);
-  grid-template-areas: "primary sidebar main rail";
+  grid-template-columns: clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(272px, 24vw, 320px);
+  grid-template-areas: "sidebar main rail";
 }
 
 .dashboard-page-modern .dashboard-shell.sidebar-collapsed {
-  grid-template-columns: 60px 44px minmax(0, 1fr) clamp(272px, 24vw, 320px);
+  grid-template-columns: 44px minmax(0, 1fr) clamp(272px, 24vw, 320px);
 }
 
 .dashboard-page-modern .dashboard-sidebar-shell {
@@ -9048,7 +9054,7 @@ body,
 }
 
 .dashboard-page-modern .dashboard-hero-surface {
-  min-height: calc(100dvh - 24px);
+  min-height: 100%;
   padding: 28px;
 }
 
@@ -9331,13 +9337,13 @@ body,
 }
 
 .editor-workspace-page .editor-workspace-shell {
-  grid-template-columns: 60px clamp(216px, 18vw, 244px) minmax(320px, 0.9fr) minmax(420px, 1.1fr);
-  grid-template-areas: "primary sidebar main rail";
+  grid-template-columns: clamp(216px, 18vw, 244px) minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  grid-template-areas: "sidebar main rail";
   gap: 16px;
 }
 
 .editor-workspace-page.desktop-sidebar-collapsed .editor-workspace-shell {
-  grid-template-columns: 60px 44px minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+  grid-template-columns: 44px minmax(320px, 0.9fr) minmax(420px, 1.1fr);
 }
 
 .editor-workspace-page.desktop-sidebar-collapsed .editor-sidebar {
@@ -9364,7 +9370,7 @@ body,
 }
 
 .editor-workspace-page .editor-loading-card {
-  min-height: calc(100dvh - 24px);
+  min-height: 100%;
   display: grid;
   place-items: center;
 }
@@ -9396,7 +9402,7 @@ body,
 }
 
 .resume-sidebar.interviews-sidebar {
-  min-height: calc(100dvh - 24px);
+  min-height: 100%;
   padding: 4px 0;
   border-radius: 0;
   border: 0;
@@ -9440,7 +9446,7 @@ body,
 
 .editor-workspace-page .template-editor-card,
 .editor-workspace-page .preview-card {
-  min-height: calc(100dvh - 24px);
+  min-height: 100%;
   border-radius: var(--iv-radius);
   border: 1px solid var(--iv-border);
   box-shadow: var(--iv-shadow);
@@ -9593,14 +9599,14 @@ body,
 
 .applications-page-modernized .applications-shell-modernized {
   display: grid;
-  grid-template-columns: 60px clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(300px, 26vw, 360px);
-  grid-template-areas: "primary sidebar main detail";
+  grid-template-columns: clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(300px, 26vw, 360px);
+  grid-template-areas: "sidebar main detail";
   gap: 16px;
-  min-height: calc(100dvh - 24px);
+  min-height: 100%;
 }
 
 .applications-page-modernized .applications-shell-modernized.sidebar-collapsed {
-  grid-template-columns: 60px 44px minmax(0, 1fr) clamp(300px, 26vw, 360px);
+  grid-template-columns: 44px minmax(0, 1fr) clamp(300px, 26vw, 360px);
   padding-left: 0;
 }
 
@@ -9836,7 +9842,7 @@ body,
   }
 
   .editor-workspace-page .editor-workspace-shell {
-    grid-template-columns: 60px clamp(14rem, 19vw, 15.5rem) minmax(18rem, 0.95fr) minmax(22rem, 1.05fr);
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(18rem, 0.95fr) minmax(22rem, 1.05fr);
   }
 
   .editor-workspace-page .template-editor-layout {
@@ -9844,7 +9850,7 @@ body,
   }
 
   .applications-page-modernized .applications-shell-modernized {
-    grid-template-columns: 60px clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17.5rem, 24vw, 20rem);
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17.5rem, 24vw, 20rem);
   }
 
   .applications-toolbar {
@@ -9858,7 +9864,7 @@ body,
   }
 
   .interviews-page-modern .interviews-shell {
-    grid-template-columns: 60px clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17rem, 23vw, 19rem);
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17rem, 23vw, 19rem);
   }
 
   .interviews-page-modern .interviews-workspace {
@@ -9872,11 +9878,11 @@ body,
 
 @media (max-width: 1200px) {
   .dashboard-page-modern .dashboard-shell {
-    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "primary main"
-      "primary rail"
-      "primary sidebar";
+      "main"
+      "rail"
+      "sidebar";
     height: auto;
     min-height: calc(100dvh - 24px);
   }
@@ -9892,11 +9898,11 @@ body,
   }
 
   .editor-workspace-page .editor-workspace-shell {
-    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "primary main"
-      "primary rail"
-      "primary sidebar";
+      "main"
+      "rail"
+      "sidebar";
     min-height: calc(100dvh - 24px);
     height: auto;
   }
@@ -9922,11 +9928,11 @@ body,
   }
 
   .applications-page-modernized .applications-shell-modernized {
-    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "primary main"
-      "primary detail"
-      "primary sidebar";
+      "main"
+      "detail"
+      "sidebar";
     min-height: calc(100dvh - 24px);
   }
 
@@ -9963,11 +9969,11 @@ body,
   }
 
   .interviews-page-modern .interviews-shell {
-    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "primary main"
-      "primary rail"
-      "primary sidebar";
+      "main"
+      "rail"
+      "sidebar";
     height: auto;
     min-height: calc(100dvh - 24px);
   }
