@@ -1,10 +1,15 @@
-﻿<script setup>
-import AppHeader from './components/AppHeader.vue';
+<script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import AppHeader from './components/AppHeader.vue'
+
+const route = useRoute()
+const showAppHeader = computed(() => Boolean(route.meta.requiresAuth))
 </script>
 
 <template>
   <div class="app-shell">
-    <AppHeader />
+    <AppHeader v-if="showAppHeader" />
     <div class="app-content">
       <RouterView />
     </div>
