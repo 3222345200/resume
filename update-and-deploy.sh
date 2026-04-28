@@ -6,7 +6,7 @@ ENV_FILE="${1:-.env.docker}"
 BRANCH="${2:-main}"
 NODE_IMAGE="${NODE_IMAGE:-node:20-alpine}"
 NPM_CACHE_VOLUME="${NPM_CACHE_VOLUME:-resume-frontend-npm-cache}"
-NODE_BUILD_MEMORY_MB="${NODE_BUILD_MEMORY_MB:-384}"
+NODE_BUILD_MEMORY_MB="${NODE_BUILD_MEMORY_MB:-1024}"
 
 cd "$ROOT_DIR"
 
