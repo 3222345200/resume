@@ -1,0 +1,43 @@
+﻿:root {
+  --bg: #ebe4dc;
+  --panel: rgba(248, 243, 238, 0.9);
+  --panel-strong: #f7f2ed;
+  --text: #2b2b2b;
+  --muted: #5f5f5f;
+  --line: rgba(136, 128, 120, 0.18);
+  --shadow: 0 18px 42px rgba(120, 111, 103, 0.14);
+  --radius: 24px;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  color: var(--text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 12%, rgba(165, 157, 149, 0.18), transparent 24%),
+    radial-gradient(circle at 86% 14%, rgba(163, 171, 182, 0.16), transparent 22%),
+    radial-gradient(circle at 80% 82%, rgba(164, 176, 164, 0.14), transparent 20%),
+    linear-gradient(140deg, #eee6de 0%, #e5ddd4 48%, #dde3e6 100%);
+}
+
+button,
+input,
+a {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+

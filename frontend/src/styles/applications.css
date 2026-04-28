@@ -1,0 +1,237 @@
+﻿.applications-page-modernized {
+  background: var(--iv-bg);
+}
+
+.applications-page-modernized .applications-shell-modernized {
+  display: grid;
+  grid-template-columns: clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(300px, 26vw, 360px);
+  grid-template-areas: "sidebar main detail";
+  gap: 16px;
+  min-height: 100%;
+}
+
+.applications-page-modernized .applications-shell-modernized.sidebar-collapsed {
+  grid-template-columns: 44px minmax(0, 1fr) clamp(300px, 26vw, 360px);
+  padding-left: 0;
+}
+
+.applications-page-modernized .applications-sidebar,
+.applications-page-modernized .applications-main,
+.applications-page-modernized .applications-detail {
+  min-height: 0;
+}
+
+.applications-page-modernized .applications-sidebar,
+.applications-page-modernized .applications-main,
+.applications-page-modernized .applications-detail {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.applications-page-modernized .applications-sidebar,
+.applications-page-modernized .applications-main,
+.applications-page-modernized .applications-detail {
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.applications-page-modernized .applications-sidebar::-webkit-scrollbar,
+.applications-page-modernized .applications-main::-webkit-scrollbar,
+.applications-page-modernized .applications-detail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.applications-page-modernized .applications-shell-modernized.sidebar-collapsed .applications-sidebar {
+  display: none;
+}
+
+.applications-page-modernized .applications-sidebar {
+  padding: 4px 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  gap: 16px;
+}
+
+.interviews-page-modern .interviews-sidebar {
+  border-radius: 0;
+}
+
+.applications-page-modernized .applications-sidebar-shell {
+  display: grid;
+  gap: 16px;
+  min-height: 0;
+}
+
+.applications-page-modernized .applications-sidebar-section {
+  display: grid;
+  gap: 4px;
+}
+
+.applications-page-modernized .applications-sidebar-panel {
+  padding: 18px;
+}
+
+.applications-page-modernized .applications-main {
+  padding: 4px 0;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  scrollbar-gutter: auto;
+}
+
+.applications-page-modernized .applications-detail {
+  padding: 4px 0;
+}
+
+.applications-page-modernized .applications-header,
+.applications-page-modernized .applications-toolbar,
+.applications-page-modernized .applications-detail-header,
+.applications-page-modernized .applications-detail-card,
+.applications-page-modernized .applications-dialog {
+  border-radius: var(--iv-radius);
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+  box-shadow: var(--iv-shadow);
+}
+
+.applications-page-modernized .applications-list-wrap {
+  border-radius: var(--iv-radius);
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+  box-shadow: var(--iv-shadow);
+}
+
+.applications-page-modernized .applications-stat-card,
+.applications-page-modernized .applications-card {
+  border-radius: 14px;
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+}
+
+.applications-page-modernized .applications-shortcut {
+  border-radius: 14px;
+  border: 1px solid var(--iv-border);
+  background: #ffffff;
+  margin-top: 0;
+  padding: 10px 14px;
+}
+
+.applications-page-modernized .applications-shortcut.is-active {
+  background: linear-gradient(180deg, rgba(31, 122, 114, 0.12), rgba(31, 122, 114, 0.06));
+  border-color: rgba(31, 122, 114, 0.24);
+}
+
+.applications-page-modernized .applications-nav-link {
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.applications-page-modernized .applications-nav-link.is-active {
+  background: rgba(31, 122, 114, 0.08);
+  border-color: rgba(31, 122, 114, 0.2);
+}
+
+.applications-page-modernized .applications-nav {
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.applications-page-modernized .applications-sidebar-title {
+  font-size: 12px;
+}
+
+.applications-page-modernized .applications-side-actions {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.applications-page-modernized .applications-side-actions .ghost-button {
+  min-height: 44px;
+  padding: 10px 18px;
+}
+
+.applications-page-modernized .applications-desktop-sidebar-reopen {
+  position: static;
+  align-self: stretch;
+  width: 44px;
+  min-height: calc(100dvh - 24px);
+  padding: 16px 4px 12px;
+  gap: 12px;
+  border-radius: 16px;
+}
+
+.editor-workspace-page .editor-mobile-switcher {
+  display: none;
+}
+
+.workspace-mobile-switcher {
+  display: none;
+}
+
+.dashboard-page-modern,
+.editor-workspace-page,
+.applications-page-modernized,
+.interviews-page-modern {
+  overflow-x: clip;
+}
+
+.dashboard-page-modern .dashboard-shell > .interviews-primary-nav,
+.editor-workspace-page .editor-workspace-shell > .interviews-primary-nav,
+.applications-page-modernized .applications-shell-modernized > .interviews-primary-nav,
+.interviews-page-modern .interviews-shell > .interviews-primary-nav {
+  grid-area: primary;
+}
+
+.dashboard-page-modern .dashboard-shell > .dashboard-sidebar {
+  grid-area: sidebar;
+}
+
+.dashboard-page-modern .dashboard-shell > .dashboard-main {
+  grid-area: main;
+}
+
+.dashboard-page-modern .dashboard-shell > .dashboard-rail {
+  grid-area: rail;
+}
+
+.editor-workspace-page .editor-workspace-shell > .editor-sidebar {
+  grid-area: sidebar;
+}
+
+.editor-workspace-page .editor-workspace-shell > .editor-main {
+  grid-area: main;
+}
+
+.editor-workspace-page .editor-workspace-shell > .editor-rail {
+  grid-area: rail;
+}
+
+.applications-page-modernized .applications-shell-modernized > .applications-sidebar {
+  grid-area: sidebar;
+}
+
+.applications-page-modernized .applications-shell-modernized > .applications-main {
+  grid-area: main;
+}
+
+.applications-page-modernized .applications-shell-modernized > .applications-detail {
+  grid-area: detail;
+}
+
+.interviews-page-modern .interviews-shell > .interviews-sidebar {
+  grid-area: sidebar;
+}
+
+.interviews-page-modern .interviews-shell > .interviews-main {
+  grid-area: main;
+}
+
+.interviews-page-modern .interviews-shell > .interviews-rail {
+  grid-area: rail;
+}
+

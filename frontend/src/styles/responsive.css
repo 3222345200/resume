@@ -1,0 +1,594 @@
+﻿@media (max-width: 1440px) {
+  .dashboard-page-modern .dashboard-stat-grid-modern,
+  .applications-stats {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+
+  .dashboard-page-modern .dashboard-task-grid-modern,
+  .dashboard-page-modern .dashboard-quick-grid {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  }
+
+  .editor-workspace-page .editor-workspace-shell {
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(18rem, 0.95fr) minmax(22rem, 1.05fr);
+  }
+
+  .editor-workspace-page .template-editor-layout {
+    grid-template-columns: minmax(10rem, 11rem) minmax(0, 1fr);
+  }
+
+  .applications-page-modernized .applications-shell-modernized {
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17.5rem, 24vw, 20rem);
+  }
+
+  .applications-toolbar {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+    overflow: visible;
+  }
+
+  .applications-card-fields,
+  .applications-detail-grid {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .interviews-page-modern .interviews-shell {
+    grid-template-columns: clamp(14rem, 19vw, 15.5rem) minmax(0, 1fr) clamp(17rem, 23vw, 19rem);
+  }
+
+  .interviews-page-modern .interviews-workspace {
+    grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);
+  }
+
+  .interviews-page-modern .interviews-doc-header h2 {
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-page-modern .dashboard-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "rail"
+      "sidebar";
+    height: auto;
+    min-height: calc(100dvh - 24px);
+  }
+
+  .dashboard-page-modern .dashboard-hero-head {
+    flex-wrap: wrap;
+  }
+
+  .dashboard-page-modern .dashboard-hero-actions {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .editor-workspace-page .editor-workspace-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "rail"
+      "sidebar";
+    min-height: calc(100dvh - 24px);
+    height: auto;
+  }
+
+  .editor-workspace-page .template-editor-card,
+  .editor-workspace-page .preview-card {
+    min-height: 0;
+  }
+
+  .editor-workspace-page .editor-main,
+  .editor-workspace-page .editor-rail,
+  .editor-workspace-page .editor-sidebar,
+  .dashboard-page-modern .dashboard-sidebar,
+  .dashboard-page-modern .dashboard-main,
+  .dashboard-page-modern .dashboard-rail,
+  .applications-page-modernized .applications-sidebar,
+  .applications-page-modernized .applications-main,
+  .applications-page-modernized .applications-detail,
+  .interviews-page-modern .interviews-sidebar,
+  .interviews-page-modern .interviews-main,
+  .interviews-page-modern .interviews-rail {
+    overflow: visible;
+  }
+
+  .applications-page-modernized .applications-shell-modernized {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "detail"
+      "sidebar";
+    min-height: calc(100dvh - 24px);
+  }
+
+  .applications-page-modernized .applications-detail {
+    position: static;
+    top: auto;
+    height: auto;
+    max-height: none;
+    padding-top: 0;
+  }
+
+  .applications-header,
+  .applications-list-header,
+  .applications-card-top,
+  .applications-detail-header,
+  .applications-detail-row {
+    flex-wrap: wrap;
+  }
+
+  .applications-card-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .applications-card-actions-inline {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .applications-follow-form,
+  .applications-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .interviews-page-modern .interviews-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "main"
+      "rail"
+      "sidebar";
+    height: auto;
+    min-height: calc(100dvh - 24px);
+  }
+
+  .interviews-page-modern .interviews-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .interviews-page-modern .interviews-outline-card {
+    min-height: 0;
+    max-height: 18rem;
+  }
+
+  .interviews-page-modern .interviews-doc-editor .rich-text-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .interviews-page-modern .interviews-rail-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-page-modern .dashboard-shell,
+  .editor-workspace-page .editor-workspace-shell,
+  .applications-page-modernized .applications-shell-modernized,
+  .interviews-page-modern .interviews-shell {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - 24px);
+  }
+
+  .dashboard-page-modern .dashboard-shell {
+    grid-template-areas:
+      "primary"
+      "switcher"
+      "main"
+      "rail"
+      "sidebar";
+  }
+
+  .editor-workspace-page .editor-workspace-shell {
+    grid-template-areas:
+      "primary"
+      "switcher"
+      "main"
+      "rail"
+      "sidebar";
+  }
+
+  .applications-page-modernized .applications-shell-modernized {
+    grid-template-areas:
+      "primary"
+      "switcher"
+      "main"
+      "detail"
+      "sidebar";
+  }
+
+  .interviews-page-modern .interviews-shell {
+    grid-template-areas:
+      "primary"
+      "switcher"
+      "main"
+      "rail"
+      "sidebar";
+  }
+
+  .interviews-page-modern .interviews-primary-nav,
+  .applications-page-modernized .interviews-primary-nav,
+  .dashboard-page-modern .interviews-primary-nav,
+  .editor-workspace-page .interviews-primary-nav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(245, 245, 243, 0.92);
+    border: 1px solid var(--iv-border, rgba(230, 228, 220, 1));
+    border-radius: 1rem;
+    box-shadow: var(--iv-shadow, 0 18px 40px rgba(43, 45, 42, 0.06));
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+
+  .editor-workspace-page .editor-mobile-switcher {
+    grid-area: switcher;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--iv-border);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--iv-shadow);
+  }
+
+  .editor-workspace-page .editor-mobile-switch {
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--iv-border);
+    background: #ffffff;
+    color: var(--iv-text);
+    font-weight: 700;
+  }
+
+  .editor-workspace-page .editor-mobile-switch.is-active {
+    color: #ffffff;
+    border-color: rgba(31, 122, 114, 0.5);
+    background: linear-gradient(180deg, #247d75 0%, #1f6f68 100%);
+    box-shadow: 0 10px 20px rgba(31, 122, 114, 0.22);
+  }
+
+  .workspace-mobile-switcher {
+    grid-area: switcher;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--iv-border);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--iv-shadow);
+  }
+
+  .workspace-mobile-switch {
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--iv-border);
+    background: #ffffff;
+    color: var(--iv-text);
+    font-weight: 700;
+  }
+
+  .workspace-mobile-switch.is-active {
+    color: #ffffff;
+    border-color: rgba(31, 122, 114, 0.5);
+    background: linear-gradient(180deg, #247d75 0%, #1f6f68 100%);
+    box-shadow: 0 10px 20px rgba(31, 122, 114, 0.22);
+  }
+
+  .interviews-page-modern .interviews-primary-brand,
+  .applications-page-modernized .interviews-primary-brand,
+  .dashboard-page-modern .interviews-primary-brand,
+  .editor-workspace-page .interviews-primary-brand {
+    flex: 0 0 auto;
+  }
+
+  .interviews-page-modern .interviews-primary-links,
+  .applications-page-modernized .interviews-primary-links,
+  .dashboard-page-modern .interviews-primary-links,
+  .editor-workspace-page .interviews-primary-links {
+    flex: 1 1 auto;
+    flex-direction: row;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.125rem;
+  }
+
+  .interviews-page-modern .interviews-primary-link,
+  .applications-page-modernized .interviews-primary-link,
+  .dashboard-page-modern .interviews-primary-link,
+  .editor-workspace-page .interviews-primary-link {
+    flex: 0 0 auto;
+  }
+
+  .interviews-page-modern .interviews-sidebar,
+  .interviews-page-modern .interviews-rail,
+  .applications-page-modernized .applications-sidebar,
+  .applications-page-modernized .applications-detail,
+  .dashboard-page-modern .dashboard-sidebar,
+  .dashboard-page-modern .dashboard-rail,
+  .editor-workspace-page .editor-sidebar,
+  .editor-workspace-page .editor-rail,
+  .resume-sidebar.interviews-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .dashboard-page-modern .dashboard-hero-surface,
+  .interviews-page-modern .interviews-editor-canvas-doc,
+  .editor-workspace-page .template-editor-card,
+  .editor-workspace-page .preview-card {
+    min-height: 0;
+  }
+
+  .editor-workspace-page .template-editor-layout {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-workspace-page .vue-section-nav-panel {
+    width: 100%;
+    min-height: 0;
+  }
+
+  .editor-workspace-page .section-nav-scrollbox .vue-editor-section-nav {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .editor-workspace-page .form-actions,
+  .applications-toolbar-actions,
+  .applications-list-header-actions,
+  .interviews-page-modern .interviews-doc-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .editor-workspace-page .live-preview-card {
+    height: auto;
+  }
+
+  .editor-workspace-page .live-preview-viewport {
+    min-height: clamp(22rem, 65vh, 48rem);
+  }
+
+  .editor-workspace-page .editor-sidebar.is-mobile-hidden,
+  .editor-workspace-page .editor-main.is-mobile-hidden,
+  .editor-workspace-page .editor-rail.is-mobile-hidden,
+  .dashboard-page-modern .dashboard-sidebar.is-mobile-hidden,
+  .dashboard-page-modern .dashboard-main.is-mobile-hidden,
+  .dashboard-page-modern .dashboard-rail.is-mobile-hidden,
+  .applications-page-modernized .applications-sidebar.is-mobile-hidden,
+  .applications-page-modernized .applications-main.is-mobile-hidden,
+  .applications-page-modernized .applications-detail.is-mobile-hidden,
+  .interviews-page-modern .interviews-sidebar.is-mobile-hidden,
+  .interviews-page-modern .interviews-main.is-mobile-hidden,
+  .interviews-page-modern .interviews-rail.is-mobile-hidden {
+    display: none;
+  }
+
+  .applications-toolbar,
+  .applications-detail-grid,
+  .applications-card-fields,
+  .applications-stats {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+
+  .applications-list {
+    overflow: visible;
+    padding-left: 0;
+  }
+
+  .applications-list::before {
+    display: none;
+  }
+
+  .interviews-page-modern .interviews-doc-shell-head,
+  .interviews-page-modern .interviews-doc-header,
+  .interviews-page-modern .interviews-list-top {
+    flex-wrap: wrap;
+  }
+
+  .interviews-page-modern .interviews-doc-editor .rich-text-toolbar {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .applications-page,
+  .interviews-page-modern,
+  .dashboard-page-modern,
+  .editor-workspace-page {
+    padding-inline: 0.75rem;
+  }
+
+  .interviews-page-modern .interviews-primary-nav,
+  .applications-page-modernized .interviews-primary-nav,
+  .dashboard-page-modern .interviews-primary-nav,
+  .editor-workspace-page .interviews-primary-nav {
+    padding: 0.625rem;
+  }
+
+  .interviews-page-modern .interviews-primary-brand,
+  .applications-page-modernized .interviews-primary-brand,
+  .dashboard-page-modern .interviews-primary-brand,
+  .editor-workspace-page .interviews-primary-brand {
+    display: none;
+  }
+
+  .dashboard-page-modern .dashboard-hero-surface,
+  .applications-header,
+  .applications-toolbar,
+  .applications-list-wrap,
+  .applications-detail-header,
+  .applications-detail-card,
+  .interviews-page-modern .interviews-card,
+  .interviews-page-modern .interviews-outline-card,
+  .interviews-page-modern .interviews-editor-canvas,
+  .editor-workspace-page .template-editor-card,
+  .editor-workspace-page .preview-card {
+    padding: 1rem;
+  }
+
+  .dashboard-page-modern .dashboard-stat-grid-modern,
+  .dashboard-page-modern .dashboard-task-grid-modern,
+  .dashboard-page-modern .dashboard-quick-grid,
+  .applications-stats,
+  .applications-toolbar,
+  .applications-card-fields,
+  .applications-detail-grid,
+  .applications-follow-form,
+  .applications-form-grid,
+  .editor-workspace-page .section-nav-scrollbox .vue-editor-section-nav,
+  .editor-workspace-page .basics-field-grid,
+  .editor-workspace-page .education-item-grid,
+  .editor-workspace-page .experience-item-grid,
+  .interviews-page-modern .interviews-filter-grid,
+  .interviews-page-modern .interviews-rail-form {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-workspace-page .basics-field-grid > .plain-field,
+  .editor-workspace-page .basics-field-grid > .basics-email-field,
+  .editor-workspace-page .basics-field-grid > .basics-city-field,
+  .editor-workspace-page .basics-field-grid > .basics-job-target-field,
+  .editor-workspace-page .experience-item-grid > label,
+  .editor-workspace-page .education-item-grid > label,
+  .editor-workspace-page .experience-item-grid > .item-start-date-field,
+  .editor-workspace-page .experience-item-grid > .item-end-date-field,
+  .editor-workspace-page .education-item-grid > .item-start-date-field,
+  .editor-workspace-page .education-item-grid > .item-end-date-field {
+    grid-column: 1 / -1;
+  }
+
+  .editor-workspace-page .form-actions > *,
+  .applications-toolbar-actions > *,
+  .applications-list-header-actions > *,
+  .applications-card-actions-inline > *,
+  .interviews-page-modern .interviews-rail-actions > *,
+  .interviews-page-modern .interviews-doc-toolbar > * {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .applications-card {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    padding: 1rem;
+  }
+
+  .applications-card-rail {
+    justify-content: flex-start;
+  }
+
+  .applications-card-dot {
+    margin-top: 0;
+  }
+
+  .applications-card-actions-inline .ghost-button,
+  .applications-card-actions-inline .custom-select,
+  .applications-card-actions-inline .custom-select-trigger {
+    min-width: 0;
+  }
+
+  .interviews-page-modern .interviews-outline-card {
+    max-height: 14rem;
+  }
+
+  .interviews-page-modern .interviews-doc-header h2,
+  .dashboard-page-modern .dashboard-hero-head h1,
+  .applications-header h1 {
+    font-size: clamp(1.8rem, 8vw, 2.4rem);
+  }
+
+  .interviews-page-modern .interviews-doc-header h2 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page-modern .dashboard-hero-surface,
+  .applications-header,
+  .applications-toolbar,
+  .applications-list-wrap,
+  .applications-detail-header,
+  .applications-detail-card,
+  .interviews-page-modern .interviews-card,
+  .interviews-page-modern .interviews-outline-card,
+  .interviews-page-modern .interviews-editor-canvas,
+  .editor-workspace-page .template-editor-card,
+  .editor-workspace-page .preview-card,
+  .editor-workspace-page .live-preview-card {
+    padding: 0.875rem;
+    border-radius: 1rem;
+  }
+
+  .interviews-page-modern .interviews-primary-nav,
+  .applications-page-modernized .interviews-primary-nav,
+  .dashboard-page-modern .interviews-primary-nav,
+  .editor-workspace-page .interviews-primary-nav {
+    gap: 0.5rem;
+  }
+
+  .interviews-page-modern .interviews-primary-link,
+  .applications-page-modernized .interviews-primary-link,
+  .dashboard-page-modern .interviews-primary-link,
+  .editor-workspace-page .interviews-primary-link {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
+  }
+
+  .dashboard-page-modern .dashboard-stat-card strong,
+  .dashboard-page-modern .dashboard-overview-chart-copy strong,
+  .applications-detail-header h2,
+  .applications-card-heading h2,
+  .interviews-page-modern .interviews-summary dd {
+    font-size: clamp(1.25rem, 6vw, 1.8rem);
+  }
+
+  .editor-workspace-page .preview-zoom-btn,
+  .editor-workspace-page .preview-zoom-reset,
+  .editor-workspace-page .preview-zoom-text {
+    min-height: 2.25rem;
+  }
+
+  .editor-workspace-page .live-preview-toolbar {
+    justify-content: space-between;
+  }
+
+  .editor-workspace-page .live-preview-viewport {
+    min-height: 18rem;
+  }
+
+  .interviews-page-modern .interviews-doc-editor .rich-tool-btn {
+    min-height: 2rem;
+    padding-inline: 0.625rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
