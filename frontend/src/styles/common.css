@@ -286,6 +286,7 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .danger-lite {
@@ -1238,10 +1239,62 @@
   line-height: 1.12;
 }
 
+.template-editor-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.template-editor-actions > .ghost-button,
+.template-editor-actions > .primary-button {
+  width: 100%;
+}
+
+.template-editor-actions .ghost-button,
+.template-editor-actions .primary-button {
+  min-width: 0;
+  flex: initial;
+}
+
+.responsive-action-label--short {
+  display: none;
+}
+
 .template-editor-scroll {
   height: calc(100% - 76px);
   overflow: auto;
   padding-right: 2px;
+}
+
+@media (max-width: 768px) {
+  .template-editor-card {
+    padding: 16px 14px 14px;
+  }
+
+  .template-editor-header {
+    margin-bottom: 14px;
+  }
+
+  .template-editor-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .template-editor-actions .ghost-button,
+  .template-editor-actions .primary-button {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 14px;
+  }
+
+  .responsive-action-label--full {
+    display: none;
+  }
+
+  .responsive-action-label--short {
+    display: inline;
+  }
 }
 
 .plain-field,

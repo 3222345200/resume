@@ -1,13 +1,13 @@
 <template>
   <section class="editor-card preview-card live-preview-card">
     <div class="live-preview-toolbar">
-      <button class="preview-zoom-btn" type="button" :disabled="zoomScale <= 0.6" @click="zoomOut">-</button>
+      <button class="preview-zoom-btn" type="button" :disabled="zoomScale <= minZoom" @click="zoomOut">-</button>
       <span class="preview-zoom-text">{{ Math.round(zoomScale * 100) }}%</span>
-      <button class="preview-zoom-btn" type="button" :disabled="zoomScale >= 1.8" @click="zoomIn">+</button>
-      <button class="preview-zoom-reset" type="button" @click="resetZoom">重置</button>
+      <button class="preview-zoom-btn" type="button" :disabled="zoomScale >= maxZoom" @click="zoomIn">+</button>
+      <button class="preview-zoom-reset" type="button" @click="resetZoom">{{ isMobileViewport ? '适配' : '重置' }}</button>
     </div>
 
-    <div v-if="previewUrl" class="live-preview-viewport">
+    <div v-if="previewUrl" class="live-preview-viewport" :class="{ 'is-mobile-fit': isMobileViewport }">
       <iframe
         class="resume-preview-frame live-preview-frame"
         :src="previewUrl"
@@ -23,6 +23,13 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 
+const MOBILE_BREAKPOINT = 768
+const MOBILE_DEFAULT_ZOOM = 0.6
+const DESKTOP_DEFAULT_ZOOM = 1
+const MOBILE_MIN_ZOOM = 0.4
+const DESKTOP_MIN_ZOOM = 0.6
+const MAX_ZOOM = 1.8
+
 const props = defineProps({
   previewUrl: {
     type: String,
@@ -32,24 +39,48 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate-section'])
 
-const zoomScale = ref(1)
+const isMobileViewport = ref(false)
+const zoomScale = ref(DESKTOP_DEFAULT_ZOOM)
 
-const previewFrameStyle = computed(() => ({
-  width: `${100 / zoomScale.value}%`,
-  height: `${100 / zoomScale.value}%`,
-  transform: `scale(${zoomScale.value})`,
-}))
+const minZoom = computed(() => (isMobileViewport.value ? MOBILE_MIN_ZOOM : DESKTOP_MIN_ZOOM))
+const maxZoom = MAX_ZOOM
+
+const previewFrameStyle = computed(() => {
+  const width = 100 / zoomScale.value
+  if (isMobileViewport.value) {
+    return {
+      width: `${width}%`,
+      height: 'auto',
+      aspectRatio: '1 / 1.414',
+      transform: `scale(${zoomScale.value})`,
+    }
+  }
+
+  return {
+    width: `${width}%`,
+    height: `${100 / zoomScale.value}%`,
+    transform: `scale(${zoomScale.value})`,
+  }
+})
+
+function getDefaultZoom() {
+  return isMobileViewport.value ? MOBILE_DEFAULT_ZOOM : DESKTOP_DEFAULT_ZOOM
+}
+
+function syncViewportMode() {
+  isMobileViewport.value = window.innerWidth <= MOBILE_BREAKPOINT
+}
 
 function zoomIn() {
-  zoomScale.value = Math.min(1.8, Number((zoomScale.value + 0.1).toFixed(1)))
+  zoomScale.value = Math.min(maxZoom, Number((zoomScale.value + 0.1).toFixed(1)))
 }
 
 function zoomOut() {
-  zoomScale.value = Math.max(0.6, Number((zoomScale.value - 0.1).toFixed(1)))
+  zoomScale.value = Math.max(minZoom.value, Number((zoomScale.value - 0.1).toFixed(1)))
 }
 
 function resetZoom() {
-  zoomScale.value = 1
+  zoomScale.value = getDefaultZoom()
 }
 
 function getPreviewIdentity(previewUrl) {
@@ -68,20 +99,34 @@ function handlePreviewMessage(event) {
   emit('navigate-section', sectionKey)
 }
 
+function handleResize() {
+  const nextIsMobile = window.innerWidth <= MOBILE_BREAKPOINT
+  if (nextIsMobile !== isMobileViewport.value) {
+    isMobileViewport.value = nextIsMobile
+    zoomScale.value = getDefaultZoom()
+    return
+  }
+  syncViewportMode()
+}
+
 watch(
   () => props.previewUrl,
   (nextUrl, prevUrl) => {
     if (getPreviewIdentity(nextUrl) !== getPreviewIdentity(prevUrl)) {
-      zoomScale.value = 1
+      zoomScale.value = getDefaultZoom()
     }
   },
 )
 
 onMounted(() => {
+  syncViewportMode()
+  zoomScale.value = getDefaultZoom()
   window.addEventListener('message', handlePreviewMessage)
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   window.removeEventListener('message', handlePreviewMessage)
+  window.removeEventListener('resize', handleResize)
 })
 </script>

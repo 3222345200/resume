@@ -126,27 +126,96 @@
 }
 
 .editor-workspace-page .template-editor-header {
-  padding-bottom: 2px;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(120, 111, 103, 0.08);
+}
+
+.editor-workspace-page .form-actions {
+  gap: 8px;
+}
+
+.editor-workspace-page .template-editor-actions {
+  width: auto;
+  max-width: 100%;
+  margin-left: auto;
+  grid-template-columns: repeat(4, minmax(8.75rem, 11rem));
+  justify-content: end;
+}
+
+.editor-workspace-page .form-actions .ghost-button,
+.editor-workspace-page .form-actions .primary-button {
+  min-height: 38px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.editor-workspace-page .form-actions .primary-button {
+  box-shadow: 0 10px 22px rgba(49, 138, 128, 0.18);
+}
+
+.editor-workspace-page .form-actions .ghost-button {
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .editor-workspace-page .template-editor-scroll {
-  gap: 12px;
+  gap: 10px;
 }
 
 .editor-workspace-page .layout-setting-panel {
+  margin-top: 0;
   border-color: var(--iv-border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 247, 243, 0.94));
-  box-shadow: var(--iv-shadow);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 247, 243, 0.9));
+  box-shadow: 0 8px 22px rgba(120, 111, 103, 0.06);
 }
 
 .editor-workspace-page .layout-setting-panel.is-expanded {
-  background: transparent;
-  box-shadow: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(249, 247, 243, 0.92));
+  box-shadow: 0 8px 22px rgba(120, 111, 103, 0.06);
+}
+
+.editor-workspace-page .layout-setting-toggle {
+  padding: 12px 16px 10px;
+  gap: 10px;
+}
+
+.editor-workspace-page .layout-setting-title {
+  font-size: 15px;
+}
+
+.editor-workspace-page .layout-setting-tip,
+.editor-workspace-page .layout-setting-panel.is-expanded .layout-setting-tip {
+  display: inline;
+  font-size: 12px;
+  color: #847a72;
 }
 
 .editor-workspace-page .layout-setting-group,
 .editor-workspace-page .layout-setting-groups {
   gap: 14px;
+}
+
+.editor-workspace-page .layout-setting-groups {
+  padding: 0 16px 14px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.editor-workspace-page .layout-setting-fields {
+  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.editor-workspace-page .layout-setting-fields .plain-field {
+  width: 100%;
+}
+
+.editor-workspace-page .layout-setting-fields .custom-select {
+  width: 100%;
 }
 
 .editor-workspace-page .vue-section-nav-panel {
@@ -253,5 +322,41 @@
 
 .editor-workspace-page .live-preview-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 241, 0.94));
+}
+
+@media (max-width: 1024px) {
+  .editor-workspace-page .live-preview-card {
+    gap: 6px;
+    padding: 8px 8px 10px;
+  }
+
+  .editor-workspace-page .live-preview-toolbar {
+    gap: 6px;
+  }
+
+  .editor-workspace-page .preview-zoom-btn,
+  .editor-workspace-page .preview-zoom-reset {
+    min-height: 32px;
+    border-radius: 11px;
+  }
+
+  .editor-workspace-page .preview-zoom-btn {
+    width: 34px;
+    font-size: 17px;
+  }
+
+  .editor-workspace-page .preview-zoom-text {
+    min-width: 46px;
+    font-size: 12px;
+  }
+
+  .editor-workspace-page .preview-zoom-reset {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .editor-workspace-page .live-preview-viewport {
+    min-height: calc(100dvh - 10.5rem);
+  }
 }
 

@@ -1,56 +1,50 @@
 <template>
-  <header class="header">
-    <div class="logo">
-      <router-link to="/">
-        <img src="../assets/logo-new.png" alt="职跃 OfferPilot Logo" />
-        <span>职跃 · OfferPilot</span>
+  <header class="app-header">
+    <div class="app-header__inner">
+      <router-link to="/dashboard" class="brand" aria-label="职跃 OfferPilot 首页">
+        <span class="brand-mark">
+          <img src="../assets/logo-new.png" alt="职跃 OfferPilot" />
+        </span>
+        <span class="brand-copy">
+          <strong>职跃 OfferPilot</strong>
+          <small>整理题库、记录与面试节奏</small>
+        </span>
       </router-link>
-    </div>
 
-    <nav class="nav">
-      <ul>
-        <li>
-          <router-link to="/dashboard" class="nav-item">
-            <span class="icon">🏠</span>
-            <span>求职总览</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/editor" class="nav-item">
-            <span class="icon">📄</span>
-            <span>我的简历</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/applications" class="nav-item">
-            <span class="icon">📬</span>
-            <span>投递进度</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/interviews" class="nav-item">
-            <span class="icon">📅</span>
-            <span>面试安排</span>
-          </router-link>
-        </li>
-      </ul>
-    </nav>
+      <nav class="primary-nav" aria-label="主导航">
+        <router-link
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="primary-nav__item"
+          :class="{ 'is-active': route.path === item.to }"
+        >
+          <span class="primary-nav__label primary-nav__label--full">{{ item.label }}</span>
+          <span class="primary-nav__label primary-nav__label--short">{{ item.shortLabel }}</span>
+        </router-link>
+      </nav>
 
-    <div class="user-actions">
-      <!-- <div class="username">
-        <p>你好，{{ authStore.user?.username || '用户' }}</p>
-      </div> -->
-      <button class="logout-btn" @click="handleLogout">退出</button>
+      <div class="app-header__actions">
+        <button class="logout-btn" type="button" @click="handleLogout">退出登录</button>
+      </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const router = useRouter()
+
+const navItems = [
+  { to: '/dashboard', label: '求职总览', shortLabel: '总览' },
+  { to: '/editor', label: '简历编辑', shortLabel: '简历' },
+  { to: '/applications', label: '投递追踪', shortLabel: '投递' },
+  { to: '/interviews', label: '面试安排', shortLabel: '面试' },
+]
 
 async function handleLogout() {
   authStore.logout()
@@ -59,186 +53,231 @@ async function handleLogout() {
 </script>
 
 <style scoped>
-.header {
+.app-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  display: flex;
+  padding: 0 16px;
+  background: rgba(245, 240, 235, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(128, 119, 110, 0.08);
+}
+
+.app-header__inner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  flex: 0 0 auto;
-  padding: 1rem 2rem;
-  background: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  min-height: 72px;
+  gap: 20px;
+  min-height: 56px;
 }
 
-.logo {
-  flex-shrink: 0;
-  z-index: 2;
-}
-
-.logo a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #222;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.logo img {
-  height: 40px;
-  width: 40px;
-  object-fit: contain;
-}
-
-.nav {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav ul {
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-}
-
-.nav-item {
+.brand {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  text-decoration: none;
-  color: #444;
-  font-weight: 500;
-  font-size: 14px;
-  background: #f5f7fb;
-  transition: all 0.25s ease;
+  color: #2f2b28;
+  justify-self: start;
 }
 
-.nav-item:hover {
-  background: #eaf2ff;
-  color: #1677ff;
-  transform: translateY(-1px);
-}
-
-.nav-item.router-link-exact-active {
-  background: linear-gradient(135deg, #1677ff, #4096ff);
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(22, 119, 255, 0.22);
-}
-
-.icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.user-actions {
-  margin-left: auto;
-  z-index: 2;
-  display: flex;
+.brand-mark {
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(143, 131, 121, 0.08);
+  overflow: hidden;
 }
 
-.username {
-  max-width: 160px;
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.28);
 }
 
-.username p {
-  margin: 0;
-  color: #333;
-  font-size: 14px;
+.brand-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-copy strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.brand-copy small {
+  color: #746b64;
+  font-size: 0.66rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.primary-nav {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  justify-self: stretch;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.primary-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.primary-nav__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  color: #6e645d;
+  transition:
+    background-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.primary-nav__item:hover {
+  background: rgba(255, 255, 255, 0.52);
+  color: #2f2a27;
+}
+
+.primary-nav__item.is-active,
+.primary-nav__item.router-link-exact-active {
+  background: rgba(255, 255, 255, 0.82);
+  color: #2d2926;
+  box-shadow: inset 0 0 0 1px rgba(128, 118, 109, 0.08);
+}
+
+.primary-nav__label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.primary-nav__label--short {
+  display: none;
+}
+
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  justify-self: end;
+}
+
 .logout-btn {
-  padding: 8px 14px;
-  border: 1px solid #1677ff;
-  background: #fff;
-  color: #1677ff;
-  border-radius: 999px;
+  border: 1px solid rgba(129, 118, 108, 0.14);
+  border-radius: 9px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.58);
+  color: #514942;
+  font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.25s ease;
+  transition:
+    background-color 0.22s ease,
+    color 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .logout-btn:hover {
-  background: #1677ff;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(22, 119, 255, 0.18);
+  background: #fff;
+  color: #2f2a27;
+  border-color: rgba(129, 118, 108, 0.24);
 }
 
-@media (max-width: 1024px) {
-  .header {
-    flex-wrap: wrap;
-    justify-content: space-between;
+@media (max-width: 1180px) {
+  .app-header {
+    padding: 0 16px;
+  }
+
+  .app-header__inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 12px;
-    padding: 1rem;
+    padding: 10px 0;
+    min-height: 56px;
   }
 
-  .nav {
-    position: static;
-    transform: none;
-    order: 3;
-    width: 100%;
-  }
-
-  .nav ul {
-    justify-content: center;
-    flex-wrap: wrap;
-    row-gap: 10px;
+  .app-header__actions {
+    justify-content: flex-end;
   }
 }
 
-@media (max-width: 640px) {
-  .header {
-    gap: 10px;
+@media (max-width: 760px) {
+  .app-header {
+    padding: 0 10px;
   }
 
-  .logo {
-    min-width: 0;
+  .app-header__inner {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 8px 0;
   }
 
-  .logo a span {
-    font-size: 16px;
+  .brand-copy {
+    display: none;
   }
 
-  .nav {
-    width: 100%;
+  .primary-nav {
+    justify-content: flex-start;
+    gap: 4px;
   }
 
-  .nav ul {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  .primary-nav__label--full {
+    display: none;
   }
 
-  .nav li {
-    min-width: 0;
+  .primary-nav__label--short {
+    display: block;
   }
 
-  .nav-item {
-    width: 100%;
-    min-width: 0;
-    justify-content: center;
-    font-size: 13px;
-    padding: 8px 12px;
+  .app-header__actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .logout-btn {
+    width: auto;
     white-space: nowrap;
   }
+}
 
-  .username {
-    display: none;
+@media (max-width: 480px) {
+  .brand {
+    align-items: center;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand-mark img {
+    transform: scale(1.25);
+  }
+
+  .primary-nav__item {
+    padding: 6px 9px;
   }
 }
 </style>

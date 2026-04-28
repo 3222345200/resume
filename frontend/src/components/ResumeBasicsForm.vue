@@ -5,15 +5,23 @@
         <p class="eyebrow">Editor</p>
         <h2>模板字段编辑</h2>
       </div> -->
-        <div class="form-actions">
-          <button class="ghost-button" type="button" @click="$emit('view-applications')">查看关联投递</button>
+        <div class="form-actions template-editor-actions">
+          <button class="ghost-button" type="button" @click="$emit('view-applications')">
+            <span class="responsive-action-label responsive-action-label--full">查看关联投递</span>
+            <span class="responsive-action-label responsive-action-label--short">关联投递</span>
+          </button>
           <button class="primary-button" type="button" :disabled="saving" @click="$emit('save')">
-            {{ saving ? '保存中...' : '保存简历' }}
+            <span class="responsive-action-label responsive-action-label--full">{{ saving ? '保存中...' : '保存简历' }}</span>
+            <span class="responsive-action-label responsive-action-label--short">{{ saving ? '保存中' : '保存' }}</span>
           </button>
           <button class="ghost-button" type="button" :disabled="rendering" @click="$emit('render')">
-            {{ rendering ? '生成中...' : '下载 PDF' }}
+            <span class="responsive-action-label responsive-action-label--full">{{ rendering ? '生成中...' : '下载 PDF' }}</span>
+            <span class="responsive-action-label responsive-action-label--short">{{ rendering ? '生成中' : '下载' }}</span>
         </button>
-        <button class="ghost-button danger-lite" type="button" @click="$emit('delete')">删除</button>
+        <button class="ghost-button danger-lite" type="button" @click="$emit('delete')">
+          <span class="responsive-action-label responsive-action-label--full">删除</span>
+          <span class="responsive-action-label responsive-action-label--short">删除</span>
+        </button>
       </div>
     </header>
 
@@ -468,7 +476,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import defaultAvatar from '../assets/default-avatar.jpg'
 import { createCustomSection } from '../stores/resume'
 import AvatarCropDialog from './AvatarCropDialog.vue'
@@ -503,6 +511,7 @@ const latestValidDateState = ref('')
 const sectionElementMap = new Map()
 let restoringInvalidDateState = false
 let jumpHighlightTimer = null
+let mobileViewportQuery = null
 const confirmState = ref({
   open: false,
   title: '',
@@ -522,6 +531,8 @@ const builtInSectionTitles = {
   research: '科研经历',
   honors: '荣誉奖项',
 }
+
+const MOBILE_VIEWPORT_WIDTH = 768
 
 const sectionTitleSizeOptions = [
   '14', '15', '16', '17', '18', '19', '20', '21', '22', '24', '26', '28'
@@ -658,11 +669,34 @@ watch(
   { immediate: true },
 )
 
+onMounted(() => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return
+  }
+
+  mobileViewportQuery = window.matchMedia(`(max-width: ${MOBILE_VIEWPORT_WIDTH}px)`)
+  syncMobileCollapsedPanels(mobileViewportQuery.matches)
+  mobileViewportQuery.addEventListener('change', handleMobileViewportChange)
+})
+
 onUnmounted(() => {
   if (jumpHighlightTimer) {
     clearTimeout(jumpHighlightTimer)
   }
+  mobileViewportQuery?.removeEventListener('change', handleMobileViewportChange)
 })
+
+function handleMobileViewportChange(event) {
+  syncMobileCollapsedPanels(event.matches)
+}
+
+function syncMobileCollapsedPanels(isMobileViewport) {
+  if (!isMobileViewport) {
+    return
+  }
+  isLayoutSettingExpanded.value = false
+  isModuleNavCollapsed.value = true
+}
 
 function normalizeAvatarCrop(value) {
   const crop = value && typeof value === 'object' ? value : {}

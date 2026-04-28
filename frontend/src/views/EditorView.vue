@@ -1,11 +1,9 @@
 ﻿<template>
   <main class="interviews-page interviews-page-modern editor-workspace-page">
-    <section class="interviews-shell editor-workspace-shell">
-
-      <div v-if="isMobileWorkspace" class="editor-mobile-switcher" role="tablist" aria-label="移动端简历工作区切换">
+    <div v-if="isMobileWorkspace" class="workspace-mobile-switcher editor-page-mobile-switcher" role="tablist" aria-label="移动端简历工作区切换">
         <button
           type="button"
-          class="editor-mobile-switch"
+          class="workspace-mobile-switch"
           :class="{ 'is-active': activeMobilePanel === 'sidebar' }"
           @click="activeMobilePanel = 'sidebar'"
         >
@@ -13,7 +11,7 @@
         </button>
         <button
           type="button"
-          class="editor-mobile-switch"
+          class="workspace-mobile-switch"
           :class="{ 'is-active': activeMobilePanel === 'main' }"
           @click="activeMobilePanel = 'main'"
         >
@@ -21,14 +19,15 @@
         </button>
         <button
           type="button"
-          class="editor-mobile-switch"
+          class="workspace-mobile-switch"
           :class="{ 'is-active': activeMobilePanel === 'rail' }"
           @click="activeMobilePanel = 'rail'"
         >
           预览
         </button>
-      </div>
+    </div>
 
+    <section class="interviews-shell editor-workspace-shell">
       <ResumeSidebar
         class="interviews-sidebar editor-sidebar"
         :class="{ 'is-mobile-hidden': isMobileWorkspace && activeMobilePanel !== 'sidebar' }"
