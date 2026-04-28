@@ -380,7 +380,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import brandMark from '../assets/logo.png'
+import brandMark from '../assets/logo-new.png'
 import { requestJson } from '../api/request'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import CustomSelect from '../components/CustomSelect.vue'

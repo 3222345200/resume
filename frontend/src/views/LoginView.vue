@@ -189,7 +189,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import brandMark from '../assets/logo.png'
+import brandMark from '../assets/logo-new.png'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()

@@ -2,7 +2,7 @@
   <header class="header">
     <div class="logo">
       <router-link to="/">
-        <img src="../assets/logo.png" alt="职跃 OfferPilot Logo" />
+        <img src="../assets/logo-new.png" alt="职跃 OfferPilot Logo" />
         <span>职跃 · OfferPilot</span>
       </router-link>
     </div>
@@ -197,17 +197,44 @@ async function handleLogout() {
   .nav ul {
     justify-content: center;
     flex-wrap: wrap;
+    row-gap: 10px;
   }
 }
 
 @media (max-width: 640px) {
+  .header {
+    gap: 10px;
+  }
+
+  .logo {
+    min-width: 0;
+  }
+
   .logo a span {
     font-size: 16px;
   }
 
+  .nav {
+    width: 100%;
+  }
+
+  .nav ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .nav li {
+    min-width: 0;
+  }
+
   .nav-item {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
     font-size: 13px;
     padding: 8px 12px;
+    white-space: nowrap;
   }
 
   .username {

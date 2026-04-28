@@ -11,13 +11,17 @@
   --iv-radius: 16px;
   --iv-shadow: 0 18px 40px rgba(43, 45, 42, 0.06);
   background: var(--iv-bg);
+  min-height: 100dvh;
+  overflow: visible;
 }
 
 .interviews-page-modern .interviews-shell {
   grid-template-columns: clamp(216px, 18vw, 244px) minmax(0, 1fr) clamp(272px, 24vw, 320px);
   grid-template-areas: "sidebar main rail";
   gap: 16px;
-  height: 100%;
+  height: auto;
+  min-height: calc(100dvh - 24px);
+  align-items: start;
 }
 
 .interviews-page-modern .interviews-shell.sidebar-collapsed {
@@ -49,8 +53,8 @@
 .interviews-page-modern .interviews-sidebar,
 .interviews-page-modern .interviews-main,
 .interviews-page-modern .interviews-rail {
-  overflow: auto;
-  scrollbar-gutter: stable;
+  overflow: visible;
+  scrollbar-gutter: auto;
 }
 
 .interviews-page-modern .interviews-primary-nav {
@@ -439,7 +443,7 @@
 }
 
 .interviews-page-modern .interviews-outline-card {
-  min-height: calc(100dvh - 24px);
+  min-height: min(720px, calc(100dvh - 24px));
   padding: 18px;
   background: #fbfaf7;
 }
@@ -578,7 +582,7 @@
 }
 
 .interviews-page-modern .interviews-editor-canvas-doc {
-  min-height: calc(100dvh - 24px);
+  min-height: min(720px, calc(100dvh - 24px));
   gap: 10px;
   overflow: hidden;
 }

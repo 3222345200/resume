@@ -18,8 +18,19 @@
     </header>
 
     <div class="template-editor-scroll">
-      <section class="layout-setting-panel is-expanded">
-        <div class="layout-setting-groups">
+      <section class="layout-setting-panel" :class="{ 'is-expanded': isLayoutSettingExpanded }">
+        <button
+          type="button"
+          class="layout-setting-toggle"
+          :aria-expanded="String(isLayoutSettingExpanded)"
+          @click="isLayoutSettingExpanded = !isLayoutSettingExpanded"
+        >
+          <span class="layout-setting-title">版式设置</span>
+          <span class="layout-setting-tip">调整字体、字号与行距</span>
+          <span class="section-toggle-chevron" :class="{ 'is-collapsed': !isLayoutSettingExpanded }" aria-hidden="true"></span>
+        </button>
+
+        <div v-if="isLayoutSettingExpanded" class="layout-setting-groups">
           <div class="layout-setting-group">
             <div class="layout-setting-fields">
               <label class="plain-field">
@@ -53,13 +64,22 @@
       </section>
 
       <div class="template-editor-layout">
-        <aside class="section-nav-panel vue-section-nav-panel">
-          <div class="section-nav-copy">
-            <h3>编辑模块</h3>
-            <p class="meta-text">左侧选模块，右侧编辑内容。</p>
-          </div>
+        <aside class="section-nav-panel vue-section-nav-panel" :class="{ 'is-collapsed': isModuleNavCollapsed }">
+          <button
+            type="button"
+            class="module-nav-collapse-toggle"
+            :aria-expanded="String(!isModuleNavCollapsed)"
+            @click="isModuleNavCollapsed = !isModuleNavCollapsed"
+          >
+            <div class="section-nav-copy">
+              <h3>编辑模块</h3>
+              <p class="meta-text">左侧选模块，右侧编辑内容。</p>
+            </div>
+            <span v-if="isModuleNavCollapsed" class="module-nav-collapsed-label">模块</span>
+            <span class="section-toggle-chevron" :class="{ 'is-collapsed': isModuleNavCollapsed }" aria-hidden="true"></span>
+          </button>
 
-          <div class="section-nav-scrollbox">
+          <div v-if="!isModuleNavCollapsed" class="section-nav-scrollbox">
             <div class="editor-section-nav vue-editor-section-nav">
               <div
                 v-for="sectionBlock in sectionNavBlocks"
@@ -99,6 +119,23 @@
             </div>
 
             <button class="ghost-button section-nav-add-button" type="button" @click="addCustomSection">新增自定义模块</button>
+          </div>
+
+          <div v-else class="section-nav-mini-stack">
+            <button
+              v-for="sectionBlock in sectionNavBlocks"
+              :key="sectionBlock.key"
+              type="button"
+              class="section-nav-mini-button"
+              :class="{
+                'is-active': activeSectionKey === sectionBlock.key,
+                'is-reorderable': sectionBlock.reorderable,
+              }"
+              :title="sectionBlock.title"
+              @click="selectSection(sectionBlock.key)"
+            >
+              {{ getSectionShortTitle(sectionBlock.title) }}
+            </button>
           </div>
         </aside>
 
@@ -456,7 +493,9 @@ const avatarVersion = ref(Date.now())
 const avatarFileInputRef = ref(null)
 const pendingAvatarFile = ref(null)
 const avatarSourceFile = ref(null)
+const isLayoutSettingExpanded = ref(true)
 const activeSectionKey = ref('basics')
+const isModuleNavCollapsed = ref(false)
 const jumpHighlightSectionKey = ref('')
 const draggedSectionKey = ref('')
 const dropTargetSectionKey = ref('')
@@ -647,6 +686,14 @@ function getAvatarTransform(crop) {
   const translateX = (50 - crop.offset_x) * moveStrength
   const translateY = (50 - crop.offset_y) * moveStrength
   return `translate(${translateX}%, ${translateY}%) scale(${crop.scale})`
+}
+
+function getSectionShortTitle(title) {
+  const value = String(title || '').trim()
+  if (!value) {
+    return '模块'
+  }
+  return value.slice(0, 2)
 }
 
 async function handleAvatarChange(event) {

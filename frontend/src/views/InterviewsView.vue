@@ -458,7 +458,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import brandMark from '../assets/logo.png'
+import brandMark from '../assets/logo-new.png'
 import { requestJson } from '../api/request'
 import CustomSelect from '../components/CustomSelect.vue'
 import DateTimePicker from '../components/DateTimePicker.vue'
@@ -773,7 +773,7 @@ function toggleOutlinePanel() {
 
 function syncWorkspaceMode() {
   if (typeof window === 'undefined') return
-  isMobileWorkspace.value = window.innerWidth <= 1024
+  isMobileWorkspace.value = window.innerWidth <= 1200
 }
 
 function toggleOutlineBranch(id) {

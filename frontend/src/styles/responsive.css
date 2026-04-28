@@ -162,6 +162,81 @@
   .interviews-page-modern .interviews-rail-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .interviews-page-modern .workspace-mobile-switcher {
+    grid-area: switcher;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--iv-border);
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--iv-shadow);
+  }
+
+  .interviews-page-modern .workspace-mobile-switch {
+    min-height: 2.75rem;
+    padding: 0 0.875rem;
+    border-radius: 0.875rem;
+    border: 1px solid var(--iv-border);
+    background: #ffffff;
+    color: var(--iv-text);
+    font-weight: 700;
+  }
+
+  .interviews-page-modern .workspace-mobile-switch.is-active {
+    color: #ffffff;
+    border-color: rgba(31, 122, 114, 0.5);
+    background: linear-gradient(180deg, #247d75 0%, #1f6f68 100%);
+    box-shadow: 0 10px 20px rgba(31, 122, 114, 0.22);
+  }
+
+  .interviews-page-modern .interviews-sidebar.is-mobile-hidden,
+  .interviews-page-modern .interviews-main.is-mobile-hidden,
+  .interviews-page-modern .interviews-rail.is-mobile-hidden {
+    display: none;
+  }
+
+  .interviews-page-modern .interviews-primary-nav {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(245, 245, 243, 0.92);
+    border: 1px solid var(--iv-border, rgba(230, 228, 220, 1));
+    border-radius: 1rem;
+    box-shadow: var(--iv-shadow, 0 18px 40px rgba(43, 45, 42, 0.06));
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+
+  .interviews-page-modern .interviews-primary-brand {
+    flex: 0 0 auto;
+  }
+
+  .interviews-page-modern .interviews-primary-links {
+    flex: 1 1 auto;
+    flex-direction: row;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.125rem;
+  }
+
+  .interviews-page-modern .interviews-primary-link {
+    flex: 0 0 auto;
+  }
+
+  .interviews-page-modern .interviews-sidebar,
+  .interviews-page-modern .interviews-rail {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -344,6 +419,44 @@
     min-height: 0;
   }
 
+  .editor-workspace-page .vue-section-nav-panel:not(.is-collapsed) .module-nav-collapse-toggle {
+    margin-bottom: 10px;
+  }
+
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed {
+    width: 100%;
+    min-height: 0;
+    padding-bottom: 12px;
+  }
+
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed .section-nav-copy {
+    display: block;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed .module-nav-collapsed-label,
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed .section-nav-mini-stack {
+    display: none;
+  }
+
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed .module-nav-collapse-toggle {
+    min-height: 32px;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .editor-workspace-page .vue-section-nav-panel .module-nav-collapse-toggle .section-toggle-chevron {
+    margin-top: 0;
+    margin-right: 4px;
+    transform: rotate(135deg);
+  }
+
+  .editor-workspace-page .vue-section-nav-panel.is-collapsed .module-nav-collapse-toggle .section-toggle-chevron {
+    transform: rotate(45deg);
+  }
+
   .editor-workspace-page .section-nav-scrollbox .vue-editor-section-nav {
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   }
@@ -475,6 +588,51 @@
     grid-column: 1 / -1;
   }
 
+  .editor-workspace-page .template-editor-scroll {
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .editor-workspace-page .template-editor-layout,
+  .editor-workspace-page .vue-section-nav-panel,
+  .editor-workspace-page .vue-section-workspace,
+  .editor-workspace-page .active-module-wrap,
+  .editor-workspace-page .active-module-wrap > .section-editor-card,
+  .editor-workspace-page .active-module-card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .editor-workspace-page .section-nav-scrollbox,
+  .editor-workspace-page .vue-editor-section-nav,
+  .editor-workspace-page .active-module-card .basics-editor-layout,
+  .editor-workspace-page .active-module-card .repeat-editor-list,
+  .editor-workspace-page .active-module-wrap .repeat-editor-list {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .editor-workspace-page .active-module-card,
+  .editor-workspace-page .active-module-wrap > .section-editor-card {
+    overflow: hidden;
+  }
+
+  .editor-workspace-page .active-module-card .basics-editor-layout,
+  .editor-workspace-page .active-module-card .repeat-editor-list,
+  .editor-workspace-page .active-module-wrap .repeat-editor-list {
+    max-height: 62vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 0.25rem;
+  }
+
+  .editor-workspace-page .layout-setting-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .editor-workspace-page .form-actions > *,
   .applications-toolbar-actions > *,
   .applications-list-header-actions > *,
@@ -523,6 +681,10 @@
 }
 
 @media (max-width: 480px) {
+  .editor-workspace-page .layout-setting-fields {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-page-modern .dashboard-hero-surface,
   .applications-header,
   .applications-toolbar,

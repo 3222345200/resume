@@ -72,7 +72,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import brandMark from '../assets/logo.png'
+import brandMark from '../assets/logo-new.png'
 import AuthAnimalScene from '../components/AuthAnimalScene.vue'
 import { useAuthStore } from '../stores/auth'
 

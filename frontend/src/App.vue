@@ -18,15 +18,15 @@ const showAppHeader = computed(() => Boolean(route.meta.requiresAuth))
 
 <style scoped>
 .app-shell {
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .app-content {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
+  min-height: auto;
+  overflow: visible;
 }
 </style>

@@ -1324,6 +1324,10 @@
   line-height: 1.6;
 }
 
+.layout-setting-panel.is-expanded .layout-setting-tip {
+  display: inline;
+}
+
 .section-toggle-chevron {
   margin-left: auto;
   width: 11px;
@@ -1347,7 +1351,7 @@
 }
 
 .template-editor-layout {
-  margin-top: 16px;
+  margin-top: 8px;
   min-height: min(760px, calc(100dvh - 320px));
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -3119,7 +3123,7 @@ body,
 
 
 .section-nav-copy {
-  padding-top: 18px;
+  padding-top: 6px;
 }
 
 .avatar-preview-large {
@@ -4655,13 +4659,13 @@ body,
 
 
 .interviews-page {
-  height: 100%;
+  min-height: 100%;
   padding: 12px;
   background:
     radial-gradient(circle at 12% 14%, rgba(165, 157, 149, 0.12), transparent 24%),
     radial-gradient(circle at 86% 12%, rgba(163, 171, 182, 0.12), transparent 22%),
     linear-gradient(145deg, #eee6de 0%, #e8e0d7 52%, #e0e6e8 100%);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .interviews-shell {
