@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    :root {
+      --layout-section-title-size: {{ layout.section_title_size }};
+      --layout-content-font-size: {{ layout.content_font_size }};
+      --layout-content-line-height: {{ layout.content_line_height }};
+      --layout-section-divider-gap: {{ layout.section_divider_gap }};
+      --layout-entry-title-size: calc(var(--layout-content-font-size) + 1.9px);
+      --layout-emphasis-font-size: calc(var(--layout-content-font-size) + 0.5px);
+      --layout-section-title-font-family: {{ layout.section_title_font_family }};
+      --layout-content-font-family: {{ layout.content_font_family }};
+      --layout-font-family: {{ layout.content_font_family }};
+      --layout-section-title-color: {{ layout.section_title_color }};
+      --layout-content-font-color: {{ layout.content_font_color }};
+      --layout-font-color: {{ layout.content_font_color }};
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--layout-content-font-family);
+      color: var(--layout-content-font-color);
+      background: #edf4ff;
+      font-size: 12px;
+      line-height: 1.36;
+      letter-spacing: 0.01em;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 7mm 10mm 8mm;
+      background:
+        linear-gradient(180deg, rgba(247, 250, 255, 0.92), rgba(255, 255, 255, 1));
+      overflow: hidden;
+      break-after: page;
+      page-break-after: always;
+    }
+
+    .page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+
+    @media screen {
+      html {
+        background: #eef2f7;
+      }
+
+      body {
+        padding: 8px;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12)),
+          #edf4ff;
+        overflow: auto;
+      }
+
+      .page {
+        margin: 0 auto 12px;
+        box-shadow: 0 18px 42px rgba(37, 99, 235, 0.14);
+      }
+    }
+
+    .topbar {
+      position: relative;
+      min-height: 88px;
+      margin-bottom: 9px;
+      padding: 11px 82px 10px 16px;
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.24), transparent 26%),
+        linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 1px solid rgba(59, 130, 246, 0.16);
+    }
+
+    .avatar-wrap {
+      position: absolute;
+      top: 11px;
+      right: 14px;
+      width: 1.88cm;
+      height: 2.63cm;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #ffffff;
+      transform-origin: center center;
+    }
+
+    .name {
+      margin: 0 0 5px;
+      text-align: left;
+      font-family: var(--layout-section-title-font-family);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+      color: #0f172a;
+    }
+
+    .contact {
+      text-align: left;
+      font-size: var(--layout-content-font-size);
+      line-height: 1.35;
+      color: #1e3a8a;
+    }
+
+    .contact strong {
+      font-weight: 700;
+    }
+
+    .contact em {
+      font-style: italic;
+    }
+
+    .contact-line {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.42em;
+      flex-wrap: wrap;
+    }
+
+    .contact-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.28em;
+    }
+
+    .contact-icon {
+      width: 0.92em;
+      height: 0.92em;
+      flex: none;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .contact-separator {
+      display: inline-block;
+      width: 0.32em;
+      height: 0.32em;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: 0.55;
+      vertical-align: middle;
+    }
+
+    
+
+
+    .job-target {
+      display: inline-block;
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-content-font-size);
+      line-height: 1.35;
+      font-weight: 700;
+    }
+    .job-target-row {
+      margin-top: 3px;
+    }
+
+    .section {
+      margin-top: 8px;
+    }
+
+    .topbar + .section {
+      margin-top: 0;
+    }
+
+    .section-title {
+      display: inline-flex;
+      align-items: center;
+      margin: 0 0 6px;
+      padding: 5px 12px 6px;
+      border: 0;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: calc(var(--layout-section-title-size) - 0.3px);
+      font-family: var(--layout-section-title-font-family);
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .section-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      margin-right: 6px;
+      transform: translateY(1px);
+      color: #1d4ed8;
+    }
+
+    .section-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .entry {
+      margin-top: 5px;
+      padding: 6px 8px 7px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.22);
+    }
+
+    .entry-head {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      margin-bottom: 1px;
+    }
+
+    .entry-left,
+    .entry-right {
+      display: table-cell;
+      vertical-align: top;
+    }
+
+    .entry-right {
+      width: 33%;
+      text-align: right;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .entry-title {
+      font-size: var(--layout-entry-title-size);
+      font-family: var(--layout-content-font-family);
+      line-height: var(--layout-content-line-height);
+    }
+
+    .entry-title strong {
+      font-weight: 700;
+    }
+
+    .education-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1.3fr) minmax(4.5em, 0.65fr) auto;
+      column-gap: 1.1em;
+      align-items: start;
+    }
+
+    .education-head .entry-right {
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .education-cell {
+      min-width: 0;
+    }
+
+    .education-school,
+    .education-major,
+    .education-degree {
+      text-align: left;
+    }
+
+    .research-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: 1em;
+      align-items: baseline;
+    }
+
+    .research-head .entry-left,
+    .research-head .entry-right {
+      display: block;
+      min-width: 0;
+    }
+
+    .research-head .entry-left {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .research-head .entry-right {
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .role-line {
+      margin-top: -1px;
+      margin-bottom: 2px;
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
+      font-weight: 700;
+    }
+
+    .role-line em {
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .entry-tag {
+      display: inline-flex;
+      align-items: center;
+      margin-right: 0.5em;
+      padding: 1px 7px;
+      border: 1px solid rgba(59, 130, 246, 0.18);
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #1d4ed8;
+      background: rgba(59, 130, 246, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .location-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 0.45em;
+      font-size: 12px;
+      font-weight: 400;
+      color: #475569;
+    }
+
+    .location-chip svg {
+      width: 11px;
+      height: 11px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .rich {
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
+      word-break: break-word;
+    }
+
+    .rich p,
+    .rich ul,
+    .rich ol {
+      margin-top: 0;
+      margin-bottom: 0.2em;
+    }
+
+    .rich p:last-child,
+    .rich ul:last-child,
+    .rich ol:last-child {
+      margin-bottom: 0;
+    }
+
+    .rich ul,
+    .rich ol {
+      padding-left: 1.45em;
+    }
+
+    .rich li {
+      margin: 0.08em 0;
+    }
+
+    .education-lines .line {
+      margin: 0.08em 0;
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-emphasis-font-size);
+      line-height: var(--layout-content-line-height);
+    }
+
+    .education-lines .line::before {
+      content: "?";
+      display: inline-block;
+      width: 1em;
+    }
+
+    .skills-text {
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
+    }
+
+    .skills-text p {
+      margin: 0 0 0.1em;
+    }
+
+    .project-prefix {
+      margin-bottom: 0.1em;
+      font-family: var(--layout-content-font-family);
+      font-size: var(--layout-emphasis-font-size);
+      line-height: var(--layout-content-line-height);
+      font-weight: 700;
+    }
+
+    .project-list ol {
+      list-style: decimal;
+      padding-left: 1.6em;
+    }
+
+    .research-summary,
+    .honor-summary,
+    .self-summary {
+      margin-top: 1px;
+    }
+
+    .portfolio-link {
+      margin-top: 1px;
+      font-family: var(--layout-content-font-family);
+      font-size: 13.5px;
+      word-break: break-all;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar" data-section-key="basics">
+      {% if basics.avatar_data_uri %}
+        <div class="avatar-wrap">
+          <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: 50% 50%; transform: translate({{ (50 - basics.avatar_crop.offset_x) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%, {{ (50 - basics.avatar_crop.offset_y) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%) scale({{ basics.avatar_crop.scale }});">
+        </div>
+      {% endif %}
+
+      <h1 class="name">{{ basics.name or title }}</h1>
+
+      <div class="contact">
+        <div class="contact-line">
+          {% if basics.phone %}
+            <span class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v2a2 2 0 0 1-2.18 2A19.8 19.8 0 0 1 3.08 4.18 2 2 0 0 1 5.06 2h2a2 2 0 0 1 2 1.72c.12.89.32 1.76.59 2.6a2 2 0 0 1-.45 2.11L8.1 9.53a16 16 0 0 0 6.37 6.37l1.1-1.1a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.6.59A2 2 0 0 1 22 16.92Z"></path></svg>
+              <strong>(+86){{ basics.phone }}</strong>
+            </span>
+          {% endif %}
+          {% if basics.phone and basics.email %}<span class="contact-separator" aria-hidden="true"></span>{% endif %}
+          {% if basics.email %}
+            <span class="contact-item">
+              <svg class="contact-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"></path><path d="m22 8-10 6L2 8"></path></svg>
+              <strong><em>{{ basics.email }}</em></strong>
+            </span>
+          {% endif %}
+        </div>
+        {% if basics.job_target or basics.location or basics.city %}
+          <div class="job-target-row">
+            {% if basics.job_target %}<span class="job-target">求职意向：{{ basics.job_target }}</span>{% endif %}
+            {% if basics.job_target and (basics.location or basics.city) %}<span class="contact-separator" aria-hidden="true"></span>{% endif %}
+            {% if basics.location or basics.city %}<span class="job-target">意向城市：{{ basics.location or basics.city }}</span>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+{% if education %}
+      <section class="section" data-section-key="education">
+        <h2 class="section-title">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 8l9-4 9 4-9 4-9-4Z"></path><path d="M7 10.5v4.2c0 .8 2.2 2.3 5 2.3s5-1.5 5-2.3v-4.2"></path><path d="M21 9v6"></path></svg>
+          </span>教育经历
+        </h2>
+        {% for item in education %}
+          <div class="entry">
+            <div class="entry-head education-head">
+              <div class="entry-left entry-title education-cell education-school">
+                <strong>{{ item.school }}</strong>
+              </div>
+              <div class="entry-title education-cell education-major">
+                {% if item.major %}<strong>{{ item.major }}</strong>{% endif %}
+              </div>
+              <div class="entry-title education-cell education-degree">
+                {% if item.degree %}<strong>{{ item.degree }}</strong>{% endif %}
+              </div>
+              <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+            </div>
+            {% if item.highlights %}
+              <div class="education-lines rich">{{ item.highlights | safe }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </section>
+    {% endif %}
+
+    {% for section in ordered_sections %}
+      {% if section["key"] == "skills" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M14 6l4 4"></path><path d="M4 20l5.5-1 9-9a2.1 2.1 0 0 0-3-3l-9 9L4 20Z"></path><path d="M12 8l4 4"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          <div class="skills-text rich">{{ section["content"] | safe }}</div>
+        </section>
+      {% elif section["key"] == "experience" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"></rect><path d="M9 7V5h6v2"></path><path d="M4 12h16"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">
+                  <span class="entry-tag">{{ item.entry_type or "实习经历" }}</span>
+                  <strong>{{ item.company }}</strong>
+                  {% if item.location %}
+                    <span class="location-chip">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-4.35-6-10a6 6 0 1 1 12 0c0 5.65-6 10-6 10Z"></path><circle cx="12" cy="11" r="2.2"></circle></svg>
+                      {{ item.location }}
+                    </span>
+                  {% endif %}
+                </div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.department or item.role %}
+                <div class="role-line">{{ item.department }}{% if item.department and item.role %} <em>{{ item.role }}</em>{% else %}{% if item.role %}<em>{{ item.role }}</em>{% endif %}{% endif %}</div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="rich">{{ item.highlights | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "projects" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M8 19v2"></path><path d="M16 19v2"></path><path d="M8 9h8"></path><path d="M8 13h5"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title"><strong>{{ item.name }}</strong></div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.description %}
+                <div class="project-prefix">项目描述</div>
+                <div class="rich project-description">{{ item.description | safe }}</div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="project-prefix">主要工作</div>
+                <div class="rich project-list">{{ item.highlights | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "portfolio" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L10 5"></path><path d="M14 11a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1L14 19"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right"></div>
+              </div>
+              {% if item.link %}
+                <div class="portfolio-link"><a href="{{ item.link }}">{{ item.link }}</a></div>
+              {% endif %}
+              {% if item.summary %}
+                <div class="rich">{{ item.summary | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "research" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 4h9l3 3v13H6z"></path><path d="M15 4v3h3"></path><path d="M9 12h6"></path><path d="M9 16h4"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head research-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right">{{ item.label }}</div>
+              </div>
+              {% if item.summary %}
+                <div class="rich research-summary">{{ item.summary | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section.get("kind") == "custom" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16"></path><path d="M4 12h16"></path><path d="M4 18h10"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title"><strong>{{ item.title }}</strong></div>
+                <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+              </div>
+              {% if item.subtitle %}
+                <div class="role-line"><em>{{ item.subtitle }}</em></div>
+              {% endif %}
+              {% if item.description %}
+                <div class="rich">{{ item.description | safe }}</div>
+              {% endif %}
+              {% if item.highlights %}
+                <div class="project-prefix">重点内容</div>
+                <div class="rich project-list">{{ item.highlights | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% elif section["key"] == "honors" %}
+        <section class="section" data-section-key="{{ section['key'] }}">
+          <h2 class="section-title">
+            <span class="section-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M10 12l-2 8 4-2 4 2-2-8"></path></svg>
+            </span>{{ section["title"] }}
+          </h2>
+          {% for item in section["items"] %}
+            <div class="entry">
+              <div class="entry-head">
+                <div class="entry-left entry-title">{{ item.title }}</div>
+                <div class="entry-right">{{ item.label }}</div>
+              </div>
+              {% if item.summary %}
+                <div class="rich honor-summary">{{ item.summary | safe }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endfor %}
+
+            {% if basics.summary %}
+      <section class="section" data-section-key="basics">
+        <h2 class="section-title">
+          <span class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"></path></svg>
+          </span>个人简介
+        </h2>
+        <div class="rich self-summary">{{ basics.summary | safe }}</div>
+      </section>
+    {% endif %}
+  </div>
+  <script>
+    (function enableSectionJumping() {
+      const notifyParent = function (sectionKey) {
+        if (!sectionKey || window.parent === window) {
+          return;
+        }
+        window.parent.postMessage({
+          type: 'resume-preview-section-dblclick',
+          sectionKey: sectionKey,
+        }, window.location.origin);
+      };
+
+      document.addEventListener('dblclick', function (event) {
+        const sectionNode = event.target.closest('[data-section-key]');
+        if (!sectionNode) {
+          return;
+        }
+        notifyParent(sectionNode.getAttribute('data-section-key'));
+      });
+    })();
+
+    (function paginateResumePages() {
+      const runPagination = function () {
+        if (document.body.dataset.resumePaginated === '1') {
+          return;
+        }
+
+        const sourcePage = document.querySelector('.page');
+        if (!sourcePage) {
+          return;
+        }
+
+        const topbarNode = sourcePage.querySelector(':scope > .topbar');
+        const sectionNodes = Array.from(sourcePage.querySelectorAll(':scope > .section'));
+        const pageStack = document.createElement('div');
+        pageStack.className = 'page-stack';
+        sourcePage.after(pageStack);
+
+        const createPage = function (withTopbar) {
+          const page = sourcePage.cloneNode(false);
+          if (withTopbar && topbarNode) {
+            page.appendChild(topbarNode.cloneNode(true));
+          }
+          pageStack.appendChild(page);
+          return page;
+        };
+
+        const pageHasBodyContent = function (page) {
+          return Array.from(page.children).some(function (child) {
+            return !child.classList.contains('topbar');
+          });
+        };
+
+        const pageOverflows = function (page) {
+          return page.scrollHeight > page.clientHeight + 1;
+        };
+
+        const buildSectionShell = function (sectionNode) {
+          const sectionShell = sectionNode.cloneNode(false);
+          const titleNode = sectionNode.querySelector(':scope > .section-title');
+          if (titleNode) {
+            sectionShell.appendChild(titleNode.cloneNode(true));
+          }
+          return sectionShell;
+        };
+
+        let currentPage = createPage(true);
+
+        const ensureSectionShell = function (sectionNode) {
+          let sectionShell = buildSectionShell(sectionNode);
+          currentPage.appendChild(sectionShell);
+
+          if (pageOverflows(currentPage) && pageHasBodyContent(currentPage)) {
+            sectionShell.remove();
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+          }
+
+          return sectionShell;
+        };
+
+        const appendWholeSection = function (sectionNode) {
+          const sectionClone = sectionNode.cloneNode(true);
+          currentPage.appendChild(sectionClone);
+
+          if (!pageOverflows(currentPage)) {
+            return true;
+          }
+
+          sectionClone.remove();
+          if (pageHasBodyContent(currentPage)) {
+            currentPage = createPage(false);
+            currentPage.appendChild(sectionNode.cloneNode(true));
+            if (!pageOverflows(currentPage)) {
+              return true;
+            }
+            currentPage.lastElementChild.remove();
+          }
+
+          return false;
+        };
+
+        const appendSectionByBlocks = function (sectionNode) {
+          const blockNodes = Array.from(sectionNode.children).filter(function (child) {
+            return !child.classList.contains('section-title');
+          });
+          let sectionShell = ensureSectionShell(sectionNode);
+
+          blockNodes.forEach(function (blockNode) {
+            const blockClone = blockNode.cloneNode(true);
+            sectionShell.appendChild(blockClone);
+
+            if (!pageOverflows(currentPage)) {
+              return;
+            }
+
+            blockClone.remove();
+            if (sectionShell.children.length <= 1 && !pageHasBodyContent(currentPage)) {
+              sectionShell.appendChild(blockNode.cloneNode(true));
+              return;
+            }
+
+            if (sectionShell.children.length <= 1) {
+              sectionShell.remove();
+            }
+            currentPage = createPage(false);
+            sectionShell = buildSectionShell(sectionNode);
+            currentPage.appendChild(sectionShell);
+            sectionShell.appendChild(blockNode.cloneNode(true));
+          });
+
+          if (sectionShell.children.length <= 1) {
+            sectionShell.remove();
+          }
+        };
+
+        sectionNodes.forEach(function (sectionNode) {
+          if (!appendWholeSection(sectionNode)) {
+            appendSectionByBlocks(sectionNode);
+          }
+        });
+
+        sourcePage.remove();
+        document.body.dataset.resumePaginated = '1';
+      };
+
+      if (document.readyState === 'complete') {
+        requestAnimationFrame(runPagination);
+      } else {
+        window.addEventListener('load', function () {
+          requestAnimationFrame(runPagination);
+        }, { once: true });
+      }
+    })();
+  </script></body>
+</html>
+
+
+
+

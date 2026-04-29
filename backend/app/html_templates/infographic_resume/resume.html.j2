@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <style>
+    :root {
+      --layout-section-title-size: {{ layout.section_title_size }};
+      --layout-content-font-size: {{ layout.content_font_size }};
+      --layout-content-line-height: {{ layout.content_line_height }};
+      --layout-section-title-font-family: {{ layout.section_title_font_family }};
+      --layout-content-font-family: {{ layout.content_font_family }};
+      --layout-section-title-color: {{ layout.section_title_color }};
+      --layout-content-font-color: {{ layout.content_font_color }};
+      --accent: #7c3aed;
+      --accent-soft: rgba(124, 58, 237, 0.12);
+      --accent-deep: #4c1d95;
+      --panel: #ffffff;
+      --panel-line: rgba(148, 163, 184, 0.2);
+      --text-soft: rgba(15, 23, 42, 0.68);
+    }
+
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f4f0ff;
+      font-family: var(--layout-content-font-family);
+      color: var(--layout-content-font-color);
+      font-size: 12.2px;
+      line-height: 1.42;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 10mm 11mm;
+      background:
+        radial-gradient(circle at top right, rgba(124, 58, 237, 0.12), transparent 22%),
+        linear-gradient(180deg, #fbf9ff 0%, #ffffff 48%);
+      overflow: hidden;
+    }
+
+    @media screen {
+      body { padding: 8px; }
+      .page {
+        margin: 0 auto 12px;
+        box-shadow: 0 18px 42px rgba(76, 29, 149, 0.14);
+      }
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) 66mm;
+      gap: 8mm;
+      align-items: stretch;
+      margin-bottom: 6mm;
+    }
+
+    .hero-main,
+    .hero-side,
+    .mini-section,
+    .metric-card,
+    .entry {
+      background: var(--panel);
+      border: 1px solid var(--panel-line);
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .hero-main {
+      position: relative;
+      padding: 7mm 7mm 6mm;
+      overflow: hidden;
+    }
+
+    .hero-main::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto auto;
+      width: 95mm;
+      height: 95mm;
+      transform: translate(30%, -35%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.22), rgba(124, 58, 237, 0));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .name {
+      margin: 0;
+      font-family: var(--layout-section-title-font-family);
+      font-size: 30px;
+      line-height: 1.03;
+      letter-spacing: 0.02em;
+      color: #111827;
+    }
+
+    .job-target {
+      margin: 8px 0 0;
+      color: var(--accent-deep);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .contact-item {
+      padding: 9px 11px;
+      border-radius: 14px;
+      background: rgba(124, 58, 237, 0.04);
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .contact-item strong {
+      display: block;
+      margin-bottom: 2px;
+      color: #111827;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .summary {
+      margin-top: 14px;
+      color: var(--text-soft);
+    }
+
+    .summary p:last-child {
+      margin-bottom: 0;
+    }
+
+    .hero-side {
+      padding: 6mm 5mm;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.06), rgba(255, 255, 255, 0.98));
+    }
+
+    .avatar-wrap {
+      width: 34mm;
+      height: 47.6mm;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid rgba(124, 58, 237, 0.12);
+      box-shadow: 0 14px 28px rgba(76, 29, 149, 0.12);
+    }
+
+    .avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform-origin: center center;
+    }
+
+    .metric-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .metric-card {
+      padding: 9px 10px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .metric-label {
+      margin: 0 0 3px;
+      color: var(--text-soft);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .metric-bar {
+      height: 7px;
+      margin-top: 6px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.08);
+      overflow: hidden;
+    }
+
+    .metric-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8b5cf6, #c084fc);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 64mm;
+      gap: 6mm;
+      align-items: start;
+    }
+
+    .section + .section {
+      margin-top: 5mm;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      color: var(--layout-section-title-color);
+      font-family: var(--layout-section-title-font-family);
+      font-size: var(--layout-section-title-size);
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #8b5cf6, #c084fc);
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+      flex: none;
+    }
+
+    .entry {
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .entry:first-of-type {
+      margin-top: 0;
+    }
+
+    .entry-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: baseline;
+      margin-bottom: 3px;
+    }
+
+    .entry-title {
+      min-width: 0;
+      font-size: calc(var(--layout-content-font-size) + 1.4px);
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .entry-right {
+      white-space: nowrap;
+      color: var(--accent-deep);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .entry-subtitle {
+      margin-bottom: 4px;
+      color: var(--text-soft);
+      font-size: var(--layout-content-font-size);
+      font-weight: 700;
+    }
+
+    .entry-tag {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-deep);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .rich {
+      font-size: var(--layout-content-font-size);
+      line-height: var(--layout-content-line-height);
+      color: #1f2937;
+      word-break: break-word;
+    }
+
+    .rich p,
+    .rich ul,
+    .rich ol {
+      margin-top: 0;
+      margin-bottom: 0.24em;
+    }
+
+    .rich ul,
+    .rich ol {
+      padding-left: 1.35em;
+    }
+
+    .mini-section {
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .mini-section + .mini-section {
+      margin-top: 5mm;
+    }
+
+    .mini-title {
+      margin: 0 0 8px;
+      font-family: var(--layout-section-title-font-family);
+      font-size: calc(var(--layout-section-title-size) - 0.3px);
+      font-weight: 700;
+      color: var(--layout-section-title-color);
+    }
+
+    .skill-lines p {
+      position: relative;
+      margin: 0 0 10px;
+      padding-bottom: 10px;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .skill-lines p:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .skill-lines p::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #8b5cf6 0%, #c084fc 72%, rgba(192, 132, 252, 0.15) 72%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero" data-section-key="basics">
+      <div class="hero-main">
+        <span class="eyebrow">Profile Snapshot</span>
+        <h1 class="name">{{ basics.name or title }}</h1>
+        {% if basics.job_target %}<p class="job-target">{{ basics.job_target }}</p>{% endif %}
+
+        <div class="contact-grid">
+          {% if basics.phone %}
+            <div class="contact-item"><strong>Phone</strong>{{ basics.phone }}</div>
+          {% endif %}
+          {% if basics.email %}
+            <div class="contact-item"><strong>Email</strong>{{ basics.email }}</div>
+          {% endif %}
+          {% if basics.location or basics.city %}
+            <div class="contact-item"><strong>City</strong>{{ basics.location or basics.city }}</div>
+          {% endif %}
+          <div class="contact-item"><strong>Template</strong>Infographic Resume</div>
+        </div>
+
+        {% if basics.summary %}
+          <div class="summary rich">{{ basics.summary | safe }}</div>
+        {% endif %}
+      </div>
+
+      <aside class="hero-side">
+        {% if basics.avatar_data_uri %}
+          <div class="avatar-wrap">
+            <img class="avatar" src="{{ basics.avatar_data_uri }}" alt="avatar" style="object-position: 50% 50%; transform: translate({{ (50 - basics.avatar_crop.offset_x) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%, {{ (50 - basics.avatar_crop.offset_y) * (0.45 + (basics.avatar_crop.scale - 1) * 0.9) }}%) scale({{ basics.avatar_crop.scale }});">
+          </div>
+        {% endif %}
+
+        <div class="metric-stack">
+          <div class="metric-card">
+            <p class="metric-label">Sections</p>
+            <p class="metric-value">{{ ordered_sections | length + (1 if education else 0) }}</p>
+            <div class="metric-bar"><div class="metric-fill" style="width: 78%;"></div></div>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label">Focus</p>
+            <p class="metric-value">{{ basics.job_target or "Generalist" }}</p>
+            <div class="metric-bar"><div class="metric-fill" style="width: 66%;"></div></div>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <div class="content-grid">
+      <main>
+        {% if education %}
+          <section class="section" data-section-key="education">
+            <h2 class="section-title">Education</h2>
+            {% for item in education %}
+              <div class="entry">
+                <div class="entry-head">
+                  <div class="entry-title">{{ item.school }}{% if item.major %} / {{ item.major }}{% endif %}{% if item.degree %} / {{ item.degree }}{% endif %}</div>
+                  <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                </div>
+                {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </section>
+        {% endif %}
+
+        {% for section in ordered_sections %}
+          {% if section["key"] == "skills" %}
+          {% elif section["key"] == "experience" %}
+            <section class="section" data-section-key="{{ section['key'] }}">
+              <h2 class="section-title">{{ section["title"] }}</h2>
+              {% for item in section["items"] %}
+                <div class="entry">
+                  <div class="entry-head">
+                    <div class="entry-title"><span class="entry-tag">{{ item.entry_type or "Experience" }}</span>{{ item.company }}</div>
+                    <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                  </div>
+                  {% if item.department or item.role or item.location %}
+                    <div class="entry-subtitle">{{ item.department }}{% if item.department and item.role %} / {% endif %}{{ item.role }}{% if item.location %} / {{ item.location }}{% endif %}</div>
+                  {% endif %}
+                  {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% elif section["key"] == "projects" %}
+            <section class="section" data-section-key="{{ section['key'] }}">
+              <h2 class="section-title">{{ section["title"] }}</h2>
+              {% for item in section["items"] %}
+                <div class="entry">
+                  <div class="entry-head">
+                    <div class="entry-title">{{ item.name }}</div>
+                    <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                  </div>
+                  {% if item.description %}<div class="rich">{{ item.description | safe }}</div>{% endif %}
+                  {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% elif section["key"] == "portfolio" %}
+            <section class="section" data-section-key="{{ section['key'] }}">
+              <h2 class="section-title">{{ section["title"] }}</h2>
+              {% for item in section["items"] %}
+                <div class="entry">
+                  <div class="entry-head"><div class="entry-title">{{ item.title }}</div></div>
+                  {% if item.link %}<div class="rich"><a href="{{ item.link }}">{{ item.link }}</a></div>{% endif %}
+                  {% if item.summary %}<div class="rich">{{ item.summary | safe }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% elif section["key"] == "research" or section["key"] == "honors" %}
+            <section class="section" data-section-key="{{ section['key'] }}">
+              <h2 class="section-title">{{ section["title"] }}</h2>
+              {% for item in section["items"] %}
+                <div class="entry">
+                  <div class="entry-head">
+                    <div class="entry-title">{{ item.title }}</div>
+                    <div class="entry-right">{{ item.label }}</div>
+                  </div>
+                  {% if item.summary %}<div class="rich">{{ item.summary | safe }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% elif section.get("kind") == "custom" %}
+            <section class="section" data-section-key="{{ section['key'] }}">
+              <h2 class="section-title">{{ section["title"] }}</h2>
+              {% for item in section["items"] %}
+                <div class="entry">
+                  <div class="entry-head">
+                    <div class="entry-title">{{ item.title }}</div>
+                    <div class="entry-right">{{ item.start_date }}{% if item.start_date and item.end_date %} - {% endif %}{{ item.end_date }}</div>
+                  </div>
+                  {% if item.subtitle %}<div class="entry-subtitle">{{ item.subtitle }}</div>{% endif %}
+                  {% if item.description %}<div class="rich">{{ item.description | safe }}</div>{% endif %}
+                  {% if item.highlights %}<div class="rich">{{ item.highlights | safe }}</div>{% endif %}
+                </div>
+              {% endfor %}
+            </section>
+          {% endif %}
+        {% endfor %}
+      </main>
+
+      <aside>
+        {% for section in ordered_sections %}
+          {% if section["key"] == "skills" %}
+            <section class="mini-section" data-section-key="{{ section['key'] }}">
+              <h2 class="mini-title">{{ section["title"] }}</h2>
+              <div class="skill-lines rich">{{ section["content"] | safe }}</div>
+            </section>
+          {% endif %}
+        {% endfor %}
+
+        <section class="mini-section">
+          <h2 class="mini-title">Highlights</h2>
+          <div class="rich">
+            <p>Visual-first layout for creative and product-facing roles.</p>
+            <p>Metric cards and side modules improve scanning speed.</p>
+            <p>Works well with concise bullet points and clear section priorities.</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+  <script>
+    (function enableSectionJumping() {
+      const notifyParent = function (sectionKey) {
+        if (!sectionKey || window.parent === window) return;
+        window.parent.postMessage({ type: 'resume-preview-section-dblclick', sectionKey: sectionKey }, window.location.origin);
+      };
+      document.addEventListener('dblclick', function (event) {
+        const sectionNode = event.target.closest('[data-section-key]');
+        if (!sectionNode) return;
+        notifyParent(sectionNode.getAttribute('data-section-key'));
+      });
+    })();
+  </script>
+</body>
+</html>
