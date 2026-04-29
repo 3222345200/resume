@@ -8,12 +8,14 @@
     </div>
 
     <div v-if="previewUrl" class="live-preview-viewport" :class="{ 'is-mobile-fit': isMobileViewport }">
-      <iframe
-        class="resume-preview-frame live-preview-frame"
-        :src="previewUrl"
-        :style="previewFrameStyle"
-        title="简历预览"
-      ></iframe>
+      <div class="live-preview-stage" :class="{ 'is-mobile-fit': isMobileViewport }">
+        <iframe
+          class="resume-preview-frame live-preview-frame"
+          :src="previewUrl"
+          :style="previewFrameStyle"
+          title="简历预览"
+        ></iframe>
+      </div>
     </div>
 
     <div v-else class="preview-empty-state live-preview-empty">保存或下载 PDF 后，这里会显示简历预览。</div>
@@ -46,20 +48,11 @@ const minZoom = computed(() => (isMobileViewport.value ? MOBILE_MIN_ZOOM : DESKT
 const maxZoom = MAX_ZOOM
 
 const previewFrameStyle = computed(() => {
-  const width = 100 / zoomScale.value
-  if (isMobileViewport.value) {
-    return {
-      width: `${width}%`,
-      height: 'auto',
-      aspectRatio: '1 / 1.414',
-      transform: `scale(${zoomScale.value})`,
-    }
-  }
-
+  const scale = zoomScale.value
   return {
-    width: `${width}%`,
-    height: `${100 / zoomScale.value}%`,
-    transform: `scale(${zoomScale.value})`,
+    width: `${100 / scale}%`,
+    height: `${100 / scale}%`,
+    transform: `scale(${scale})`,
   }
 })
 

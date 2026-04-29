@@ -861,19 +861,20 @@
   .editor-workspace-page .live-preview-viewport.is-mobile-fit {
     min-height: calc(100dvh - 9rem);
     max-height: none;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
     padding: 0.25rem;
     background: linear-gradient(180deg, #f7f7f5 0%, #f1efe9 100%);
   }
 
-  .editor-workspace-page .live-preview-viewport.is-mobile-fit .live-preview-frame {
+  .editor-workspace-page .live-preview-stage.is-mobile-fit {
     width: 100%;
-    height: auto;
+    aspect-ratio: 1 / 1.414;
     min-height: 0;
+  }
+
+  .editor-workspace-page .live-preview-viewport.is-mobile-fit .live-preview-frame {
+    min-height: 100%;
     border-radius: 0.875rem;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   }
